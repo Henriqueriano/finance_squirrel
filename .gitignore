@@ -1,5 +1,8 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
+# arquivos teste Daniel H
+dumb.*
+
 # dependencies
 node_modules/
 
@@ -41,3 +44,10 @@ app-example
 # generated native folders
 /ios
 /android
+
+# alembic versions
+*/alembic/versions/*
+
+# python cache
+__pycache__/*
+*.pyc

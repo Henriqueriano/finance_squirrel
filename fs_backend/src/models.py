@@ -10,6 +10,16 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 class Base(DeclarativeBase):
     pass
 
+class ExpensesCategory(Base):
+    __tablename__ = 'expenses_categoryes_table'
+
+    category_id: Mapped[int] = mapped_column(Integer, primary_key = True)
+    category_name: Mapped[str] = mapped_column(String(50), nullable = False)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('users_table.user_id'))
+    
+    expenses: Mapped['Expenses'] = relationship(back_populates = 'ExpensesCategory')
+    users: Mapped['Users'] = relationship(back_populates = 'ExpensesCategory')
+
 class Expenses(Base):
     __tablename__ = 'expenses_table'
 
@@ -20,11 +30,15 @@ class Expenses(Base):
                                                  nullable = False,
                                                  default= lambda: datetime.now(timezone.utc)) 
     expense_date: Mapped[datetime] = mapped_column(DateTime(timezone = True), nullable = True, default=None) 
-    expense_category: Mapped[str] = mapped_column(String(50), nullable = True, default=None)
+    category_id: Mapped[str] = mapped_column(ForeignKey('expenses_categoryes_table.category_id'))
     expense_desc: Mapped[str] = mapped_column(String(300), nullable = True, default=None)
-    users: Mapped["Users"] = relationship(back_populates = 'expenses')
+    transaction_type: Mapped[bool] = mapped_column(default= False, nullable = True)
+
+    users: Mapped["Users"] = relationship(back_populates = 'Expenses')
 
 class Users(Base):
     __tablename__ = 'users_table'
-    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid = True), primary_key = True, default = uuid.uuid4) 
-    expenses: Mapped[List["Expenses"]] = relationship(back_populates = 'users')
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid = True), primary_key = True, default = uuid.uuid7) 
+    user_name: Mapped[str] = mapped_column(String(100), nullable = False)
+
+    expenses: Mapped[List["Expenses"]] = relationship(back_populates = 'Users')
