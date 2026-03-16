@@ -5,7 +5,7 @@ export default function SignIn() {
   const router = useRouter()
 
   return (
-    <View style={{ flex: 1, justifyContent: "center", padding: 20, backgroundColor: "#051F20"}}>
+    <View className="flex-1 justify-center items-center pw-20 bg-green-500">
       <Text style={{ fontSize: 48,  color: "#fff" }}>Login</Text>
       <View style={{ flexDirection: "row", gap: 5, marginTop: 15}}>
         <Text style={{ color: "#fff"}}>Ainda não tem uma Conta?</Text>
