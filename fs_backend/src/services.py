@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker, Session
 from .dtos import *
 from .models import *
@@ -10,7 +10,7 @@ load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
 SECRET_KEY = os.getenv('SECRET_KEY')
 
-async def persist_expenses_service(payload: list[ExpenseDto]) -> bool: 
+async def bulk_register_service(payload: list[ExpenseDto]) -> bool: 
     data: list[Expenses] = [Expenses(
         user_id = e.user_id,
         expense_value = e.expense_value,
@@ -28,3 +28,4 @@ async def persist_expenses_service(payload: list[ExpenseDto]) -> bool:
     except Exception as e:
         print('ERROR: ', e)
         return False
+
