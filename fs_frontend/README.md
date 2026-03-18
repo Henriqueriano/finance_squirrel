@@ -24,3 +24,4 @@ Após iniciar, você poderá abrir o aplicativo utilizando:
 - **Emulador Android**
 - **Simulador iOS**
 - **Navegador (Web)**
+
