@@ -32,7 +32,7 @@ export default function SignIn() {
 
       <View className="flex-row justify-between mt-10 items-center">
         <Text className="text-xl text-accent">Esqueci a senha</Text>
-        <TouchableOpacity className="flex-row gap-5 bg-menuColor w-30 h-30 p-5 rounded-3xl">
+        <TouchableOpacity className="flex-row gap-5 bg-menuColor w-30 h-30 p-5 rounded-3xl" onPress={() => router.replace("/")}>
           <Text className="text-textPrimary text-center text-xl">Login</Text>
           <MaterialCommunityIcons name="login" size={24} color="#8EB69B" />
         </TouchableOpacity>

@@ -1,0 +1,123 @@
+import AntDesign from '@expo/vector-icons/AntDesign';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
+export default function SettingsScreen() {
+  const [selectedTheme, setSelectedTheme] = useState("light")
+  const [selectedTypeMoney, setSelectedTypeMoney] = useState("real")
+  const [selectedDateFormat, setSelectedDateFormat] = useState("nominal")
+
+  const themes = [
+    { key: 'light', label: 'claro', icon: <FontAwesome5 name="sun" size={20} color="#fff" /> },
+    { key: 'dark', label: 'escuro', icon: <AntDesign name="moon" size={20} color="#fff" /> },
+    { key: 'green', label: 'verde', icon: <FontAwesome5 name="leaf" size={20} color="#fff" /> },
+  ]
+  const moneyType = [
+    { key: "real", label: "R$"},
+    { key: "dolar", label: "$"},
+    { key: "euro", label: "€"}
+  ]
+  const dateFormat = [
+    { key: "nominal", label: "Jan/2025"},
+    { key: "numerico", label: "01/2025"}
+  ]
+  const router = useRouter()
+
+  return (
+    <View className="flex-1 bg-background p-5 gap-5">
+      <Text className="text-2xl text-textPrimary font-bold">Personalização:</Text>
+
+      <View className="bg-card p-3 rounded-xl gap-5">
+        
+        <View className='flex-row items-center gap-5'>
+          <Text className="text-textPrimary text-xl">Tema:</Text>
+          <View className="flex-row gap-2">
+            {themes.map((theme) => (
+              <TouchableOpacity
+                key={theme.key}
+                onPress={() => setSelectedTheme(theme.key)}
+                className={`flex-row items-center px-2 py-2 rounded-lg gap-1 ${
+                  selectedTheme === theme.key ? 'bg-accent' : 'bg-transparent'
+                }`}
+              >
+                <Text className="text-textPrimary">{theme.label}</Text>
+                {theme.icon}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        <View className='flex-row items-center gap-5'>
+          <Text className="text-textPrimary text-xl">Moeda:</Text>
+          <View className="flex-row gap-2">
+            {moneyType.map((money) => (
+              <TouchableOpacity
+                key={money.key}
+                onPress={() => setSelectedTypeMoney(money.key)}
+                className={`flex-row items-center px-5 py-2 rounded-lg gap-1 ${
+                  selectedTypeMoney === money.key ? 'bg-accent' : 'bg-transparent'
+                }`}
+              >
+                <Text className="text-textPrimary">{money.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+        </View>
+
+        <View className='flex-row items-center gap-2'>
+          <Text className="text-textPrimary text-xl">Formato de Data:</Text>
+          <View className="flex-row gap-2">
+            {dateFormat.map((format) => (
+              <TouchableOpacity
+                key={format.key}
+                onPress={() => setSelectedDateFormat(format.key)}
+                className={`flex-row items-center px-5 py-2 rounded-lg gap-1 ${
+                  selectedDateFormat === format.key ? 'bg-accent' : 'bg-transparent'
+                }`}
+              >
+                <Text className="text-textPrimary">{format.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+        </View>
+
+        <Text className="text-textPrimary text-xl">Organização do dashboard:</Text>
+        <Text style={styles.item}>Gastos por categoria</Text>
+        <Text style={styles.item}>Evolução Mensal</Text>
+        <Text style={styles.item}>Últimas movimentações</Text>
+      </View>
+
+      <TouchableOpacity className="flex-row items-center gap-2 bg-[#912F40] p-5 rounded-xl" onPress={() => router.navigate("/signin")}>
+        <Text className="text-textPrimary text-xl">Sair</Text>
+        <MaterialIcons name="exit-to-app" size={30} color="#FE4A49" />
+      </TouchableOpacity>
+
+      <TouchableOpacity className="absolute bottom-5 right-5 bg-accent rounded-xl p-5">
+        <Text className="text-textPrimary">Confirmar Alterações</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  item: {
+    color: '#fff',
+    marginTop: 5,
+  },
+  confirm: {
+    backgroundColor: '#6ee7b7',
+    padding: 15,
+    borderRadius: 10,
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+  },
+  confirmText: {
+    color: '#000',
+  },
+});
