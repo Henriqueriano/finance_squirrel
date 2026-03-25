@@ -1,9 +1,11 @@
+import { Ionicons } from "@expo/vector-icons";
 import AntDesign from '@expo/vector-icons/AntDesign';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
+import DraggableFlatList from "react-native-draggable-flatlist";
 
 export default function SettingsScreen() {
   const [selectedTheme, setSelectedTheme] = useState("light")
@@ -24,13 +26,18 @@ export default function SettingsScreen() {
     { key: "nominal", label: "Jan/2025"},
     { key: "numerico", label: "01/2025"}
   ]
+  const [dashboardItems, setDashboardItems] = useState([
+    { id: "category", label: "Gastos por categoria" },
+    { id: "monthly", label: "Evolução Mensal" },
+    { id: "recent", label: "Últimas movimentações" },
+  ])
   const router = useRouter()
 
   return (
     <View className="flex-1 bg-background p-5 gap-5">
       <Text className="text-2xl text-textPrimary font-bold">Personalização:</Text>
 
-      <View className="bg-card p-3 rounded-xl gap-5">
+      <View className="bg-card p-3 rounded-xl gap-4">
         
         <View className='flex-row items-center gap-5'>
           <Text className="text-textPrimary text-xl">Tema:</Text>
@@ -86,10 +93,37 @@ export default function SettingsScreen() {
 
         </View>
 
-        <Text className="text-textPrimary text-xl">Organização do dashboard:</Text>
-        <Text style={styles.item}>Gastos por categoria</Text>
-        <Text style={styles.item}>Evolução Mensal</Text>
-        <Text style={styles.item}>Últimas movimentações</Text>
+        <View className="bg-cardrounded-xl gap-2">
+          <Text className="text-textPrimary text-xl">
+            Organização do dashboard:
+          </Text>
+
+          <DraggableFlatList
+            data={dashboardItems}
+            keyExtractor={(item) => item.id}
+            onDragEnd={({ data }) => setDashboardItems(data)}
+            activationDistance={10}
+            contentContainerStyle={{ paddingTop: 5 }}
+            renderItem={({ item, drag, isActive }) => (
+              <TouchableOpacity
+                onPressIn={drag}
+                activeOpacity={0.8}
+                className={`flex-row items-center justify-between p-4 rounded-xl mt-2 ${
+                  isActive ? "bg-accent" : "bg-background"
+                }`}
+              >
+                <View className="flex-row items-center gap-3">
+                  <Ionicons name="menu" size={20} color="#aaa" />
+                  <Text className="text-textPrimary text-base">
+                    {item.label}
+                  </Text>
+                </View>
+
+                <Ionicons name="reorder-three-outline" size={22} color="#aaa" />
+              </TouchableOpacity>
+            )}
+          />
+        </View>
       </View>
 
       <TouchableOpacity className="flex-row items-center gap-2 bg-[#912F40] p-5 rounded-xl" onPress={() => router.navigate("/signin")}>
@@ -97,27 +131,12 @@ export default function SettingsScreen() {
         <MaterialIcons name="exit-to-app" size={30} color="#FE4A49" />
       </TouchableOpacity>
 
-      <TouchableOpacity className="absolute bottom-5 right-5 bg-accent rounded-xl p-5">
+      <TouchableOpacity
+        className="flex-row items-center absolute bottom-5 right-5 bg-accent rounded-xl p-4 gap-2"
+      >
         <Text className="text-textPrimary">Confirmar Alterações</Text>
+        <FontAwesome5 name="save" size={24} color="#235347" />
       </TouchableOpacity>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  item: {
-    color: '#fff',
-    marginTop: 5,
-  },
-  confirm: {
-    backgroundColor: '#6ee7b7',
-    padding: 15,
-    borderRadius: 10,
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-  },
-  confirmText: {
-    color: '#000',
-  },
-});
