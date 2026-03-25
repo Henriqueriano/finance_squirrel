@@ -132,7 +132,7 @@ export default function SettingsScreen() {
       </TouchableOpacity>
 
       <TouchableOpacity
-        className="flex-row items-center absolute bottom-5 right-5 bg-accent rounded-xl p-4 gap-2"
+        className="flex-row items-center absolute bottom-5 right-5 bg-accent rounded-xl p-5 gap-2"
       >
         <Text className="text-textPrimary">Confirmar Alterações</Text>
         <FontAwesome5 name="save" size={24} color="#235347" />
