@@ -41,7 +41,7 @@ class UserModel(Base):
     __tablename__ = 'users_table'
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid = True), primary_key = True, default = uuid.uuid7) 
     user_name: Mapped[str] = mapped_column(String(100), nullable = False)
-    
+    is_active: Mapped[bool] = mapped_column(default=True, nullable=False)    
     expenses: Mapped[List['ExpenseModel']] = relationship(back_populates = 'users')
     categoryes: Mapped['ExpenseCategoryModel'] = relationship(back_populates = 'users')
 
