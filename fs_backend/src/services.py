@@ -85,9 +85,9 @@ async def delete_expense_service(expense_id: int) -> bool:
 
 # region categoryes 
 async def categories_register_service(payload: ExpensesCategoryDto) -> bool:
-    data: ExpenseCategoryModel = [ExpenseCategoryModel(
-        category_name = e.category_name,
-        user_id = e.user_id) for e in payload]
+    data: ExpenseCategoryModel = ExpenseCategoryModel(
+        category_name = payload.category_name,
+        user_id = payload.user_id) 
     engine = create_engine(DATABASE_URL)
     session = sessionmaker(bind=engine)
     try:
@@ -99,12 +99,13 @@ async def categories_register_service(payload: ExpensesCategoryDto) -> bool:
         print('ERROR: ', e)
         return False
 
-async def update_category_service(category_id: str,payload: ExpensesCategoryDto) -> str:
+async def update_category_service(category_id: str, payload: ExpensesCategoryDto) -> str:
     data: ExpenseCategoryModel = ExpenseCategoryModel(
         category_name = payload.category_name,
         user_id = payload.user_id)
-    statement = update(ExpenseCategoryModel).values(data)
-        .where(ExpenseCategoryModel.category_id == category_id)
+    statement = update(ExpenseCategoryModel).values(
+        category_name = payload.category_name).where(
+        ExpenseCategoryModel.category_id == category_id)
     engine = create_engine(DATABASE_URL)
     session = sessionmaker(bind=engine)
     try: 
@@ -116,7 +117,7 @@ async def update_category_service(category_id: str,payload: ExpensesCategoryDto)
        print('ERROR: ', e)
        return False
 
-async def delete_category(category_id: str) -> bool:
+async def delete_category_service(category_id: int) -> bool:
     statement = delete(ExpenseCategoryModel).where(ExpenseCategoryModel.category_id == category_id)
     engine = create_engine(DATABASE_URL)
     session = sessionmaker(bind=engine)
@@ -129,15 +130,15 @@ async def delete_category(category_id: str) -> bool:
        print('ERROR: ', e)
        return False
 
-async def get_all_categories(user_id: str) -> list[ExpenseCategoryModel]:
+async def get_all_categories_service(user_id: str) -> list[ExpensesCategoryReturnDto]:
     engine = create_engine(DATABASE_URL)
     session = sessionmaker(bind=engine)
     try:
         statement = select(ExpenseCategoryModel).where(ExpenseCategoryModel.user_id == user_id)
         with session() as session:
             db_data = session.scalars(statement).all()
-            data: list[ExpenseCategoryModel] = [ExpenseCategoryModel(
-                user_id = d.user_id,
+            data: list[ExpensesCategoryReturnDto] = [ExpensesCategoryReturnDto(
+                category_id = d.category_id,
                 category_name = d.category_name) for d in db_data]
             return data
     except e:

@@ -1,7 +1,6 @@
 import uuid
 from typing import List
 from decimal import Decimal
-from __future__ import annotations
 from pydantic import BaseModel, Field
 from datetime import datetime, timezone
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -17,7 +16,7 @@ class ExpenseCategoryModel(Base):
     category_name: Mapped[str] = mapped_column(String(50), nullable = False)
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('users_table.user_id'))
     
-    expenses: Mapped['ExpenseModel'] = relationship(back_populates = 'categoryes')
+    expenses: Mapped[list['ExpenseModel']] = relationship(back_populates = 'categoryes')
     users: Mapped['UserModel'] = relationship(back_populates = 'categoryes')
 
 class ExpenseModel(Base):

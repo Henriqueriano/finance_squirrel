@@ -13,6 +13,10 @@ class ExpensesCategoryDto(BaseModel):
     category_name: str
     user_id: uuid.UUID 
 
+class ExpensesCategoryReturnDto(BaseModel):
+    category_id: int
+    category_name: str
+
 class UserDto(BaseModel):
     user_name: str
 
