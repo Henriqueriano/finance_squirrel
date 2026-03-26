@@ -34,6 +34,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="register-transaction"
+        options={{
+          title: "Registro de Transações",
+          tabBarIcon: ({ color, size }) => (
+            <FontAwesome5 name="cash-register" size={size} color={color} />
+          )
+        }}
+      />
+      <Tabs.Screen
         name="index"
         options={{
           title: "DashBoard",

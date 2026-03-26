@@ -1,11 +1,11 @@
-from __future__ import annotations
 import uuid
 from typing import List
-from datetime import datetime, timezone
 from decimal import Decimal
+from __future__ import annotations
 from pydantic import BaseModel, Field
-from sqlalchemy import DECIMAL, types, Integer, String, DateTime, UUID, ForeignKey
+from datetime import datetime, timezone
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy import DECIMAL, types, Integer, String, DateTime, UUID, ForeignKey
 
 class Base(DeclarativeBase):
     pass
