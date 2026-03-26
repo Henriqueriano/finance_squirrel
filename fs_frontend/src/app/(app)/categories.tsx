@@ -1,6 +1,6 @@
-import Entypo from '@expo/vector-icons/Entypo';
-import React, { useState } from 'react';
-import { FlatList, Modal, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import Entypo from '@expo/vector-icons/Entypo'
+import React, { useState } from 'react'
+import { FlatList, Modal, Text, TextInput, TouchableOpacity, View } from 'react-native'
 
 type Category = {
   id: string;

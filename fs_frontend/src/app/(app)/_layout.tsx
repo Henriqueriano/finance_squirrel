@@ -1,8 +1,10 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { Tabs, useRouter } from 'expo-router';
-import { TouchableOpacity } from 'react-native';
+import FontAwesome from '@expo/vector-icons/FontAwesome'
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5'
+import MaterialIcons from '@expo/vector-icons/MaterialIcons'
+import { Tabs, useRouter } from 'expo-router'
+import { Text, TouchableOpacity } from 'react-native'
+
+
 export default function TabLayout() {
   const router = useRouter()
   return (
@@ -11,9 +13,9 @@ export default function TabLayout() {
       headerStyle: {
         backgroundColor: '#163832', // fundo do header
       },
-      headerTintColor: '#FFFFFF', // cor de ícones e botão back
+      headerTintColor: '#fff', // cor de ícones e botão back
       headerTitleStyle: {
-        color: '#FFFFFF', // cor do título
+        color: '#fff', // cor do título
         fontWeight: 'bold',
       }, 
       // Bottom (barra inferior)
@@ -37,6 +39,11 @@ export default function TabLayout() {
         name="register-transaction"
         options={{
           title: "Registro de Transações",
+          headerRight: () => (
+            <TouchableOpacity className="bg-accent p-2 rounded-lg mr-2">
+              <Text className="text-textPrimary">Salvar Transações</Text>
+            </TouchableOpacity>
+          ),
           tabBarIcon: ({ color, size }) => (
             <FontAwesome5 name="cash-register" size={size} color={color} />
           )
@@ -46,7 +53,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "DashBoard",
-          headerRight: () => (
+          headerRight: ({}) => (
             <TouchableOpacity className="mr-5" onPress={() => router.navigate("/settings")}>
               <FontAwesome name="gear" size={40} color="#8EB69B" />
             </TouchableOpacity>

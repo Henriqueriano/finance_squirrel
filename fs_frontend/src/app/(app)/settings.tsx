@@ -1,11 +1,11 @@
-import { Ionicons } from "@expo/vector-icons";
-import AntDesign from '@expo/vector-icons/AntDesign';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
-import DraggableFlatList from "react-native-draggable-flatlist";
+import { Ionicons } from "@expo/vector-icons"
+import AntDesign from '@expo/vector-icons/AntDesign'
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5'
+import MaterialIcons from '@expo/vector-icons/MaterialIcons'
+import { useRouter } from 'expo-router'
+import { useState } from 'react'
+import { Text, TouchableOpacity, View } from 'react-native'
+import DraggableFlatList from "react-native-draggable-flatlist"
 
 export default function SettingsScreen() {
   const [selectedTheme, setSelectedTheme] = useState("light")

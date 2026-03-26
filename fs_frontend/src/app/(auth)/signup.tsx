@@ -1,15 +1,15 @@
-import { PasswordInput } from '@/src/components/password-input';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from "expo-router";
-import { useState } from "react";
+import { PasswordInput } from '@/src/components/password-input'
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
+import { LinearGradient } from 'expo-linear-gradient'
+import { useRouter } from "expo-router"
+import { useState } from "react"
 import {
   Text,
   TextInput,
   TouchableOpacity,
   View
-} from "react-native";
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+} from "react-native"
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 
 
 export default function SignUp() {

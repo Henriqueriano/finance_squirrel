@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
-import { DateField } from "./date-field";
-import { InputField } from "./input-field";
+import { useState } from "react"
+import { Text, TextInput, TouchableOpacity, View } from "react-native"
+import { DateField } from "./date-field"
+import { InputField } from "./input-field"
 
 interface TransactionListItemProps {
   cont: number
