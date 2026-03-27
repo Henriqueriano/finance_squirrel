@@ -1,19 +1,18 @@
-import Entypo from '@expo/vector-icons/Entypo'
-import React, { useState } from 'react'
-import { FlatList, Modal, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import Entypo from "@expo/vector-icons/Entypo"
+import React, { useState } from "react"
+import { FlatList, Modal, Text, TextInput, TouchableOpacity, View } from "react-native"
 
 type Category = {
-  id: string;
-  label: string;
-  color: string;
-};
-
+  id: string
+  label: string
+  color: string
+}
 
 export default function CategoriesScreen() {
   const [modalVisible, setModalVisible] = useState(false)
   const [categoryName, setCategoryName] = useState("")
   const [selectedColor, setSelectedColor] = useState("#f87171")
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState("")
   const [categories, setCategories] = useState<Category[]>([
     { id: "1", color: "#fb923c", label: "Moradia"},
     { id: "2", color: "#c084fc", label: "Alimentação"},
@@ -35,19 +34,19 @@ export default function CategoriesScreen() {
       id: Date.now().toString(),
       label: categoryName.trim(),
       color: selectedColor,
-    };
+    }
 
-    setCategories((prev) => [...prev, newCategory]);
+    setCategories((prev) => [...prev, newCategory])
 
     // reset
-    setCategoryName("");
-    setSelectedColor("#f87171");
-    setModalVisible(false);
+    setCategoryName("")
+    setSelectedColor("#f87171")
+    setModalVisible(false)
   }
 
   const filteredCategories = categories.filter((item) =>
     item.label.toLowerCase().includes(search.toLowerCase())
-  );
+  )
 
   return (
     <View className="flex-1 bg-background p-5">

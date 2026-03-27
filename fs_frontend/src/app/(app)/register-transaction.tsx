@@ -1,5 +1,5 @@
 import { TransactionListItem } from "@/src/components/transaction-list-item"
-import Entypo from '@expo/vector-icons/Entypo'
+import Entypo from "@expo/vector-icons/Entypo"
 import { useState } from "react"
 import { FlatList, Text, TouchableOpacity, View } from "react-native"
 
