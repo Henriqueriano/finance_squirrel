@@ -1,16 +1,16 @@
 import os
-from dotenv import load_dotenv
-from sqlalchemy import create_engine, select, update, delete
-from sqlalchemy.orm import sessionmaker, Session
 from .dtos import *
 from .models import *
+from dotenv import load_dotenv
+from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy import create_engine, select, update, delete
 
 # environment setup
 load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
 SECRET_KEY = os.getenv('SECRET_KEY')
 
-# expenses region
+# region expenses
 async def expenses_bulk_register_service(payload: list[ExpensesDto]) -> bool: 
     data: list[ExpenseModel] = [ExpenseModel(
         user_id = e.user_id,
@@ -48,7 +48,14 @@ async def get_expenses(user_id: str) -> list[ExpensesDto]:
         return data
 
 async def update_expense_service(expense_id: str, payload: ExpensesDto) -> bool:
-    statement = update(ExpenseModel).values(payload).where(ExpenseModel.expense_id == expense_id)
+    data: ExpenseModel = ExpenseModel(
+        user_id = payload.user_id,
+        expense_value = payload.expense_value,
+        expense_date = payload.expense_date,
+        category_id = payload.category_id,
+        expense_desc = payload.expense_desc
+    ) 
+    statement = update(ExpenseModel).values(data).where(ExpenseModel.expense_id == expense_id)
     engine = create_engine(DATABASE_URL)
     session = sessionmaker(bind=engine)
     try: 
@@ -72,27 +79,75 @@ async def delete_expense_service(expense_id: int) -> bool:
     except Exception as e:
        print('ERROR: ', e)
        return False
+# endregion
 
        
 
-# categoryes region
-async def categoryes_bulk_register_service(payload: list[ExpensesCategoryDto]) -> bool:
-    data: list[ExpenseCategoryModel] = [ExpenseCategoryModel(
-        category_name = e.category_name,
-        user_id = e.user_id) for e in payload]
+# region categoryes 
+async def categories_register_service(payload: ExpensesCategoryDto) -> bool:
+    data: ExpenseCategoryModel = ExpenseCategoryModel(
+        category_name = payload.category_name,
+        user_id = payload.user_id) 
     engine = create_engine(DATABASE_URL)
     session = sessionmaker(bind=engine)
     try:
        with session() as session: 
-            session.add_all(data)
+            session.add(data)
             session.commit()
             return True
     except Exception as e:
         print('ERROR: ', e)
         return False
 
+async def update_category_service(category_id: str, payload: ExpensesCategoryDto) -> str:
+    data: ExpenseCategoryModel = ExpenseCategoryModel(
+        category_name = payload.category_name,
+        user_id = payload.user_id)
+    statement = update(ExpenseCategoryModel).values(
+        category_name = payload.category_name).where(
+        ExpenseCategoryModel.category_id == category_id)
+    engine = create_engine(DATABASE_URL)
+    session = sessionmaker(bind=engine)
+    try: 
+        with session() as session:
+            session.execute(statement)
+            session.commit()
+            return True
+    except Exception as e:
+       print('ERROR: ', e)
+       return False
 
-# user region
+async def delete_category_service(category_id: int) -> bool:
+    statement = delete(ExpenseCategoryModel).where(ExpenseCategoryModel.category_id == category_id)
+    engine = create_engine(DATABASE_URL)
+    session = sessionmaker(bind=engine)
+    try: 
+       with session() as session:
+          session.execute(statement)
+          session.commit()
+          return True
+    except Exception as e:
+       print('ERROR: ', e)
+       return False
+
+async def get_all_categories_service(user_id: str) -> list[ExpensesCategoryReturnDto]:
+    engine = create_engine(DATABASE_URL)
+    session = sessionmaker(bind=engine)
+    try:
+        statement = select(ExpenseCategoryModel).where(ExpenseCategoryModel.user_id == user_id)
+        with session() as session:
+            db_data = session.scalars(statement).all()
+            data: list[ExpensesCategoryReturnDto] = [ExpensesCategoryReturnDto(
+                category_id = d.category_id,
+                category_name = d.category_name) for d in db_data]
+            return data
+    except e:
+        print('Error: ', e)
+        return data
+# endregion
+
+
+# region user 
 async def user_register_service(payload: UserDto) -> bool:
     data: UserModel = UserModel(user_name = payload.user_name)
     engine = create_engine(DATABASE_URL)
@@ -105,4 +160,4 @@ async def user_register_service(payload: UserDto) -> bool:
     except Exception as e:
         print('ERROR: ', e)
         return False
-
+# endregion
