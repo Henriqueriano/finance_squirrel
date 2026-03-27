@@ -27,7 +27,7 @@ export default function FinancialEducationScreen() {
   return (
       <ScrollView  className="flex-1 bg-background p-5">
         {conteudos.map((item) => (
-          <View key={item.id} className="bg-card p-2 rounded-xl mb-4">
+          <View key={item.id} className="bg-card p-2 rounded-xl mb-8">
             <Text className="text-xl font-bold text-textPrimary mb-2">{item.titulo}</Text>
             <Text className="text-textPrimary text-justify">{item.texto}</Text>
           </View>
