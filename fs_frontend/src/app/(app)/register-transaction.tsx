@@ -4,7 +4,6 @@ import { useState } from "react"
 import { FlatList, Text, TouchableOpacity, View } from "react-native"
 
 export default function RegisterTransactionScreen() {
-
   const [data, setData] = useState([
     { id: "1" }
   ])
@@ -27,7 +26,7 @@ export default function RegisterTransactionScreen() {
   }
 
   return (
-    <View className="flex-1 bg-background p-5">
+    <View className="flex-1 bg-background px-5">
 
       <FlatList
         data={data}
@@ -40,14 +39,14 @@ export default function RegisterTransactionScreen() {
             canRemove={index !== 0}
           />
         )}
-        contentContainerStyle={{ gap: 12, paddingBottom: 100 }}
+        contentContainerStyle={{ gap: 12, paddingBottom: 100, paddingTop: 20 }}
       />
 
       <TouchableOpacity
         onPress={addTransaction}
-        className="flex-row items-center absolute bottom-5 right-5 bg-accent rounded-xl p-4 gap-2"
+        className="flex-row items-center bg-accent px-4 py-3 rounded-lg absolute bottom-5 right-5"
       >
-        <Text className="text-textPrimary">Adicionar Transação</Text>
+        <Text className="text-white">Adicionar Transação</Text>
         <Entypo name="plus" size={30} color="#235347" />
       </TouchableOpacity>
 

@@ -9,7 +9,7 @@ type InputFieldProps = {
 export function InputField({ label, leftElement, ...rest }: InputFieldProps) {
   return (
     <View className="flex-row items-center gap-3">
-      <Text className="text-textPrimary w-24">{label}</Text>
+      <Text className="text-white w-24">{label}</Text>
 
       <View className="flex-1 flex-row items-center bg-white rounded-lg px-3">
         
@@ -20,7 +20,7 @@ export function InputField({ label, leftElement, ...rest }: InputFieldProps) {
         )}
 
         <TextInput
-          className="flex-1 py-2"
+          className="flex-1 py-2 text-black"
           {...rest}
         />
       </View>

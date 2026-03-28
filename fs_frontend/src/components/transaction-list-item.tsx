@@ -27,7 +27,7 @@ export function TransactionListItem({
 
       {/* HEADER */}
       <View className="flex-row justify-between items-center">
-        <Text className="text-textPrimary text-2xl font-bold">
+        <Text className="text-white text-2xl font-bold">
           Transação {cont}
         </Text>
 
@@ -38,11 +38,11 @@ export function TransactionListItem({
         )}
       </View>
 
+      {/* FORMULÁRIO */}
       <View className="gap-4 mt-4">
-
         {/* Tipo */}
         <View className="gap-2 flex-row items-center">
-          <Text className="text-textPrimary">Tipo de Transação:</Text>
+          <Text className="text-white">Tipo de Transação:</Text>
 
           <View className="flex-row gap-3">
             {transactions.map((transaction) => (
@@ -53,7 +53,7 @@ export function TransactionListItem({
                   transactionTypeSelected === transaction.key ? 'bg-accent' : 'bg-transparent'
                 }`}
               >
-                <Text className="text-textPrimary">{transaction.label}</Text>
+                <Text className="text-white">{transaction.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -72,13 +72,13 @@ export function TransactionListItem({
 
         {/* Categoria */}
         <View className="flex-row items-center gap-3">
-          <Text className="text-textPrimary w-24">Categoria:</Text>
+          <Text className="text-white w-24">Categoria:</Text>
           <TextInput className="bg-white flex-1 rounded-lg px-3 py-2" />
         </View>
 
         {/* Descrição */}
         <View className="gap-3">
-          <Text className="text-textPrimary">Descrição:</Text>
+          <Text className="text-white">Descrição:</Text>
           <TextInput
             className="bg-white rounded-lg px-3 py-3 h-28"
             multiline
@@ -87,7 +87,6 @@ export function TransactionListItem({
             placeholderTextColor="#999"
           />
         </View>
-
       </View>
     </View>
   )

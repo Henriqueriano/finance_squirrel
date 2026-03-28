@@ -49,12 +49,12 @@ export default function CategoriesScreen() {
   )
 
   return (
-    <View className="flex-1 bg-background p-5">
-      <Text className="text-2xl text-textPrimary font-bold mb-5">Buscar categorias:</Text>
+    <View className="flex-1 bg-background p-5 gap-5">
+      <Text className="text-2xl text-white font-bold">Buscar categorias:</Text>
 
       <TextInput
-        className="bg-white rounded-xl p-5 mb-5"
-        placeholder="Buscar..."
+        className="bg-white rounded-lg p-5"
+        placeholder="Digite a categoria..."
         value={search}
         onChangeText={setSearch}
       />
@@ -69,7 +69,7 @@ export default function CategoriesScreen() {
               className="w-10 h-10 rounded-lg border border-lightBorder"
               style={{ backgroundColor: item.color }}
             />
-            <Text className="text-textPrimary text-xl">
+            <Text className="text-white text-xl">
               {item.label}
             </Text>
           </View>
@@ -77,10 +77,10 @@ export default function CategoriesScreen() {
       />
 
       <TouchableOpacity 
-        className="flex-row items-center gap-10 bg-accent p-4 rounded-xl absolute bottom-5 right-5"
+        className="flex-row items-center bg-accent px-4 py-3 rounded-lg absolute bottom-5 right-5"
         onPress={() => setModalVisible(true)}
       >
-        <Text className="text-textPrimary">Nova Categoria</Text>
+        <Text className="text-white">Nova Categoria</Text>
         <Entypo name="plus" size={30} color="#235347" />
       </TouchableOpacity>
 
@@ -99,7 +99,7 @@ export default function CategoriesScreen() {
             
             <View className="bg-card p-5 rounded-2xl gap-4">
               
-              <Text className="text-textPrimary text-xl font-bold">
+              <Text className="text-white text-xl font-bold">
                 Nova Categoria
               </Text>
 
@@ -117,13 +117,13 @@ export default function CategoriesScreen() {
                   className="w-5 h-5 rounded-full"
                   style={{ backgroundColor: selectedColor }}
                 />
-                <Text className="text-textPrimary">
+                <Text className="text-white">
                   Cor selecionada
                 </Text>
               </View>
 
               {/* Seletor de cores */}
-              <Text className="text-textPrimary">
+              <Text className="text-white">
                 Selecione uma cor:
               </Text>
 
@@ -153,7 +153,7 @@ export default function CategoriesScreen() {
                     setCategoryName("");
                   }}
                 >
-                  <Text className="text-textPrimary">Cancelar</Text>
+                  <Text className="text-white">Cancelar</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -165,7 +165,7 @@ export default function CategoriesScreen() {
                   disabled={!categoryName.trim()}
                   onPress={handleAddCategory}
                 >
-                  <Text className="text-textPrimary">Salvar</Text>
+                  <Text className="text-white">Salvar</Text>
                 </TouchableOpacity>
               </View>
             </View>

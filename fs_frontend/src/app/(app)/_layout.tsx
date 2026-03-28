@@ -57,7 +57,7 @@ export default function TabLayout() {
           headerTitle: "Registro de Transações",
           headerRight: () => (
             <TouchableOpacity className="bg-accent p-2 rounded-lg mr-2">
-              <Text className="text-textPrimary">Salvar Transações</Text>
+              <Text className="text-white">Salvar Transações</Text>
             </TouchableOpacity>
           ),
           tabBarIcon: ({ color, size }) => (

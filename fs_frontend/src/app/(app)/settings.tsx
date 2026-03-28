@@ -35,12 +35,12 @@ export default function SettingsScreen() {
 
   return (
     <View className="flex-1 bg-background p-5 gap-5">
-      <Text className="text-2xl text-textPrimary font-bold">Personalização:</Text>
+      <Text className="text-2xl text-white font-bold">Personalização:</Text>
 
-      <View className="bg-card p-3 rounded-xl gap-4">
+      <View className="bg-card p-3 rounded-lg gap-4">
         
         <View className='flex-row items-center gap-5'>
-          <Text className="text-textPrimary text-xl">Tema:</Text>
+          <Text className="text-white text-xl">Tema:</Text>
           <View className="flex-row gap-2">
             {themes.map((theme) => (
               <TouchableOpacity
@@ -50,7 +50,7 @@ export default function SettingsScreen() {
                   selectedTheme === theme.key ? 'bg-accent' : 'bg-transparent'
                 }`}
               >
-                <Text className="text-textPrimary">{theme.label}</Text>
+                <Text className="text-white">{theme.label}</Text>
                 {theme.icon}
               </TouchableOpacity>
             ))}
@@ -58,7 +58,7 @@ export default function SettingsScreen() {
         </View>
 
         <View className='flex-row items-center gap-5'>
-          <Text className="text-textPrimary text-xl">Moeda:</Text>
+          <Text className="text-white text-xl">Moeda:</Text>
           <View className="flex-row gap-2">
             {moneyType.map((money) => (
               <TouchableOpacity
@@ -68,7 +68,7 @@ export default function SettingsScreen() {
                   selectedTypeMoney === money.key ? 'bg-accent' : 'bg-transparent'
                 }`}
               >
-                <Text className="text-textPrimary">{money.label}</Text>
+                <Text className="text-white">{money.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -76,7 +76,7 @@ export default function SettingsScreen() {
         </View>
 
         <View className='flex-row items-center gap-2'>
-          <Text className="text-textPrimary text-xl">Formato de Data:</Text>
+          <Text className="text-white text-xl">Formato de Data:</Text>
           <View className="flex-row gap-2">
             {dateFormat.map((format) => (
               <TouchableOpacity
@@ -86,7 +86,7 @@ export default function SettingsScreen() {
                   selectedDateFormat === format.key ? 'bg-accent' : 'bg-transparent'
                 }`}
               >
-                <Text className="text-textPrimary">{format.label}</Text>
+                <Text className="text-white">{format.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -94,7 +94,7 @@ export default function SettingsScreen() {
         </View>
 
         <View className="bg-cardrounded-xl gap-2">
-          <Text className="text-textPrimary text-xl">
+          <Text className="text-white text-xl">
             Organização do dashboard:
           </Text>
 
@@ -114,7 +114,7 @@ export default function SettingsScreen() {
               >
                 <View className="flex-row items-center gap-3">
                   <Ionicons name="menu" size={20} color="#aaa" />
-                  <Text className="text-textPrimary text-base">
+                  <Text className="text-white text-base">
                     {item.label}
                   </Text>
                 </View>
@@ -126,15 +126,15 @@ export default function SettingsScreen() {
         </View>
       </View>
 
-      <TouchableOpacity className="flex-row items-center gap-2 bg-[#912F40] p-5 rounded-xl" onPress={() => router.navigate("/signin")}>
-        <Text className="text-textPrimary text-xl">Sair</Text>
+      <TouchableOpacity className="flex-row items-center gap-2 bg-[#912F40] p-4 rounded-lg" onPress={() => router.navigate("/signin")}>
+        <Text className="text-white text-xl">Sair</Text>
         <MaterialIcons name="exit-to-app" size={30} color="#FE4A49" />
       </TouchableOpacity>
 
       <TouchableOpacity
-        className="flex-row items-center absolute bottom-5 right-5 bg-accent rounded-xl p-5 gap-2"
+        className="flex-row items-center bg-accent px-4 py-3 rounded-lg absolute bottom-5 right-5 gap-2"
       >
-        <Text className="text-textPrimary">Confirmar Alterações</Text>
+        <Text className="text-white">Confirmar Alterações</Text>
         <FontAwesome5 name="save" size={24} color="#235347" />
       </TouchableOpacity>
     </View>

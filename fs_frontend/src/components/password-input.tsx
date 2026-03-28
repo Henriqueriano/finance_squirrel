@@ -24,7 +24,7 @@ export function PasswordInput({
         placeholder={placeholder}
         placeholderTextColor="#fff"
         secureTextEntry={!showPassword}
-        className="flex-1 p-5 text-textPrimary text-xl"
+        className="flex-1 p-5 text-white text-xl"
       />
 
       <TouchableOpacity
