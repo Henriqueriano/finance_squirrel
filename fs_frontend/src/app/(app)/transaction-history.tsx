@@ -107,7 +107,7 @@ export default function TransactionHistoryScreen() {
   ])
 
   const TableHeader = () => (
-    <View className="flex-row border-b border-gray-600 pb-1 bg-background">
+    <View className="flex-row gap-2 border-b border-gray-600 py-2 bg-background">
       <Text className="flex-1 text-accent font-bold text-xs">Data</Text>
       <Text className="flex-1 text-accent font-bold text-xs">Categoria</Text>
       <Text className="flex-1 text-accent font-bold text-xs">Descrição</Text>
@@ -116,113 +116,105 @@ export default function TransactionHistoryScreen() {
     </View>
   ) 
   const renderItem = ({ item }: { item: listItem }) => (
-    <View className="flex-row py-1 border-b border-gray-800">
-      <Text className="flex-1 text-textPrimary text-xs">{item.date}</Text>
-      <Text className="flex-1 text-textPrimary text-xs">{item.categorie}</Text>
-      <Text className="flex-1 text-textPrimary text-xs" numberOfLines={1}>
+    <View className="flex-row gap-2 py-1 border-b border-gray-800">
+      <Text className="flex-1 text-white text-xs">{item.date}</Text>
+      <Text className="flex-1 text-white text-xs">{item.categorie}</Text>
+      <Text className="flex-1 text-white text-xs" numberOfLines={1}>
         {item.description}
       </Text>
-      <Text className="flex-1 text-textPrimary text-xs">
+      <Text className="flex-1 text-white text-xs">
         {formatCurrency(item.value)}
       </Text>
-      <Text className="flex-1 text-textPrimary text-xs">{item.type}</Text>
+      <Text className="flex-1 text-white text-xs">{item.type}</Text>
     </View>
   )
 
   return (
-    <View className="flex-1 bg-background p-5 gap-5">
-      <Text className="text-textPrimary font-bold text-2xl">
-        Histórico Financeiro
-      </Text>
+    <View className="flex-1 bg-background p-5 gap-3">
 
       {/* FILTROS */}
-      <View className="bg-card p-2 rounded-xl gap-2">
-        <Text className="text-textPrimary text-xl font-medium">
-          Filtros:
-        </Text>
+      <Text className="text-white text-2xl font-bold">Filtros:</Text>
+      <View className="flex-row gap-2 bg-card p-2 rounded-lg items-center">
+        <TouchableOpacity
+          className="flex-1 bg-accent p-2 rounded-lg justify-center"
+          onPress={() => {
+            setFiltroAtivo("tipo")
+            setModalVisivel(true)
+          }}
+        >
+          {tipoSelecionado ? (
+            <View className="flex-row justify-between items-center">
+              <Text className="text-white">{tipoSelecionado}</Text> 
+              <AntDesign name="caret-down" size={24} color="#235347" />
+            </View>
+          ) : (
+            <View className="flex-row justify-between items-center">
+              <Text className="text-white">Tipo</Text> 
+              <AntDesign name="caret-down" size={24} color="#235347" />
+            </View>
+          )}
+        </TouchableOpacity>
 
-        <View className="flex-row gap-2">
-          <TouchableOpacity
-            className="flex-1 bg-accent p-2 rounded-lg justify-center"
-            onPress={() => {
-              setFiltroAtivo("tipo")
-              setModalVisivel(true)
-            }}
-          >
-            {tipoSelecionado ? (
-              <View className="flex-row justify-between items-center">
-                <Text className="text-textPrimary">{tipoSelecionado}</Text> 
-                <AntDesign name="caret-down" size={24} color="#235347" />
-              </View>
-            ) : (
-              <View className="flex-row justify-between items-center">
-                <Text className="text-textPrimary">Tipo</Text> 
-                <AntDesign name="caret-down" size={24} color="#235347" />
-              </View>
-            )}
-          </TouchableOpacity>
+        <TouchableOpacity
+          className="flex-1 bg-accent p-2 rounded-lg"
+          onPress={() => {
+            setFiltroAtivo("categoria")
+            setModalVisivel(true)
+          }}
+        >
+          {categoriaSelecionada ? (
+            <View className="flex-row justify-between items-center">
+              <Text className="text-white">{categoriaSelecionada}</Text> 
+              <AntDesign name="caret-down" size={24} color="#235347" />
+            </View>
+          ) : (
+            <View className="flex-row justify-between items-center">
+              <Text className="text-white">Categoria</Text> 
+              <AntDesign name="caret-down" size={24} color="#235347" />
+            </View>
+          )}
+        </TouchableOpacity>
 
-          <TouchableOpacity
-            className="flex-1 bg-accent p-2 rounded-lg"
-            onPress={() => {
-              setFiltroAtivo("categoria")
-              setModalVisivel(true)
-            }}
-          >
-            {categoriaSelecionada ? (
-              <View className="flex-row justify-between items-center">
-                <Text className="text-textPrimary">{categoriaSelecionada}</Text> 
-                <AntDesign name="caret-down" size={24} color="#235347" />
-              </View>
-            ) : (
-              <View className="flex-row justify-between items-center">
-                <Text className="text-textPrimary">Categoria</Text> 
-                <AntDesign name="caret-down" size={24} color="#235347" />
-              </View>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            className="flex-1 bg-accent p-2 rounded-lg"
-            onPress={() => {
-              setFiltroAtivo("data")
-              setModalVisivel(true)
-            }}
-          >
-            {dataSelecionada ? (
-              <View className="flex-row justify-between items-center">
-                <Text className="text-textPrimary">{dataSelecionada}</Text> 
-                <AntDesign name="caret-down" size={24} color="#235347" />
-              </View>
-            ) : (
-              <View className="flex-row justify-between items-center">
-                <Text className="text-textPrimary">Data</Text> 
-                <AntDesign name="caret-down" size={24} color="#235347" />
-              </View>
-            )}
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          className="flex-1 bg-accent p-2 rounded-lg"
+          onPress={() => {
+            setFiltroAtivo("data")
+            setModalVisivel(true)
+          }}
+        >
+          {dataSelecionada ? (
+            <View className="flex-row justify-between items-center">
+              <Text className="text-white">{dataSelecionada}</Text> 
+              <AntDesign name="caret-down" size={24} color="#235347" />
+            </View>
+          ) : (
+            <View className="flex-row justify-between items-center">
+              <Text className="text-white">Data</Text> 
+              <AntDesign name="caret-down" size={24} color="#235347" />
+            </View>
+          )}
+        </TouchableOpacity>
       </View>
 
       {/* ORDENAÇÃO */}
-      <View className="flex-row gap-2 bg-card p-2 rounded-xl items-center">
-        <Text className="text-textPrimary text-xl font-medium">Ordenar por:</Text>
+      <Text className="text-white text-2xl font-bold mt-4">Ordenar por:</Text>
+      <View className="flex-row bg-card p-2 rounded-lg justify-between">
         <TouchableOpacity
-          className={`px-3 py-2 rounded-lg ${
+          className={`w-[50%] py-2 rounded-lg justify-center items-center ${
             ordenarPor === "data" ? "bg-accent" : ""
           }`}
           onPress={() => setOrdenarPor("data")}
         >
-          <Text className="text-textPrimary">Data</Text>
+          <Text className="text-white">Data</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          className={`px-3 py-2 rounded-lg ${
+          className={`w-[50%] py-2 rounded-lg justify-center items-center ${
             ordenarPor === "valor" ? "bg-accent" : ""
           }`}
           onPress={() => setOrdenarPor("valor")}
         >
-          <Text className="text-textPrimary">Valor</Text>
+          <Text className="text-white">Valor</Text>
         </TouchableOpacity>
       </View>
 
@@ -242,6 +234,11 @@ export default function TransactionHistoryScreen() {
           onPress={() => setModalVisivel(false)}
         >
           <View className="bg-card w-4/5 rounded-xl p-4 gap-2">
+            <Text className="text-white text-xl mb-2">
+              {(filtroAtivo === "tipo" ? "Tipo" :
+              filtroAtivo === "categoria" ? "Categorias" :
+              "Data")+":"}
+            </Text>
             <TouchableOpacity
               className="p-2 bg-accent rounded-lg"
               onPress={() => {
@@ -251,7 +248,7 @@ export default function TransactionHistoryScreen() {
                 setModalVisivel(false)
               }}
             >
-              <Text className="text-textPrimary">Nenhum</Text>
+              <Text className="text-white">Nenhum</Text>
             </TouchableOpacity>
             {(filtroAtivo === "tipo" ? tipos :
               filtroAtivo === "categoria" ? categorias :
@@ -268,7 +265,7 @@ export default function TransactionHistoryScreen() {
                   setModalVisivel(false)
                 }}
               >
-                <Text className="text-textPrimary">{item}</Text>
+                <Text className="text-white">{item}</Text>
               </TouchableOpacity>
             ))}
 
