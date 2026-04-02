@@ -5,5 +5,8 @@
     "source.sortMembers": "explicit",
   },
   "typescript.preferences.quoteStyle": "double",
-  "typescript.format.semicolons": "remove"
+  "typescript.format.semicolons": "remove",
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
 }
