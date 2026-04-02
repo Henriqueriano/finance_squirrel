@@ -1,14 +1,70 @@
 import os
+import jwt
+import bcrypt
 from .dtos import *
 from .models import *
 from dotenv import load_dotenv
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine, select, update, delete
 
 # environment setup
 load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
 SECRET_KEY = os.getenv('SECRET_KEY')
+
+# region auth
+def aux_create_user(user_name):
+    data: UserModel = UserModel(
+        user_name = user_name,
+        is_active = 1
+    )
+    try:
+        engine = create_engine(DATABASE_URL)
+        Session = sessionmaker(engine)
+        with Session() as session:
+            entry = session.add(data)
+            session.commit()
+            return entry.user_id
+    except:
+        return ''
+
+async def login_service(payload: LoginDto):
+    try:
+        engine = create_engine(DATABASE_URL)
+        Session = sessionmaker(bind = engine)
+        with Session() as session:
+            db = session.select(LoginModel).where(
+                LoginModel.user_login == payload.user_login).first()
+            if len(db) == 0:
+                return ''
+            passw: str = db[3]
+            if bcrypt.checkpw(payload.user_password.encode('utf-8'), passw):
+                return jwt.encode(
+                    {'user_id' : db[1]},
+                    SECRET_KEY, algorithm="HS256")
+    except:
+        return ''
+    
+async def register_service(payload: RegisterDto):
+    passw: str = payload.user_login.user_pass.encode('utf-8')  
+    user_id = aux_create_user(payload.user_name),
+    data: LoginModel = LoginModel(
+        user_id = user_id,
+        user_login = payload.user_login.user_login,
+        user_pass = bcrypt.hashpw(passw,
+                    bcrypt.gensalt(rounds=16))
+    )
+    try:
+        engine = create_engine(DATABASE_URL)
+        Session = sessionmaker(bind = engine)
+        with Session() as session:
+            session.add(data)
+            session.commit()
+            return jwt.encode({'user_id' : user_id}, 
+                              SECRET_KEY, algorithm="HS256")
+    except:
+        return ''
+# endregion
 
 # region expenses
 async def expenses_bulk_register_service(payload: list[ExpensesDto]) -> bool: 
@@ -164,19 +220,13 @@ async def user_register_service(payload: UserDto) -> bool:
 async def get_user_service(user_id: str) -> UserDto | None:
     engine = create_engine(DATABASE_URL)
     session = sessionmaker(bind=engine)
-
     try:
         statement = select(UserModel).where(UserModel.user_id == user_id)
-
         with session() as session:
             user = session.scalar(statement)
-
             if not user:
                 return None
-
-            return UserDto(
-                user_name=user.user_name
-            )
+            return UserDto(user_name=user.user_name)
     except Exception as e:
         print('ERROR:', e)
         return None
@@ -184,19 +234,16 @@ async def get_user_service(user_id: str) -> UserDto | None:
 async def update_user_service(user_id: str, payload: UserDto) -> bool:
     engine = create_engine(DATABASE_URL)
     session = sessionmaker(bind=engine)
-
     try:
         statement = (
             update(UserModel)
             .where(UserModel.user_id == user_id)
             .values(user_name=payload.user_name)
         )
-
         with session() as session:
             session.execute(statement)
             session.commit()
             return True
-
     except Exception as e:
         print('ERROR:', e)
         return False
@@ -204,15 +251,12 @@ async def update_user_service(user_id: str, payload: UserDto) -> bool:
 async def delete_user_service(user_id: str) -> bool:
     engine = create_engine(DATABASE_URL)
     session = sessionmaker(bind=engine)
-
     try:
         statement = delete(UserModel).where(UserModel.user_id == user_id)
-
         with session() as session:
             session.execute(statement)
             session.commit()
             return True
-
     except Exception as e:
         print('ERROR:', e)
         return False        

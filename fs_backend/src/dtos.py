@@ -2,6 +2,14 @@ import uuid
 from datetime import datetime
 from pydantic import BaseModel, Field
 
+class LoginDto(BaseModel):
+    user_login: str
+    user_password: str
+
+class RegisterDto(BaseModel):
+    user_login: LoginDto
+    user_name: str
+
 class ExpensesDto(BaseModel):
     user_id: uuid.UUID 
     expense_value: int

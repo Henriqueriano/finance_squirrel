@@ -1,30 +1,63 @@
 from .dtos import *
 from .services import *
-from fastapi import APIRouter, HTTPException, status
-router = APIRouter()
+from fastapi.responses import JSONResponse
+from fastapi import APIRouter, HTTPException
+
+# region auth
+auth = APIRouter(prefix = "/auth")
+@auth.post('/login/')
+async def login(payload: LoginDto) -> str:
+    if (payload.user_login == '' 
+        or payload.user_password == ''):
+        raise HTTPException(status_code = 404,
+                            detail = "login or pass cannot be empty" )
+    service_response = await login_service(payload)
+    if (service_response == ''):
+        raise HTTPException(
+                status_code=500,
+                detail='server error')
+    headers: object = { 'Authorization' : f'Bearer {service_response}' }
+    return JSONResponse(status_code = 200, headers = headers)
+
+@auth.post('/register/')
+async def register(payload: RegisterDto) -> str:
+    if (payload.user_name == '' 
+        or payload.user_login.user_login == '' 
+        or payload.user_login.user_pass == ''):
+        raise HTTPException(status_code = 404,
+                    detail = "name, login or pass cannot be empty" )
+    service_response = await register_service(payload.user_login.user_login)
+    if (service_response == ''):
+        raise HTTPException(
+            status_code=500,
+            detail='server error')
+    headers: object = { 'Authorization' : f'Bearer {service_response}' }
+    return JSONResponse(status_code = 200, headers = headers)
+# endregion
 
 # region expenses: 
-@router.post('/expenses_bulk_register/')
-async def expenses_bulk_register(payload: list[ExpensesDto]) -> None:
+expenses = APIRouter(prefix = "/expenses")
+@expenses.post('/register/')
+async def bulk_register(payload: list[ExpensesDto]) -> None:
     service_response = await expenses_bulk_register_service(payload)
     if (not service_response):
         raise HTTPException(
                 status_code=500,
                 detail='server error')
 
-@router.get('/get_expenses/', response_model = list[ExpensesDto])
-async def get_expenses(user_id: str) -> list[Expenses]:
-    if user_id == '':
+@expenses.get('/all/', response_model = list[ExpensesDto])
+async def all_expenses(payload: str) -> list[ExpensesDto]:
+    if payload == '':
         raise HTTPException(
                 status_code=400,
                 detail='user_id cannot be None')
-    service_response = await get_expenses_service(payload)
+    service_response = await get_expenses(payload)
     if (len(service_response) == 0):
         raise HTTPException(
                 status_code=500,
                 detail='nothing on the base')
 
-@router.patch('/update_expense/')
+@expenses.patch('/update/')
 async def update_expense(expense_id: int, payload: ExpensesDto) -> None:
     if expense_id == '':
         raise HTTPException(
@@ -36,7 +69,7 @@ async def update_expense(expense_id: int, payload: ExpensesDto) -> None:
                 status_code=500,
                 detail='server error')
 
-@router.delete('/delete_expense/')
+@expenses.delete('/delete/')
 async def delete_expense(expense_id: int) -> None:
     if expense_id is None:
         raise HTTPException(
@@ -50,7 +83,8 @@ async def delete_expense(expense_id: int) -> None:
 # end region
 
 # region categories:
-@router.delete('/delete_category/')
+categories = APIRouter(prefix = "/categories")
+@categories.delete('/delete/')
 async def delete_category(payload: int) -> None:
     service_response = await delete_category_service(payload)
     if (not service_response):
@@ -58,8 +92,7 @@ async def delete_category(payload: int) -> None:
                 status_code=500,
                 detail='server error')
 
-
-@router.post('/categories_register/')
+@categories.post('/register/')
 async def categories_register(payload: ExpensesCategoryDto) -> None:
     service_response = await categories_register_service(payload)
     if (not service_response):
@@ -67,7 +100,7 @@ async def categories_register(payload: ExpensesCategoryDto) -> None:
                 status_code=500,
                 detail='server error')
 
-@router.patch('/update_category/', response_model = None)
+@categories.patch('/update/', response_model = None)
 async def update_category(category_id: str, payload: ExpensesCategoryDto) -> None:
     service_response = await update_category_service(category_id, payload)
     if (not service_response):
@@ -75,13 +108,13 @@ async def update_category(category_id: str, payload: ExpensesCategoryDto) -> Non
                 status_code=500,
                 detail='server error')
 
-@router.get('/get_all_categories/', response_model = list[ExpensesCategoryReturnDto])
-async def get_all_categories(user_id: str) -> list[ExpensesCategoryReturnDto]:
-    if user_id == '':
+@categories.get('/all/', response_model = list[ExpensesCategoryReturnDto])
+async def get_all_categories(payload: str) -> list[ExpensesCategoryReturnDto]:
+    if payload == '':
         raise HTTPException(
                 status_code=400,
                 detail='user_id cannot be None')
-    service_response = await get_all_categories_service(user_id)
+    service_response = await get_all_categories_service(payload)
     if (len(service_response) == 0):
         raise HTTPException(
                 status_code=500,
@@ -90,7 +123,8 @@ async def get_all_categories(user_id: str) -> list[ExpensesCategoryReturnDto]:
 # endregion
 
 # region user:
-@router.post('/register_user/')
+users = APIRouter(prefix = "/users")
+@users.post('/register/')
 async def register_user(payload: UserDto) -> None:
     service_response = await user_register_service(payload)
     if (not service_response):
@@ -98,38 +132,27 @@ async def register_user(payload: UserDto) -> None:
                 status_code=500,
                 detail='server error')
     
-@router.get('/get_user/', response_model=UserDto)
+@users.get('/get/', response_model = UserDto)
 async def get_user(user_id: str):
     if not user_id:
         raise HTTPException(status_code=400, detail='user_id is required')
-
     user = await get_user_service(user_id)
-
     if not user:
         raise HTTPException(status_code=404, detail='user not found')
-
     return user
 
-
-@router.patch('/update_user/')
-async def update_user(user_id: str, payload: UserDto):
-    if not user_id or not payload:
-        raise HTTPException(status_code=400, detail='invalid data')
-
+@users.patch('/update/')
+async def update_user(payload: UserDto):
     success = await update_user_service(user_id, payload)
-
     if not success:
         raise HTTPException(status_code=500, detail='server error')
 
-
-@router.delete('/delete_user/')
-async def delete_user(user_id: str):
-    if not user_id:
+@users.delete('/delete/')
+async def delete_user(payload: str):
+    if not payload:
         raise HTTPException(status_code=400, detail='user_id required')
-
-    success = await delete_user_service(user_id)
-
+    success = await delete_user_service(payload)
     if not success:
         raise HTTPException(status_code=500, detail='server error')
 # endregion
-   
+

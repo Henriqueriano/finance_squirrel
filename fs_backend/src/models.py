@@ -1,10 +1,8 @@
 import uuid
 from typing import List
-from decimal import Decimal
-from pydantic import BaseModel, Field
 from datetime import datetime, timezone
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import DECIMAL, types, Integer, String, DateTime, UUID, ForeignKey
+from sqlalchemy import DECIMAL, Integer, String, DateTime, UUID, ForeignKey
 
 class Base(DeclarativeBase):
     pass
@@ -38,9 +36,21 @@ class ExpenseModel(Base):
 
 class UserModel(Base):
     __tablename__ = 'users_table'
+
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid = True), primary_key = True, default = uuid.uuid7) 
     user_name: Mapped[str] = mapped_column(String(100), nullable = False)
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)    
+    
     expenses: Mapped[List['ExpenseModel']] = relationship(back_populates = 'users')
     categoryes: Mapped['ExpenseCategoryModel'] = relationship(back_populates = 'users')
+    login: Mapped['LoginModel'] = relationship(back_populates = 'users')
 
+class LoginModel(Base):
+    __tablename__ = 'login_table'
+
+    login_id: Mapped[int] = mapped_column(Integer, primary_key = True)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('users_table.user_id'))
+    user_login: Mapped[str] = mapped_column(String(100), nullable = False)
+    user_pass: Mapped[str] = mapped_column(String(25), nullable = False)
+
+    users: Mapped['UserModel'] = relationship(back_populates = 'login')
