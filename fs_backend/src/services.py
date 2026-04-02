@@ -1,8 +1,10 @@
 import os
 import jwt
 import bcrypt
+import datetime
 from .dtos import *
 from .models import *
+from datetime import timedelta
 from dotenv import load_dotenv
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine, select, update, delete
@@ -12,8 +14,8 @@ load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
 SECRET_KEY = os.getenv('SECRET_KEY')
 
-# region auth
-def aux_create_user(user_name):
+# region aux methods
+def aux_create_user(user_name) -> str:
     data: UserModel = UserModel(
         user_name = user_name,
         is_active = 1
@@ -22,13 +24,22 @@ def aux_create_user(user_name):
         engine = create_engine(DATABASE_URL)
         Session = sessionmaker(engine)
         with Session() as session:
-            entry = session.add(data)
+            session.add(data)
+            session.flush()
             session.commit()
-            return entry.user_id
+            return data.user_id
     except:
         return ''
+    
+def aux_create_jwt(payload: str) -> str:
+    print(payload)
+    expiration_time = datetime.now(timezone.utc) + timedelta(minutes = 30)
+    data: object = { 'data': payload, 'expires_at': expiration_time.strftime("%Y-%m-%d %H:%M:%S")}
+    return jwt.encode( data, SECRET_KEY, algorithm="HS256")
+# endregion
 
-async def login_service(payload: LoginDto):
+# region auth
+async def login_service(payload: LoginDto) -> str:
     try:
         engine = create_engine(DATABASE_URL)
         Session = sessionmaker(bind = engine)
@@ -39,18 +50,17 @@ async def login_service(payload: LoginDto):
                 return ''
             passw: str = db[3]
             if bcrypt.checkpw(payload.user_password.encode('utf-8'), passw):
-                return jwt.encode(
-                    {'user_id' : db[1]},
-                    SECRET_KEY, algorithm="HS256")
+                return aux_create_jwt(db[3])
     except:
         return ''
     
-async def register_service(payload: RegisterDto):
-    passw: str = payload.user_login.user_pass.encode('utf-8')  
-    user_id = aux_create_user(payload.user_name),
+async def register_service(payload: RegisterDto) -> str:
+    passw: str = payload.user_pass.encode('utf-8')  
+    user_id = aux_create_user(payload.user_name)
+
     data: LoginModel = LoginModel(
         user_id = user_id,
-        user_login = payload.user_login.user_login,
+        user_login = payload.user_login,
         user_pass = bcrypt.hashpw(passw,
                     bcrypt.gensalt(rounds=16))
     )
@@ -60,9 +70,9 @@ async def register_service(payload: RegisterDto):
         with Session() as session:
             session.add(data)
             session.commit()
-            return jwt.encode({'user_id' : user_id}, 
-                              SECRET_KEY, algorithm="HS256")
-    except:
+            return aux_create_jwt(str(user_id))
+    except Exception as e:
+        print(e)
         return ''
 # endregion
 
@@ -89,7 +99,7 @@ async def get_expenses(user_id: str) -> list[ExpensesDto]:
     engine = create_engine(DATABASE_URL)
     session = sessionmaker(bind=engine)
     try:
-        statement = select(ExpensesModel).where(Expenses.user_id == user_id)
+        statement = select(ExpenseModel).where(ExpenseModel.user_id == user_id)
         with session() as session:
             db_data = session.scalars(statement).all()
             data: list[ExpensesDto] = [ExpensesDto(

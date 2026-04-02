@@ -2,6 +2,7 @@
 
 # arquivos teste Daniel H
 dumb.*
+*.log
 
 # dependencies
 node_modules/

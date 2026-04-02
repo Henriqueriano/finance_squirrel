@@ -51,6 +51,6 @@ class LoginModel(Base):
     login_id: Mapped[int] = mapped_column(Integer, primary_key = True)
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('users_table.user_id'))
     user_login: Mapped[str] = mapped_column(String(100), nullable = False)
-    user_pass: Mapped[str] = mapped_column(String(25), nullable = False)
+    user_pass: Mapped[str] = mapped_column(String(255), nullable = False)
 
     users: Mapped['UserModel'] = relationship(back_populates = 'login')

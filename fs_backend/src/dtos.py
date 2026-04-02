@@ -7,7 +7,8 @@ class LoginDto(BaseModel):
     user_password: str
 
 class RegisterDto(BaseModel):
-    user_login: LoginDto
+    user_login: str
+    user_pass: str
     user_name: str
 
 class ExpensesDto(BaseModel):
@@ -27,5 +28,3 @@ class ExpensesCategoryReturnDto(BaseModel):
 
 class UserDto(BaseModel):
     user_name: str
-
-

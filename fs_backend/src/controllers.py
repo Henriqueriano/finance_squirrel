@@ -1,14 +1,25 @@
+import jwt
 from .dtos import *
 from .services import *
 from fastapi.responses import JSONResponse
 from fastapi import APIRouter, HTTPException
+
+# region aux methods
+def aux_verify_jwt(my_jwt: str) -> bool:
+    valid: bool = False # zero trust
+    payload: str = jwt.decode(my_jwt, SECRET_KEY, algorithms=["HS256"])
+    if (payload.data == '' 
+        or (payload.expires_at <= datetime.now(datetime.timezone.utc))):
+        return valid
+    return True
+# endregion
 
 # region auth
 auth = APIRouter(prefix = "/auth")
 @auth.post('/login/')
 async def login(payload: LoginDto) -> str:
     if (payload.user_login == '' 
-        or payload.user_password == ''):
+        or payload.user_pass == ''):
         raise HTTPException(status_code = 404,
                             detail = "login or pass cannot be empty" )
     service_response = await login_service(payload)
@@ -17,22 +28,22 @@ async def login(payload: LoginDto) -> str:
                 status_code=500,
                 detail='server error')
     headers: object = { 'Authorization' : f'Bearer {service_response}' }
-    return JSONResponse(status_code = 200, headers = headers)
+    return JSONResponse(status_code = 200, headers = headers, content = 'logged')
 
 @auth.post('/register/')
 async def register(payload: RegisterDto) -> str:
     if (payload.user_name == '' 
-        or payload.user_login.user_login == '' 
-        or payload.user_login.user_pass == ''):
+        or payload.user_login == '' 
+        or payload.user_pass == ''):
         raise HTTPException(status_code = 404,
                     detail = "name, login or pass cannot be empty" )
-    service_response = await register_service(payload.user_login.user_login)
+    service_response = await register_service(payload)
     if (service_response == ''):
         raise HTTPException(
             status_code=500,
             detail='server error')
     headers: object = { 'Authorization' : f'Bearer {service_response}' }
-    return JSONResponse(status_code = 200, headers = headers)
+    return JSONResponse(status_code = 200, headers = headers, content = 'registered')
 # endregion
 
 # region expenses: 
@@ -133,7 +144,7 @@ async def register_user(payload: UserDto) -> None:
                 detail='server error')
     
 @users.get('/get/', response_model = UserDto)
-async def get_user(user_id: str):
+async def get_user(user_id: str) -> str:
     if not user_id:
         raise HTTPException(status_code=400, detail='user_id is required')
     user = await get_user_service(user_id)
@@ -142,13 +153,13 @@ async def get_user(user_id: str):
     return user
 
 @users.patch('/update/')
-async def update_user(payload: UserDto):
-    success = await update_user_service(user_id, payload)
+async def update_user(payload: UserDto) -> None:
+    success = await update_user_service(payload)
     if not success:
         raise HTTPException(status_code=500, detail='server error')
 
 @users.delete('/delete/')
-async def delete_user(payload: str):
+async def delete_user(payload: str) -> None:
     if not payload:
         raise HTTPException(status_code=400, detail='user_id required')
     success = await delete_user_service(payload)
