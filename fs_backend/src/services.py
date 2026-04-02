@@ -160,4 +160,60 @@ async def user_register_service(payload: UserDto) -> bool:
     except Exception as e:
         print('ERROR: ', e)
         return False
+
+async def get_user_service(user_id: str) -> UserDto | None:
+    engine = create_engine(DATABASE_URL)
+    session = sessionmaker(bind=engine)
+
+    try:
+        statement = select(UserModel).where(UserModel.user_id == user_id)
+
+        with session() as session:
+            user = session.scalar(statement)
+
+            if not user:
+                return None
+
+            return UserDto(
+                user_name=user.user_name
+            )
+    except Exception as e:
+        print('ERROR:', e)
+        return None
+
+async def update_user_service(user_id: str, payload: UserDto) -> bool:
+    engine = create_engine(DATABASE_URL)
+    session = sessionmaker(bind=engine)
+
+    try:
+        statement = (
+            update(UserModel)
+            .where(UserModel.user_id == user_id)
+            .values(user_name=payload.user_name)
+        )
+
+        with session() as session:
+            session.execute(statement)
+            session.commit()
+            return True
+
+    except Exception as e:
+        print('ERROR:', e)
+        return False
+
+async def delete_user_service(user_id: str) -> bool:
+    engine = create_engine(DATABASE_URL)
+    session = sessionmaker(bind=engine)
+
+    try:
+        statement = delete(UserModel).where(UserModel.user_id == user_id)
+
+        with session() as session:
+            session.execute(statement)
+            session.commit()
+            return True
+
+    except Exception as e:
+        print('ERROR:', e)
+        return False        
 # endregion

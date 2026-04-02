@@ -97,5 +97,39 @@ async def register_user(payload: UserDto) -> None:
         raise HTTPException(
                 status_code=500,
                 detail='server error')
+    
+@router.get('/get_user/', response_model=UserDto)
+async def get_user(user_id: str):
+    if not user_id:
+        raise HTTPException(status_code=400, detail='user_id is required')
+
+    user = await get_user_service(user_id)
+
+    if not user:
+        raise HTTPException(status_code=404, detail='user not found')
+
+    return user
+
+
+@router.patch('/update_user/')
+async def update_user(user_id: str, payload: UserDto):
+    if not user_id or not payload:
+        raise HTTPException(status_code=400, detail='invalid data')
+
+    success = await update_user_service(user_id, payload)
+
+    if not success:
+        raise HTTPException(status_code=500, detail='server error')
+
+
+@router.delete('/delete_user/')
+async def delete_user(user_id: str):
+    if not user_id:
+        raise HTTPException(status_code=400, detail='user_id required')
+
+    success = await delete_user_service(user_id)
+
+    if not success:
+        raise HTTPException(status_code=500, detail='server error')
 # endregion
    
