@@ -19,7 +19,7 @@ auth = APIRouter(prefix = "/auth")
 @auth.post('/login/')
 async def login(payload: LoginDto) -> str:
     if (payload.user_login == '' 
-        or payload.user_pass == ''):
+        or payload.user_password == ''):
         raise HTTPException(status_code = 404,
                             detail = "login or pass cannot be empty" )
     service_response = await login_service(payload)
@@ -34,7 +34,7 @@ async def login(payload: LoginDto) -> str:
 async def register(payload: RegisterDto) -> str:
     if (payload.user_name == '' 
         or payload.user_login == '' 
-        or payload.user_pass == ''):
+        or payload.user_password == ''):
         raise HTTPException(status_code = 404,
                     detail = "name, login or pass cannot be empty" )
     service_response = await register_service(payload)

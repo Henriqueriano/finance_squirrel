@@ -32,7 +32,6 @@ def aux_create_user(user_name) -> str:
         return ''
     
 def aux_create_jwt(payload: str) -> str:
-    print(payload)
     expiration_time = datetime.now(timezone.utc) + timedelta(minutes = 30)
     data: object = { 'data': payload, 'expires_at': expiration_time.strftime("%Y-%m-%d %H:%M:%S")}
     return jwt.encode( data, SECRET_KEY, algorithm="HS256")
@@ -44,25 +43,26 @@ async def login_service(payload: LoginDto) -> str:
         engine = create_engine(DATABASE_URL)
         Session = sessionmaker(bind = engine)
         with Session() as session:
-            db = session.select(LoginModel).where(
-                LoginModel.user_login == payload.user_login).first()
-            if len(db) == 0:
+            db = session.query(LoginModel).where(
+            LoginModel.user_login == payload.user_login).first()
+            if db.user_id == '':
                 return ''
-            passw: str = db[3]
+            passw: str = db.user_password.encode('utf-8')
             if bcrypt.checkpw(payload.user_password.encode('utf-8'), passw):
-                return aux_create_jwt(db[3])
-    except:
+                return aux_create_jwt(str(db.user_id))
+    except Exception as e:
+        print(e)
         return ''
     
 async def register_service(payload: RegisterDto) -> str:
-    passw: str = payload.user_pass.encode('utf-8')  
+    passw: str = payload.user_password.encode('utf-8')  
     user_id = aux_create_user(payload.user_name)
-
+    decoded_bpass =  bcrypt.hashpw(passw , bcrypt.gensalt(rounds=16)
+                    ).decode('utf-8') # https://stackoverflow.com/questions/34548846/flask-bcrypt-valueerror-invalid-salt
     data: LoginModel = LoginModel(
         user_id = user_id,
         user_login = payload.user_login,
-        user_pass = bcrypt.hashpw(passw,
-                    bcrypt.gensalt(rounds=16))
+        user_password = decoded_bpass
     )
     try:
         engine = create_engine(DATABASE_URL)
@@ -71,8 +71,7 @@ async def register_service(payload: RegisterDto) -> str:
             session.add(data)
             session.commit()
             return aux_create_jwt(str(user_id))
-    except Exception as e:
-        print(e)
+    except:
         return ''
 # endregion
 

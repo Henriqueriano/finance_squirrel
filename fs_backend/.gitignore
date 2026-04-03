@@ -2,7 +2,6 @@
 
 # arquivos teste Daniel H
 dumb.*
-*.log
 
 # dependencies
 node_modules/
@@ -56,4 +55,4 @@ __pycache__/*
 *.pyc
 
 # log files
-*.log
+**/*.log
