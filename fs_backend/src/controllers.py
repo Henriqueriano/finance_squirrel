@@ -4,16 +4,6 @@ from .services import *
 from fastapi.responses import JSONResponse
 from fastapi import APIRouter, HTTPException
 
-# region aux methods
-def aux_verify_jwt(my_jwt: str) -> bool:
-    valid: bool = False # zero trust
-    payload: str = jwt.decode(my_jwt, SECRET_KEY, algorithms=["HS256"])
-    if (payload.data == '' 
-        or (payload.expires_at <= datetime.now(datetime.timezone.utc))):
-        return valid
-    return True
-# endregion
-
 # region auth
 auth = APIRouter(prefix = "/auth")
 @auth.post('/login/')
