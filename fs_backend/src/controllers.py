@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException
 
 # region aux methods
 def aux_verify_jwt(my_jwt: str) -> bool:
+    print(my_jwt)
     valid: bool = False # zero trust
     payload: str = jwt.decode(my_jwt, SECRET_KEY, algorithms=["HS256"])
     if (payload.data == '' 
