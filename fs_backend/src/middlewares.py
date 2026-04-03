@@ -10,6 +10,7 @@ from fastapi import Request, HTTPException
 # environment setup
 load_dotenv()
 SECRET_KEY = os.getenv('SECRET_KEY')
+ALLOWED_ROUTES = os.getenv('ALLOWED_ROUTES').split(',')
 
 # region aux
 def aux_verify_jwt(my_jwt: str) -> bool:
@@ -39,6 +40,10 @@ async def process_timer(request: Request, call_next):
 # region auth middleware
 async def is_authenticated(request: Request, call_next):
     response = await call_next(request)
+    if ('authorization' not in response.headers
+        and request.scope['path'] in ALLOWED_ROUTES): 
+        return response # first game
+    
     jwt_token = response.headers.get("authorization").replace("Bearer", "").strip()
     if not aux_verify_jwt(jwt_token):
         raise HTTPException(
