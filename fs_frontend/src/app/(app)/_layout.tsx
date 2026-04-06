@@ -86,7 +86,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: `DashBoard - ${user?.name}`,
+          title: "DashBoard",
+          headerTitle: `DashBoard - ${user?.name}`,
           headerRight: ({}) => (
             <TouchableOpacity
               className="mr-5"
