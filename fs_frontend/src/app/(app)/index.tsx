@@ -1,4 +1,9 @@
 import TransactionTable from "@/src/components/transaction-table"
+import {
+  DashboardData,
+  LineGraphData,
+  PieGraphData,
+} from "@/src/types/dashboard/types"
 import { Transaction } from "@/src/types/transaction/types"
 import { Link } from "expo-router"
 import {
@@ -7,7 +12,7 @@ import {
   ChevronRight,
   Landmark,
 } from "lucide-react-native"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   FlatList,
   Modal,
@@ -18,46 +23,41 @@ import {
 } from "react-native"
 import { LineChart, PieChart } from "react-native-gifted-charts"
 
-const pieData = [
+const pieData: PieGraphData[] = [
   { value: 54, color: "#177AD5", text: "abacate" },
   { value: 40, color: "#79D2DE", text: "banana" },
   { value: 20, color: "#ED6665", text: "uva" },
   { value: 200, color: "#0ac009", text: "melancia" },
 ]
-const total = pieData.reduce((acc, item) => acc + item.value, 0)
-const relativeDataPercent = pieData.map((item) => ({
-  ...item,
-  value: (item.value / total) * 100,
-  text: ((item.value / total) * 100).toFixed(2) + "%",
-}))
 
-const lineData1 = [
-  { value: 1200, label: "Jan" },
-  { value: 900, label: "Fev" },
-  { value: 1600, label: "Mar" },
-  { value: 2000, label: "Abr" },
-  { value: 1000, label: "Mai" },
-  { value: 1500, label: "Jun" },
-  { value: 1700, label: "Jul" },
-  { value: 1750, label: "Ago" },
-  { value: 1700, label: "Set" },
-  { value: 1200, label: "Out" },
-  { value: 1900, label: "Nov" },
-  { value: 2100, label: "Dez" },
+const lineData1: LineGraphData[] = [
+  { value: 1200, label: "jan" },
+  { value: 900, label: "fev" },
+  { value: 1600, label: "mar" },
+  { value: 2000, label: "abr" },
+  { value: 1000, label: "mai" },
+  { value: 1500, label: "jun" },
+  { value: 1700, label: "jul" },
+  { value: 1750, label: "ago" },
+  { value: 1700, label: "set" },
+  { value: 1200, label: "out" },
+  { value: 1900, label: "nov" },
+  { value: 2100, label: "dez" },
 ]
-const lineData2 = [
-  { value: 800, label: "Jan" },
-  { value: 1100, label: "Fev" },
-  { value: 1300, label: "Mar" },
-  { value: 950, label: "Abr" },
-  { value: 1400, label: "Mai" },
-  { value: 1200, label: "Jun" },
-  { value: 1600, label: "Jul" },
-  { value: 1800, label: "Ago" },
-  { value: 1500, label: "Set" },
-  { value: 1700, label: "Out" },
-  { value: 2000, label: "Nov" },
-  { value: 2300, label: "Dez" },
+
+const lineData2: LineGraphData[] = [
+  { value: 800, label: "jan" },
+  { value: 1100, label: "fev" },
+  { value: 1300, label: "mar" },
+  { value: 950, label: "abr" },
+  { value: 1400, label: "mai" },
+  { value: 1200, label: "jun" },
+  { value: 1600, label: "jul" },
+  { value: 1800, label: "ago" },
+  { value: 1500, label: "set" },
+  { value: 1700, label: "out" },
+  { value: 2000, label: "nov" },
+  { value: 2300, label: "dez" },
 ]
 
 const data: Transaction[] = [
@@ -103,8 +103,52 @@ const data: Transaction[] = [
   },
 ]
 
+const mockDashboardData: DashboardData = {
+  balance: 3000,
+  totalIncome: 2000,
+  totalExpense: 2000,
+  pieData,
+  lineData1,
+  lineData2,
+  transactions: data,
+}
+
 export default function Index() {
+  const [dashboardData, setDashboardData] =
+    useState<DashboardData>(mockDashboardData)
+  const [loading, setLoading] = useState(false)
   const [modalVisible, setModalVisible] = useState(false)
+
+  async function fetchDashboardData() {
+    try {
+      setLoading(true)
+
+      // 🔴 FUTURO: substituir por fetch real
+      // const response = await api.get("/dashboard")
+      // setDashboardData(response.data)
+
+      // 🟢 TEMPORÁRIO (simulando backend)
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+
+      setDashboardData(mockDashboardData)
+    } catch (error) {
+      console.error("Erro ao buscar dados do dashboard", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchDashboardData()
+  }, [])
+
+  const total = dashboardData.pieData.reduce((acc, item) => acc + item.value, 0)
+
+  const relativeDataPercent = dashboardData.pieData.map((item) => ({
+    ...item,
+    value: (item.value / total) * 100,
+    text: ((item.value / total) * 100).toFixed(2) + "%",
+  }))
 
   return (
     <>
@@ -117,7 +161,9 @@ export default function Index() {
               {/* Saldo */}
               <View>
                 <Text className="font-bold text-sm text-white">Saldo</Text>
-                <Text className="text-2xl text-white">R$3000,00</Text>
+                <Text className="text-2xl text-white">
+                  R${dashboardData.balance.toFixed(2)}
+                </Text>
                 <Link href="/transaction-history">
                   <View className="flex-row items-center">
                     <Text className="text-accent">Ver histórico</Text>
@@ -133,7 +179,9 @@ export default function Index() {
                 <BanknoteArrowUp size={30} color={"#8EB69B"} />
                 <View>
                   <Text className="text-white font-bold">Total Receitas</Text>
-                  <Text className="text-white">R$2000,00</Text>
+                  <Text className="text-white">
+                    R${dashboardData.totalIncome.toFixed(2)}
+                  </Text>
                 </View>
               </View>
 
@@ -141,7 +189,9 @@ export default function Index() {
                 <BanknoteArrowDown size={30} color={"#DB5461"} />
                 <View>
                   <Text className="text-white font-bold">Total Despesas</Text>
-                  <Text className="text-white">R$2000,00</Text>
+                  <Text className="text-white">
+                    R${dashboardData.totalExpense.toFixed(2)}
+                  </Text>
                 </View>
               </View>
             </View>
@@ -162,7 +212,7 @@ export default function Index() {
               strokeColor="#333"
             />
             <FlatList
-              data={pieData}
+              data={dashboardData.pieData}
               contentContainerStyle={{ gap: 5 }}
               scrollEnabled={false}
               renderItem={({ item }) => (
@@ -187,8 +237,8 @@ export default function Index() {
           </Text>
           <View className="bg-card rounded-lg p-5">
             <LineChart
-              data={lineData1}
-              data2={lineData2}
+              data={dashboardData.lineData1}
+              data2={dashboardData.lineData2}
               width={250}
               color1="skyblue"
               color2="orange"
@@ -212,9 +262,10 @@ export default function Index() {
           <Text className="text-2xl text-white font-bold mt-5">
             Últimas Movimentações (Mês)
           </Text>
-          <TransactionTable data={data} />
+          <TransactionTable data={dashboardData.transactions} />
         </View>
 
+        {/* Modal para Transação Rápida */}
         <Modal visible={modalVisible} transparent animationType="fade">
           <TouchableOpacity
             className="flex-1 justify-center items-center bg-black/50"

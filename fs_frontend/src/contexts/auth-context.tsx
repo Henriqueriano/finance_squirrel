@@ -1,22 +1,6 @@
 import { createContext, ReactNode, useState } from "react"
 import { api } from "../services/api"
-
-// Tipagem dos dados do usuário autenticado
-type User = {
-  id: string
-  name: string
-  email: string
-}
-
-// Tipagem do contexto
-type AuthContextData = {
-  user: User | null
-  isAuthenticated: boolean
-
-  signIn: (email: string, password: string) => Promise<void>
-  signUp: (name: string, email: string, password: string) => Promise<void>
-  signOut: () => void
-}
+import { AuthContextData, User } from "../types/authentication/types"
 
 // Criação do contexto
 export const AuthContext = createContext<AuthContextData | undefined>(undefined)
