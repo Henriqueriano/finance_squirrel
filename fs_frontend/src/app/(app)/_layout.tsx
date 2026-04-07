@@ -1,10 +1,14 @@
 import { useAuth } from "@/src/hooks/use-auth"
-import FontAwesome from "@expo/vector-icons/FontAwesome"
-import FontAwesome5 from "@expo/vector-icons/FontAwesome5"
-import FontAwesome6 from "@expo/vector-icons/FontAwesome6"
-import Ionicons from "@expo/vector-icons/Ionicons"
-import MaterialIcons from "@expo/vector-icons/MaterialIcons"
 import { Redirect, Tabs, useRouter } from "expo-router"
+import {
+  BookmarkPlus,
+  ChartNoAxesCombined,
+  ClipboardClock,
+  GraduationCap,
+  House,
+  Layers,
+  Settings,
+} from "lucide-react-native"
 import { Text, TouchableOpacity } from "react-native"
 
 export default function TabLayout() {
@@ -45,7 +49,16 @@ export default function TabLayout() {
           title: "Histórico",
           headerTitle: "Histórico Financeiro",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="calendar-clear-sharp" size={size} color={color} />
+            <ClipboardClock size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="financial-insights"
+        options={{
+          title: "Análise",
+          tabBarIcon: ({ color, size }) => (
+            <ChartNoAxesCombined size={size} color={color} />
           ),
         }}
       />
@@ -53,9 +66,7 @@ export default function TabLayout() {
         name="categories"
         options={{
           title: "Categorias",
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="category" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <Layers size={size} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -69,7 +80,7 @@ export default function TabLayout() {
             </TouchableOpacity>
           ),
           tabBarIcon: ({ color, size }) => (
-            <FontAwesome5 name="cash-register" size={size} color={color} />
+            <BookmarkPlus size={size} color={color} />
           ),
         }}
       />
@@ -79,7 +90,7 @@ export default function TabLayout() {
           title: "Educação",
           headerTitle: "Educação Financeira",
           tabBarIcon: ({ color, size }) => (
-            <FontAwesome6 name="book" size={size} color={color} />
+            <GraduationCap size={size} color={color} />
           ),
         }}
       />
@@ -93,12 +104,10 @@ export default function TabLayout() {
               className="mr-5"
               onPress={() => router.navigate("/settings")}
             >
-              <FontAwesome name="gear" size={40} color="#8EB69B" />
+              <Settings size={40} color="#8EB69B" />
             </TouchableOpacity>
           ),
-          tabBarIcon: ({ color, size }) => (
-            <FontAwesome5 name="home" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <House size={size} color={color} />,
         }}
       />
       <Tabs.Screen
