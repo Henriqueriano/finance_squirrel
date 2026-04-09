@@ -14,7 +14,15 @@ class RegisterDto(BaseModel):
 class ExpensesDto(BaseModel):
     expense_value: int
     expense_date: datetime
-    expense_type: str
+    expense_type: bool
+    category_id: int
+    expense_desc: str
+
+class ExpensesReturnDto(BaseModel):
+    expense_id: int
+    expense_value: int
+    expense_date: datetime
+    expense_type: bool
     category_id: int
     expense_desc: str
 

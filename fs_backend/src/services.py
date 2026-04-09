@@ -90,11 +90,12 @@ async def register_service(payload: RegisterDto) -> str:
 # endregion
 
 # region expenses
-async def expenses_bulk_register_service(payload: list[ExpensesDto]) -> bool: 
+async def expenses_bulk_register_service(payload: list[ExpensesDto], x_request_id) -> bool: 
     data: list[ExpenseModel] = [ExpenseModel(
-        user_id = e.user_id,
+        user_id = x_request_id,
         expense_value = e.expense_value,
         expense_date = e.expense_date,
+        expense_type = e.expense_type,
         category_id = e.category_id,
         expense_desc = e.expense_desc) for e in payload]
     engine = create_engine(DATABASE_URL)
@@ -104,37 +105,35 @@ async def expenses_bulk_register_service(payload: list[ExpensesDto]) -> bool:
             session.add_all(data)
             session.commit()
             return True
-    except Exception as e:
-        print('ERROR: ', e)
+    except:
         return False
 
-async def get_expenses(user_id: str) -> list[ExpensesDto]:
+async def get_expenses(user_id: str) -> list[ExpensesReturnDto]:
     engine = create_engine(DATABASE_URL)
     session = sessionmaker(bind=engine)
     try:
         statement = select(ExpenseModel).where(ExpenseModel.user_id == user_id)
         with session() as session:
             db_data = session.scalars(statement).all()
-            data: list[ExpensesDto] = [ExpensesDto(
-                user_id = d.user_id,
+            data: list[ExpensesReturnDto] = [ExpensesReturnDto(
+                expense_id = d.expense_id,
                 expense_value = d.expense_value,
                 expense_date = d.expense_date,
+                expense_type = d.expense_type,
                 category_id = d.category_id,
                 expense_desc = d.expense_desc) for d in db_data]
             return data
-    except e:
-        print('Error: ', e)
-        return data
+    except:
+        return []
 
-async def update_expense_service(expense_id: str, payload: ExpensesDto) -> bool:
-    data: ExpenseModel = ExpenseModel(
-        user_id = payload.user_id,
+async def update_expense_service(expense_id: str, x_request_id: str, payload: ExpensesDto) -> bool:
+    statement = update(ExpenseModel).values(
         expense_value = payload.expense_value,
         expense_date = payload.expense_date,
+        expense_type = payload.expense_type,
         category_id = payload.category_id,
-        expense_desc = payload.expense_desc
-    ) 
-    statement = update(ExpenseModel).values(data).where(ExpenseModel.expense_id == expense_id)
+        expense_desc = payload.expense_desc).where(ExpenseModel.expense_id == expense_id 
+                                                        and ExpenseModel.user_id == x_request_id)
     engine = create_engine(DATABASE_URL)
     session = sessionmaker(bind=engine)
     try: 
@@ -142,12 +141,12 @@ async def update_expense_service(expense_id: str, payload: ExpensesDto) -> bool:
             session.execute(statement)
             session.commit()
             return True
-    except Exception as e:
-       print('ERROR: ', e)
+    except:
        return False
 
-async def delete_expense_service(expense_id: int) -> bool:
-    statement = delete(ExpenseModel).where(ExpenseModel.expense_id == expense_id)
+async def delete_expense_service(expense_id: int, x_request_id: str) -> bool:
+    statement = delete(ExpenseModel).where(ExpenseModel.expense_id == expense_id 
+                                           and ExpenseModel.user_id == x_request_id)
     engine = create_engine(DATABASE_URL)
     session = sessionmaker(bind=engine)
     try: 
@@ -155,8 +154,7 @@ async def delete_expense_service(expense_id: int) -> bool:
           session.execute(statement)
           session.commit()
           return True
-    except Exception as e:
-       print('ERROR: ', e)
+    except:
        return False
 # endregion
 
@@ -173,8 +171,7 @@ async def categories_register_service(payload: ExpensesCategoryDto, user_id: str
             session.add(data)
             session.commit()
             return True
-    except Exception as e:
-        print('ERROR: ', e)
+    except:
         return False
 
 async def update_category_service(category_id: str, x_request_id: str, payload: ExpensesCategoryDto) -> str:
@@ -193,8 +190,7 @@ async def update_category_service(category_id: str, x_request_id: str, payload: 
             session.execute(statement)
             session.commit()
             return True
-    except Exception as e:
-       print('ERROR: ', e)
+    except:
        return False
 
 async def delete_category_service(category_id: int, x_request_id: str) -> bool:
@@ -207,8 +203,7 @@ async def delete_category_service(category_id: int, x_request_id: str) -> bool:
           session.execute(statement)
           session.commit()
           return True
-    except Exception as e:
-       print('ERROR: ', e)
+    except:
        return False
 
 async def get_all_categories_service(user_id: str) -> list[ExpensesCategoryReturnDto]:
@@ -238,8 +233,7 @@ async def user_register_service(payload: UserDto) -> bool:
             session.add(data)
             session.commit()
             return True
-    except Exception as e:
-        print('ERROR: ', e)
+    except:
         return False
 
 async def get_user_service(user_id: str) -> UserDto | None:
@@ -252,8 +246,7 @@ async def get_user_service(user_id: str) -> UserDto | None:
             if not user:
                 return None
             return UserDto(user_name=user.user_name)
-    except Exception as e:
-        print('ERROR:', e)
+    except:
         return None
 
 async def update_user_service(user_id: str, payload: UserDto) -> bool:
@@ -282,8 +275,7 @@ async def delete_user_service(user_id: str) -> bool:
             session.execute(statement)
             session.commit()
             return True
-    except Exception as e:
-        print('ERROR:', e)
+    except:
         return False        
 # endregion
 

@@ -2,7 +2,7 @@ import uuid
 from typing import List
 from datetime import datetime, timezone
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import DECIMAL, Integer, String, DateTime, UUID, ForeignKey
+from sqlalchemy import DECIMAL, Integer, String, DateTime, UUID, ForeignKey, Boolean
 
 class Base(DeclarativeBase):
     pass
@@ -28,9 +28,9 @@ class ExpenseModel(Base):
                                                  nullable = False,
                                                  default= lambda: datetime.now(timezone.utc)) 
     expense_date: Mapped[datetime] = mapped_column(DateTime(timezone = True), nullable = True, default=None) 
+    expense_type: Mapped[bool] = mapped_column(Boolean, nullable = False)
     category_id: Mapped[int] = mapped_column(ForeignKey('expenses_categories_table.category_id'))
     expense_desc: Mapped[str] = mapped_column(String(300), nullable = True, default=None)
-    transaction_type: Mapped[bool] = mapped_column(default= False, nullable = True)
 
     users: Mapped['UserModel'] = relationship(back_populates = 'expenses')
     categories: Mapped['ExpenseCategoryModel'] = relationship(back_populates = 'expenses')

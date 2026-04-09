@@ -42,44 +42,45 @@ async def register(payload: RegisterDto) -> str:
 # region expenses: 
 expenses = APIRouter(prefix = "/expenses")
 @expenses.post('/register/')
-async def bulk_register(payload: list[ExpensesDto]) -> None:
-    service_response = await expenses_bulk_register_service(payload)
+async def bulk_register(payload: list[ExpensesDto], x_request_id : str = Header(None)) -> None:
+    service_response = await expenses_bulk_register_service(payload, x_request_id)
     if (not service_response):
         raise HTTPException(
                 status_code=500,
                 detail='server error')
 
-@expenses.get('/all/', response_model = list[ExpensesDto])
-async def all_expenses(payload : str = Header('X-request-id')) -> list[ExpensesDto]:
-    if payload == '':
+@expenses.get('/all/', response_model = list[ExpensesReturnDto])
+async def all_expenses(x_request_id = Header(None)) -> list[ExpensesReturnDto]:
+    if x_request_id == '':
         raise HTTPException(
                 status_code=400,
                 detail='user_id cannot be None')
-    service_response = await get_expenses(payload)
+    service_response = await get_expenses(x_request_id)
     if (len(service_response) == 0):
         raise HTTPException(
                 status_code=500,
                 detail='nothing on the base')
+    return service_response
 
 @expenses.patch('/update/')
-async def update_expense(expense_id: int, payload: ExpensesDto) -> None:
+async def update_expense(expense_id: int, payload: ExpensesDto, x_request_id : str = Header(None)) -> None:
     if expense_id == '':
         raise HTTPException(
                 status_code=400,
                 detail='expense_id cannot be None')
-    service_response = await update_expense_service(expense_id, payload)
+    service_response = await update_expense_service(expense_id, x_request_id, payload)
     if (not service_response):
         raise HTTPException(
                 status_code=500,
                 detail='server error')
 
 @expenses.delete('/delete/')
-async def delete_expense(expense_id: int) -> None:
+async def delete_expense(expense_id: int, x_request_id = Header(None)) -> None:
     if expense_id is None:
         raise HTTPException(
                 status_code=400,
                 detail='expense_id cannot be None')
-    service_response = await delete_expense_service(expense_id)
+    service_response = await delete_expense_service(expense_id, x_request_id)
     if (not service_response):
         raise HTTPException(
                 status_code=500,
@@ -89,7 +90,7 @@ async def delete_expense(expense_id: int) -> None:
 # region categories:
 categories = APIRouter(prefix = "/categories")
 @categories.delete('/delete/')
-async def delete_category(category_id: int, x_request_id = Header(None)) -> None:
+async def delete_category(category_id : int, x_request_id : str = Header(None)) -> None:
     if category_id == '' and x_request_id == '':
         raise HTTPException(
                 status_code=404,
@@ -101,7 +102,7 @@ async def delete_category(category_id: int, x_request_id = Header(None)) -> None
                 detail='server error')
 
 @categories.post('/register/')
-async def categories_register(payload: ExpensesCategoryDto, x_request_id = Header(None)) -> None:
+async def categories_register(payload: ExpensesCategoryDto, x_request_id: str = Header(None)) -> None:
     service_response = await categories_register_service(payload, x_request_id)
     if (not service_response):
         raise HTTPException(
@@ -109,7 +110,7 @@ async def categories_register(payload: ExpensesCategoryDto, x_request_id = Heade
                 detail='server error')
 
 @categories.patch('/update/', response_model = None)
-async def update_category(category_id: str, payload: ExpensesCategoryDto, x_request_id = Header(None)) -> None:
+async def update_category(category_id: str, payload: ExpensesCategoryDto, x_request_id: str = Header(None)) -> None:
     service_response = await update_category_service(category_id, x_request_id, payload)
     if (not service_response):
         raise HTTPException(
@@ -117,7 +118,7 @@ async def update_category(category_id: str, payload: ExpensesCategoryDto, x_requ
                 detail='server error')
 
 @categories.get('/all/', response_model = list[ExpensesCategoryReturnDto])
-async def get_all_categories(x_request_id = Header(None)) -> list[ExpensesCategoryReturnDto]:
+async def get_all_categories(x_request_id: str = Header(None)) -> list[ExpensesCategoryReturnDto]:
     if x_request_id == '':
         raise HTTPException(
                 status_code=400,
@@ -167,16 +168,16 @@ async def delete_user(payload: str) -> None:
 # region user settings
 settings = APIRouter(prefix = "/settings")
 @settings.post("/create/")
-async def create_config(payload: UserSettingDto):
-    success = await delete_user_service(payload)
-    if not success:
+async def create_config(x_request_id: UserSettingDto):
+    # success = await delete_user_service(x_request_id)
+    if not True:
         raise HTTPException(status_code=500, detail='server error')
 
 @settings.get('/get/')
-async def get_setting(payload: str = Header('X-request-id')) -> UserSettingDto:
-    service_response = await get_settings_service(payload)
+async def get_setting(x_request_id: str = Header('X-request-id')) -> UserSettingDto:
+    service_response = await get_settings_service(x_request_id)
     if service_response == None:
         raise HTTPException(status_code=500,
                          detail='server error')
-    return payload
+    return service_response
 # endregion
