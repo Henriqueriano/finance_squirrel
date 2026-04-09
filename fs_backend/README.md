@@ -1,5 +1,3 @@
----
-
 # 🐿️ Finance Squirrel
 
 ## ⚙️ Configuração do Backend
