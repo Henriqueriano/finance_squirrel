@@ -38,6 +38,20 @@ def aux_create_jwt(payload: str) -> str:
 # endregion
 
 # region auth
+async def get_user_id_service(user_login: str):
+    try:
+        engine = create_engine(DATABASE_URL)
+        Session = sessionmaker(bind = engine)
+        with Session() as session:
+            db = session.query(LoginModel).where(
+                LoginModel.user_login == user_login).first()
+            if db.user_id != '':
+                return db.user_id
+            return ''
+    except Exception as e:
+        print(e.__cause__)
+        return ''
+
 async def login_service(payload: LoginDto) -> str:
     try:
         engine = create_engine(DATABASE_URL)
@@ -51,7 +65,6 @@ async def login_service(payload: LoginDto) -> str:
             if bcrypt.checkpw(payload.user_password.encode('utf-8'), passw):
                 return aux_create_jwt(str(db.user_id))
     except Exception as e:
-        print(e)
         return ''
     
 async def register_service(payload: RegisterDto) -> str:
@@ -71,7 +84,8 @@ async def register_service(payload: RegisterDto) -> str:
             session.add(data)
             session.commit()
             return aux_create_jwt(str(user_id))
-    except:
+    except Exception as e:
+        print(e)
         return ''
 # endregion
 
@@ -146,13 +160,12 @@ async def delete_expense_service(expense_id: int) -> bool:
        return False
 # endregion
 
-       
-
 # region categoryes 
-async def categories_register_service(payload: ExpensesCategoryDto) -> bool:
+async def categories_register_service(payload: ExpensesCategoryDto, user_id: str) -> bool:
     data: ExpenseCategoryModel = ExpenseCategoryModel(
         category_name = payload.category_name,
-        user_id = payload.user_id) 
+        category_color = payload.category_color,
+        user_id = user_id) 
     engine = create_engine(DATABASE_URL)
     session = sessionmaker(bind=engine)
     try:
@@ -164,13 +177,15 @@ async def categories_register_service(payload: ExpensesCategoryDto) -> bool:
         print('ERROR: ', e)
         return False
 
-async def update_category_service(category_id: str, payload: ExpensesCategoryDto) -> str:
+async def update_category_service(category_id: str, x_request_id: str, payload: ExpensesCategoryDto) -> str:
     data: ExpenseCategoryModel = ExpenseCategoryModel(
         category_name = payload.category_name,
-        user_id = payload.user_id)
+        user_id = x_request_id)
     statement = update(ExpenseCategoryModel).values(
-        category_name = payload.category_name).where(
-        ExpenseCategoryModel.category_id == category_id)
+        category_name = payload.category_name,
+        category_color = payload.category_color).where(
+        ExpenseCategoryModel.category_id == category_id 
+        and ExpenseCategoryModel.user_id == x_request_id)
     engine = create_engine(DATABASE_URL)
     session = sessionmaker(bind=engine)
     try: 
@@ -182,8 +197,9 @@ async def update_category_service(category_id: str, payload: ExpensesCategoryDto
        print('ERROR: ', e)
        return False
 
-async def delete_category_service(category_id: int) -> bool:
-    statement = delete(ExpenseCategoryModel).where(ExpenseCategoryModel.category_id == category_id)
+async def delete_category_service(category_id: int, x_request_id: str) -> bool:
+    statement = delete(ExpenseCategoryModel).where(ExpenseCategoryModel.category_id == category_id 
+                                                   and ExpenseCategoryModel.user_id == x_request_id)
     engine = create_engine(DATABASE_URL)
     session = sessionmaker(bind=engine)
     try: 
@@ -204,10 +220,10 @@ async def get_all_categories_service(user_id: str) -> list[ExpensesCategoryRetur
             db_data = session.scalars(statement).all()
             data: list[ExpensesCategoryReturnDto] = [ExpensesCategoryReturnDto(
                 category_id = d.category_id,
-                category_name = d.category_name) for d in db_data]
+                category_name = d.category_name,
+                category_color = d.category_color) for d in db_data]
             return data
-    except e:
-        print('Error: ', e)
+    except:
         return data
 # endregion
 
@@ -270,3 +286,15 @@ async def delete_user_service(user_id: str) -> bool:
         print('ERROR:', e)
         return False        
 # endregion
+
+# region user settings 
+async def get_settings_service(payload: UserSettingDto, user_id: str) -> UserSettingDto:
+    sttm = select(UserSettingModel).where(UserSettingModel.user_id == user_id)
+    try: 
+        engine = create_engine(DATABASE_URL)
+        Session = sessionmaker(bind = engine)
+        with Session() as session:
+            data = session.execute(sttm)
+            print(data)
+    except:
+        return ''

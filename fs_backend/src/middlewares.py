@@ -13,7 +13,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 ALLOWED_ROUTES = os.getenv('ALLOWED_ROUTES').split(',')
 
 # region aux
-def aux_verify_jwt(my_jwt: str) -> bool:
+def aux_verify_jwt(my_jwt: str, hUser_id: str) -> bool:
     date_format: str = "%Y-%m-%d %H:%M:%S"
     
     # decode and convert values of payload, this takes me a lot (rage screams) (this really got me a lot)
@@ -22,7 +22,9 @@ def aux_verify_jwt(my_jwt: str) -> bool:
     now = datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
     user_id = payload["data"]
     
-    if (user_id != '' and (expires_at >= now)):
+    if (user_id != '' 
+        and (expires_at >= now) 
+        and user_id == hUser_id):
         return True
     
     return False # zero trust
@@ -42,10 +44,11 @@ async def is_authenticated(request: Request, call_next):
     response = await call_next(request)
     if ('authorization' not in response.headers
         and request.scope['path'] in ALLOWED_ROUTES): 
-        return response # first game
+        return response # first entry
     
-    jwt_token = response.headers.get("authorization").replace("Bearer", "").strip()
-    if not aux_verify_jwt(jwt_token):
+    jwt_token: str = response.headers.get("authorization").replace("Bearer", "").strip()
+    hUser_id: str = response.headers.get("X-request-id").strip()
+    if not aux_verify_jwt(jwt_token, hUser_id):
         raise HTTPException(
             status_code=401,
             detail=f"the user is not authenticated"
