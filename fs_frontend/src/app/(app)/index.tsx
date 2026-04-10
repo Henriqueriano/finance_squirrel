@@ -1,3 +1,5 @@
+import { DateField } from "@/src/components/date-field"
+import { InputField } from "@/src/components/input-field"
 import TransactionTable from "@/src/components/transaction-table"
 import { useDashboard } from "@/src/hooks/use-dashboard"
 import {
@@ -12,6 +14,7 @@ import {
   BanknoteArrowUp,
   ChevronRight,
   Landmark,
+  Plus,
 } from "lucide-react-native"
 import { JSX, useEffect, useState } from "react"
 import {
@@ -299,7 +302,19 @@ export default function Index() {
           >
             <TouchableOpacity activeOpacity={1} className="w-[90%]">
               <View className="bg-card p-5 rounded-2xl gap-4">
-                <Text className="text-white text-xl font-bold">Modal</Text>
+                <Text className="text-white text-xl font-bold">
+                  Transação Rápida
+                </Text>
+
+                <InputField
+                  label="Valor:"
+                  placeholder="0,00"
+                  keyboardType="numeric"
+                  leftElement={<Text className="text-gray-500">R$</Text>}
+                />
+
+                {/* Data */}
+                <DateField />
 
                 {/* Botões */}
                 <View className="flex-row items-center justify-end gap-3 mt-3">
@@ -310,6 +325,9 @@ export default function Index() {
                   >
                     <Text className="text-white">Sair</Text>
                   </TouchableOpacity>
+                  <TouchableOpacity className="px-4 py-2 rounded-lg bg-accent">
+                    <Text className="text-white">Salvar</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             </TouchableOpacity>
@@ -318,10 +336,13 @@ export default function Index() {
       </ScrollView>
 
       <TouchableOpacity
-        className="absolute bottom-5 right-5 bg-accent p-5 rounded-lg"
+        className="absolute bottom-5 right-5 bg-accent p-3 rounded-lg"
         onPress={() => setModalVisible(true)}
       >
-        <Text className="text-white">Transação rápida +</Text>
+        <View className="flex-row items-center gap-2">
+          <Text className="text-white">Transação rápida</Text>
+          <Plus size={30} color={"#235347"} />
+        </View>
       </TouchableOpacity>
     </>
   )
