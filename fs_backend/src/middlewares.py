@@ -43,7 +43,7 @@ async def process_timer(request: Request, call_next):
 async def is_authenticated(request: Request, call_next):
     response = await call_next(request)
     if ('authorization' not in response.headers
-        and request.scope['path'] in ALLOWED_ROUTES): 
+         and request.scope['path'] in ALLOWED_ROUTES): 
         return response # first entry
     
     jwt_token: str = response.headers.get("authorization").replace("Bearer", "").strip()
