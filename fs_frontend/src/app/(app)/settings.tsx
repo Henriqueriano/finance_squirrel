@@ -1,4 +1,5 @@
 import { useAuth } from "@/src/hooks/use-auth"
+import { useDashboard } from "@/src/hooks/use-dashboard"
 import { Ionicons } from "@expo/vector-icons"
 import AntDesign from "@expo/vector-icons/AntDesign"
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5"
@@ -13,6 +14,7 @@ export default function SettingsScreen() {
   const [selectedTheme, setSelectedTheme] = useState("light")
   const [selectedTypeMoney, setSelectedTypeMoney] = useState("real")
   const [selectedDateFormat, setSelectedDateFormat] = useState("nominal")
+  const { dashboardItems, setDashboardItems } = useDashboard()
 
   const themes = [
     {
@@ -40,11 +42,7 @@ export default function SettingsScreen() {
     { key: "nominal", label: "Jan/2025" },
     { key: "numerico", label: "01/2025" },
   ]
-  const [dashboardItems, setDashboardItems] = useState([
-    { id: "category", label: "Gastos por categoria" },
-    { id: "monthly", label: "Evolução Mensal" },
-    { id: "recent", label: "Últimas movimentações" },
-  ])
+
   const router = useRouter()
 
   return (

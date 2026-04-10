@@ -1,4 +1,5 @@
 import TransactionTable from "@/src/components/transaction-table"
+import { useDashboard } from "@/src/hooks/use-dashboard"
 import {
   DashboardData,
   LineGraphData,
@@ -12,7 +13,7 @@ import {
   ChevronRight,
   Landmark,
 } from "lucide-react-native"
-import { useEffect, useState } from "react"
+import { JSX, useEffect, useState } from "react"
 import {
   FlatList,
   Modal,
@@ -113,11 +114,92 @@ const mockDashboardData: DashboardData = {
   transactions: data,
 }
 
+type DashboardItemId = "category" | "monthly" | "recent"
+
 export default function Index() {
   const [dashboardData, setDashboardData] =
     useState<DashboardData>(mockDashboardData)
   const [loading, setLoading] = useState(false)
   const [modalVisible, setModalVisible] = useState(false)
+  const { dashboardItems } = useDashboard()
+
+  const dashboardComponents: Record<DashboardItemId, () => JSX.Element> = {
+    category: () => (
+      <>
+        <Text className="text-2xl text-white font-bold mt-5">
+          Gastos por Categoria (Mês)
+        </Text>
+        <View className="flex-row bg-card rounded-lg items-center gap-5 p-5 mt-2">
+          <PieChart
+            radius={100}
+            data={relativeDataPercent}
+            showText
+            textColor="#fff"
+            textSize={14}
+            strokeWidth={2}
+            strokeColor="#333"
+          />
+          <FlatList
+            data={dashboardData.pieData}
+            contentContainerStyle={{ gap: 5 }}
+            scrollEnabled={false}
+            renderItem={({ item }) => (
+              <View className="flex-row gap-2">
+                <View
+                  style={{
+                    backgroundColor: item.color,
+                    width: 20,
+                    height: 20,
+                    borderRadius: 5,
+                  }}
+                ></View>
+                <Text className="text-white">{item.text}</Text>
+              </View>
+            )}
+          />
+        </View>
+      </>
+    ),
+
+    monthly: () => (
+      <>
+        <Text className="text-2xl text-white font-bold mt-5">
+          Evolução Mensal (2026)
+        </Text>
+        <View className="bg-card rounded-lg p-5 mt-2">
+          <LineChart
+            data={dashboardData.lineData1}
+            data2={dashboardData.lineData2}
+            width={250}
+            color1="skyblue"
+            color2="orange"
+            dataPointsHeight={6}
+            dataPointsWidth={6}
+            dataPointsColor1="blue"
+            dataPointsColor2="red"
+            textFontSize={13}
+            maxValue={2500}
+            noOfSections={5}
+            stepValue={500}
+            xAxisColor="#fff"
+            yAxisColor="#fff"
+            xAxisLabelTextStyle={{ color: "#fff", fontSize: 12 }}
+            yAxisTextStyle={{ color: "#fff", fontSize: 10 }}
+            yAxisLabelPrefix="R$"
+          />
+        </View>
+      </>
+    ),
+
+    recent: () => (
+      <>
+        <Text className="text-2xl text-white font-bold mt-5">
+          Últimas Movimentações (Mês)
+        </Text>
+        <TransactionTable data={dashboardData.transactions} />
+      </>
+    ),
+  }
 
   async function fetchDashboardData() {
     try {
@@ -156,12 +238,12 @@ export default function Index() {
         <View className="flex-1 bg-background justify-center p-5 gap-2">
           {/* Saldo e Tot. Receita/Despesa */}
           <View className="flex-1 flex-row justify-between gap-2">
+            {/* Saldo */}
             <View className="flex-1 flex-row items-center justify-around bg-card rounded-lg p-2">
               <Landmark size={40} color={"#DAF1DE"} />
-              {/* Saldo */}
               <View>
                 <Text className="font-bold text-sm text-white">Saldo</Text>
-                <Text className="text-2xl text-white">
+                <Text className="text-2xl text-white mt-2">
                   R${dashboardData.balance.toFixed(2)}
                 </Text>
                 <Link href="/transaction-history">
@@ -178,7 +260,9 @@ export default function Index() {
               <View className="flex-row gap-3">
                 <BanknoteArrowUp size={30} color={"#8EB69B"} />
                 <View>
-                  <Text className="text-white font-bold">Total Receitas</Text>
+                  <Text className="text-white font-bold text-sm">
+                    Total Receitas
+                  </Text>
                   <Text className="text-white">
                     R${dashboardData.totalIncome.toFixed(2)}
                   </Text>
@@ -188,7 +272,9 @@ export default function Index() {
               <View className="flex-row gap-3">
                 <BanknoteArrowDown size={30} color={"#DB5461"} />
                 <View>
-                  <Text className="text-white font-bold">Total Despesas</Text>
+                  <Text className="text-white font-bold text-sm">
+                    Total Despesas
+                  </Text>
                   <Text className="text-white">
                     R${dashboardData.totalExpense.toFixed(2)}
                   </Text>
@@ -197,72 +283,11 @@ export default function Index() {
             </View>
           </View>
 
-          {/* Gastos por categoria (Mês) */}
-          <Text className="text-2xl text-white font-bold mt-5">
-            Gastos por Categoria (Mês)
-          </Text>
-          <View className="flex-row bg-card rounded-lg items-center gap-5 p-5">
-            <PieChart
-              radius={100}
-              data={relativeDataPercent}
-              showText
-              textColor="#fff"
-              textSize={14}
-              strokeWidth={2}
-              strokeColor="#333"
-            />
-            <FlatList
-              data={dashboardData.pieData}
-              contentContainerStyle={{ gap: 5 }}
-              scrollEnabled={false}
-              renderItem={({ item }) => (
-                <View className="flex-row gap-2">
-                  <View
-                    style={{
-                      backgroundColor: item.color,
-                      width: 20,
-                      height: 20,
-                      borderRadius: 5,
-                    }}
-                  ></View>
-                  <Text className="text-white">{item.text}</Text>
-                </View>
-              )}
-            />
-          </View>
-
-          {/* Evolução Mensal */}
-          <Text className="text-2xl text-white font-bold mt-5">
-            Evolução Mensal (2026)
-          </Text>
-          <View className="bg-card rounded-lg p-5">
-            <LineChart
-              data={dashboardData.lineData1}
-              data2={dashboardData.lineData2}
-              width={250}
-              color1="skyblue"
-              color2="orange"
-              dataPointsHeight={6}
-              dataPointsWidth={6}
-              dataPointsColor1="blue"
-              dataPointsColor2="red"
-              textFontSize={13}
-              maxValue={2500}
-              noOfSections={5}
-              stepValue={500}
-              xAxisColor="#fff"
-              yAxisColor="#fff"
-              xAxisLabelTextStyle={{ color: "#fff", fontSize: 12 }}
-              yAxisTextStyle={{ color: "#fff", fontSize: 10 }}
-              yAxisLabelPrefix="R$"
-            />
-          </View>
-
-          {/* Últimas Movimentações */}
-          <Text className="text-2xl text-white font-bold mt-5">
-            Últimas Movimentações (Mês)
-          </Text>
-          <TransactionTable data={dashboardData.transactions} />
+          {dashboardItems.map((item) => {
+            const Component = dashboardComponents[item.id]
+            if (!Component) return null
+            return <View key={item.id}>{Component?.()}</View>
+          })}
         </View>
 
         {/* Modal para Transação Rápida */}
