@@ -18,7 +18,10 @@ async def login(payload: LoginDto) -> str:
                 status_code=500,
                 detail='server error')
     headers: object = { 'Authorization' : f'Bearer {service_response}', 'X-request-id' : str(user_id) }
-    return JSONResponse(status_code = 200, headers = headers, content = 'logged')
+    return JSONResponse(status_code = 200,
+                        headers = headers,
+                        content = {'user_id' : str(user_id),
+                                   'auth' : f'Bearer {service_response}'})
 
 @auth.post('/register/')
 async def register(payload: RegisterDto) -> str:
@@ -29,14 +32,15 @@ async def register(payload: RegisterDto) -> str:
                     detail = "name, login or pass cannot be empty" )
     service_response = await register_service(payload)
     user_id = await get_user_id_service(payload.user_login) # confirmed insertion
-    print(service_response)
-    print(user_id) 
     if (service_response == '' or user_id == ''):
         raise HTTPException(
             status_code=500,
             detail='server error')
     headers: object = { 'Authorization' : f'Bearer {service_response}', 'X-request-id' : str(user_id) }
-    return JSONResponse(status_code = 200, headers = headers, content = 'registered')
+    return JSONResponse(status_code = 200,
+                        headers = headers,
+                        content = {'user_id' : str(user_id),
+                                   'auth' : f'Bearer {service_response}'})
 # endregion
 
 # region expenses: 

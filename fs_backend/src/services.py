@@ -70,7 +70,7 @@ async def login_service(payload: LoginDto) -> str:
 async def register_service(payload: RegisterDto) -> str:
     passw: str = payload.user_password.encode('utf-8')  
     user_id = aux_create_user(payload.user_name)
-    decoded_bpass =  bcrypt.hashpw(passw , bcrypt.gensalt(rounds=16)
+    decoded_bpass =  bcrypt.hashpw(passw , bcrypt.gensalt(rounds=5)
                     ).decode('utf-8') # https://stackoverflow.com/questions/34548846/flask-bcrypt-valueerror-invalid-salt
     data: LoginModel = LoginModel(
         user_id = user_id,

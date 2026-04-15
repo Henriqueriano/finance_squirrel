@@ -1,10 +1,11 @@
 import os
 import jwt
 import time
+from fastapi import Request
 from datetime import timezone
 from datetime import datetime
 from dotenv import load_dotenv
-from fastapi import Request, HTTPException
+from fastapi.responses import JSONResponse
 
 
 # environment setup
@@ -20,8 +21,7 @@ def aux_verify_jwt(my_jwt: str, hUser_id: str) -> bool:
     payload: str = jwt.decode(my_jwt, SECRET_KEY, algorithms=["HS256"])
     expires_at = datetime.strptime(payload["expires_at"], date_format).replace(tzinfo=timezone.utc)
     now = datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
-    user_id = payload["data"]
-    
+    user_id = payload["data"].strip()
     if (user_id != '' 
         and (expires_at >= now) 
         and user_id == hUser_id):
@@ -42,17 +42,23 @@ async def process_timer(request: Request, call_next):
 # region auth middleware
 async def is_authenticated(request: Request, call_next):
     response = await call_next(request)
-    if ('authorization' not in response.headers
-         and request.scope['path'] in ALLOWED_ROUTES): 
+    if (request.scope['path'] in ALLOWED_ROUTES): 
         return response # first entry
-    
+    elif ('authorization' not in response.headers):
+        return JSONResponse(
+                status_code = 403,
+                content = {'not allowed' : 'missing authorization header'})
+    elif (request.scope['path'] not in ALLOWED_ROUTES):
+        return JSONResponse(status_code = 403,
+                            content = {'not allowd' : 'this route needs auth'})
+
     jwt_token: str = response.headers.get("authorization").replace("Bearer", "").strip()
-    hUser_id: str = response.headers.get("X-request-id").strip()
+    hUser_id: str = response.headers.get("x-request-id").strip()
+
     if not aux_verify_jwt(jwt_token, hUser_id):
-        raise HTTPException(
-            status_code=401,
-            detail=f"the user is not authenticated"
-        )
+       return JSONResponse(
+            status_code = 401,
+            content = {'user_id': "the user is not authenticated"})
     return response
 # endregion
 
