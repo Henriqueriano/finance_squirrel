@@ -48,8 +48,7 @@ async def get_user_id_service(user_login: str):
             if db.user_id != '':
                 return db.user_id
             return ''
-    except Exception as e:
-        print(e.__cause__)
+    except:
         return ''
 
 async def login_service(payload: LoginDto) -> str:
@@ -68,8 +67,10 @@ async def login_service(payload: LoginDto) -> str:
         return ''
     
 async def register_service(payload: RegisterDto) -> str:
-    passw: str = payload.user_password.encode('utf-8')  
+    if (not await get_user_id_service(payload.user_login) == ''):
+        return 'exists'     
     user_id = aux_create_user(payload.user_name)
+    passw: str = payload.user_password.encode('utf-8')  
     decoded_bpass =  bcrypt.hashpw(passw , bcrypt.gensalt(rounds=5)
                     ).decode('utf-8') # https://stackoverflow.com/questions/34548846/flask-bcrypt-valueerror-invalid-salt
     data: LoginModel = LoginModel(
@@ -84,9 +85,8 @@ async def register_service(payload: RegisterDto) -> str:
             session.add(data)
             session.commit()
             return aux_create_jwt(str(user_id))
-    except Exception as e:
-        print(e)
-        return ''
+    except:
+        return 'error'
 # endregion
 
 # region expenses

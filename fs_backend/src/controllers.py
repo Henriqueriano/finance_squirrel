@@ -14,9 +14,9 @@ async def login(payload: LoginDto) -> str:
     service_response = await login_service(payload)
     user_id = await get_user_id_service(payload.user_login)
     if (service_response == '' or user_id == ''):
-        raise HTTPException(
+        raise JSONResponse(
                 status_code=500,
-                detail='server error')
+                content = { 'msg': 'server error'})
     headers: object = { 'Authorization' : f'Bearer {service_response}', 'X-request-id' : str(user_id) }
     return JSONResponse(status_code = 200,
                         headers = headers,
@@ -28,14 +28,19 @@ async def register(payload: RegisterDto) -> str:
     if (payload.user_name == '' 
         or payload.user_login == '' 
         or payload.user_password == ''):
-        raise HTTPException(status_code = 404,
-                    detail = "name, login or pass cannot be empty" )
+        raise JSONResponse(status_code = 404,
+                           content = { 'msg': "name, login or pass cannot be empty" })
     service_response = await register_service(payload)
     user_id = await get_user_id_service(payload.user_login) # confirmed insertion
-    if (service_response == '' or user_id == ''):
-        raise HTTPException(
+    if (service_response == 'exists'):
+        return JSONResponse(
             status_code=500,
-            detail='server error')
+            content = { 'msg': 'user login already exists' })
+
+    if (service_response == 'error' or user_id == ''):
+        return JSONResponse(
+            status_code=500,
+            content = {'msg' : 'server error' })
     headers: object = { 'Authorization' : f'Bearer {service_response}', 'X-request-id' : str(user_id) }
     return JSONResponse(status_code = 200,
                         headers = headers,
