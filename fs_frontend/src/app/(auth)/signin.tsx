@@ -20,16 +20,26 @@ export default function SignIn() {
   const { signIn } = useAuth()
   const router = useRouter()
 
-  const login = async () => {
+  const handleSignIn = async () => {
     try {
       setLoading(true)
       setMsgError("")
+
+      if (!email || !password) {
+        throw new Error("Preencha todos os campos")
+      }
+
       await signIn(email, password)
 
       router.replace("/")
-    } catch (error: any) {
-      console.error("Erro no login:", error)
-      setMsgError(error.message || "Erro ao fazer login")
+    } catch (err: any) {
+      console.error("Erro no login:", err)
+
+      if (err instanceof Error) {
+        setMsgError(err.message)
+      } else {
+        setMsgError("Erro ao criar conta")
+      }
     } finally {
       setLoading(false)
     }
@@ -79,7 +89,7 @@ export default function SignIn() {
         <Text className="text-xl text-accent">Esqueci a senha</Text>
         <TouchableOpacity
           className="flex-row gap-5 bg-menuColor w-30 h-30 p-5 rounded-3xl items-center justify-center"
-          onPress={login}
+          onPress={handleSignIn}
           disabled={loading}
         >
           {loading ? (

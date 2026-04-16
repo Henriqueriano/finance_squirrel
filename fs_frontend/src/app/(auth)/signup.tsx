@@ -22,7 +22,6 @@ export default function SignUp() {
       setLoading(true)
       setError("")
 
-      // validações básicas
       if (!name || !email || !password || !confirmPassword) {
         throw new Error("Preencha todos os campos")
       }
@@ -34,9 +33,9 @@ export default function SignUp() {
       await signUp(name.trim(), email.trim(), password)
 
       // redireciona após sucesso
-      router.replace("/signin")
+      router.replace("/")
     } catch (err) {
-      console.error(err)
+      console.error("Erro no registro:", err)
 
       if (err instanceof Error) {
         setError(err.message)

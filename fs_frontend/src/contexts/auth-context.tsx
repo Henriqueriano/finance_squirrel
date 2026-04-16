@@ -1,60 +1,82 @@
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import { AxiosError } from "axios"
 import { createContext, ReactNode, useState } from "react"
 import { api } from "../services/api"
 import { AuthContextData, User } from "../types/authentication/types"
 
-// Criação do contexto
 export const AuthContext = createContext<AuthContextData | undefined>(undefined)
 
-// Tipagem do provider
 type AuthProviderProps = {
   children: ReactNode
 }
 
-// Provider
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null)
 
   const isAuthenticated = !!user
 
-  // Função de login (mock básico)
   async function signIn(email: string, password: string) {
     try {
-      const response = await api.get("/user")
+      const response = await api.post("/auth/login/", {
+        user_login: email,
+        user_password: password,
+      })
       const data = response.data
 
-      const myUser = data.find((user: any) => user.email === email.trim())
+      const userData = {
+        id: data?.id,
+        name: data?.name,
+        email: email,
+      }
+      const userToken = data.auth
+      const cleanToken = userToken.replace(/^Bearer\s+/i, "")
+      await AsyncStorage.setItem("token", cleanToken)
 
-      if (!myUser) {
-        throw new Error("Usuário não existe")
+      setUser(userData)
+    } catch (e: unknown) {
+      if (e instanceof AxiosError) {
+        if (e.response?.status === 501) {
+          throw new Error("Email ou senha inválidos")
+        }
       }
 
-      if (myUser.password !== password) {
-        throw new Error("Email ou senha inválido")
-      }
-
-      setUser(myUser)
-    } catch (e) {
-      console.error(e)
+      console.error("Erro ao fazer login:", e)
       throw e
     }
   }
 
   async function signUp(name: string, email: string, password: string) {
     try {
-      const data = {
+      const bodyData = {
+        user_name: name,
+        user_login: email,
+        user_password: password,
+      }
+      const response = await api.post("/auth/register/", bodyData)
+      const data = response.data
+
+      const userData = {
+        id: data?.id,
         name,
         email,
-        password,
       }
 
-      const response = await api.post("/user", data)
-      console.log(response.data)
-    } catch (e) {
-      console.error(e)
+      const userToken = data.auth
+      const cleanToken = userToken.replace(/^Bearer\s+/i, "")
+      await AsyncStorage.setItem("token", cleanToken)
+
+      setUser(userData)
+    } catch (e: unknown) {
+      if (e instanceof AxiosError) {
+        console.error("Erro da API:", e.response?.data || e.message)
+      } else {
+        console.error("Erro inesperado:", e)
+      }
+
+      throw e
     }
   }
 
-  // Logout
   function signOut() {
     setUser(null)
   }
