@@ -13,6 +13,7 @@ async def login(payload: LoginDto) -> str:
                             detail = "login or pass cannot be empty" )
     service_response = await login_service(payload)
     user_id = await get_user_id_service(payload.user_login)
+    user_name = await get_user_name_service(payload.user_login)
     if (service_response == '' or user_id == ''):
         raise JSONResponse(
                 status_code=500,
@@ -21,7 +22,8 @@ async def login(payload: LoginDto) -> str:
     return JSONResponse(status_code = 200,
                         headers = headers,
                         content = {'user_id' : str(user_id),
-                                   'auth' : f'Bearer {service_response}'})
+                                   'auth' : f'Bearer {service_response}',
+                                   'user_name': user_name})
 
 @auth.post('/register/')
 async def register(payload: RegisterDto) -> str:
@@ -32,6 +34,7 @@ async def register(payload: RegisterDto) -> str:
                            content = { 'msg': "name, login or pass cannot be empty" })
     service_response = await register_service(payload)
     user_id = await get_user_id_service(payload.user_login) # confirmed insertion
+    user_name = await get_user_name_service(payload.user_login)
     if (service_response == 'exists'):
         return JSONResponse(
             status_code=500,
@@ -45,7 +48,8 @@ async def register(payload: RegisterDto) -> str:
     return JSONResponse(status_code = 200,
                         headers = headers,
                         content = {'user_id' : str(user_id),
-                                   'auth' : f'Bearer {service_response}'})
+                                   'auth' : f'Bearer {service_response}',
+                                   'user_name': user_name})
 # endregion
 
 # region expenses: 
@@ -141,37 +145,7 @@ async def get_all_categories(x_request_id: str = Header(None)) -> list[ExpensesC
 # endregion
 
 # region user:
-users = APIRouter(prefix = "/users")
-@users.post('/register/')
-async def register_user(payload: UserDto) -> None:
-    service_response = await user_register_service(payload)
-    if (not service_response):
-        raise HTTPException(
-                status_code=500,
-                detail='server error')
-    
-@users.get('/get/', response_model = UserDto)
-async def get_user(user_id: str) -> str:
-    if not user_id:
-        raise HTTPException(status_code=400, detail='user_id is required')
-    user = await get_user_service(user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail='user not found')
-    return user
-
-@users.patch('/update/')
-async def update_user(payload: UserDto) -> None:
-    success = await update_user_service(payload)
-    if not success:
-        raise HTTPException(status_code=500, detail='server error')
-
-@users.delete('/delete/')
-async def delete_user(payload: str) -> None:
-    if not payload:
-        raise HTTPException(status_code=400, detail='user_id required')
-    success = await delete_user_service(payload)
-    if not success:
-        raise HTTPException(status_code=500, detail='server error')
+    # recreate
 # endregion
 
 # region user settings

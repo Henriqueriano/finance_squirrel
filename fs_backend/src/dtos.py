@@ -35,9 +35,6 @@ class ExpensesCategoryReturnDto(BaseModel):
     category_name: str
     category_color: str
 
-class UserDto(BaseModel):
-    user_name: str
-
 class UserSettingDto(BaseModel):
     theme_config: str
     exchange_config: str

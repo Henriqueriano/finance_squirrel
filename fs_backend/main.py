@@ -26,7 +26,6 @@ app.middleware("http")(middlewares.is_authenticated)
 app.include_router(controllers.auth, tags=['auth'])
 app.include_router(controllers.expenses, tags=['expenses'])
 app.include_router(controllers.categories, tags=['categories'])
-app.include_router(controllers.users, tags=['users'])
 app.include_router(controllers.settings, tags=['user settings'])
 
 

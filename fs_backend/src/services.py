@@ -224,59 +224,22 @@ async def get_all_categories_service(user_id: str) -> list[ExpensesCategoryRetur
 
 
 # region user 
-async def user_register_service(payload: UserDto) -> bool:
-    data: UserModel = UserModel(user_name = payload.user_name)
-    engine = create_engine(DATABASE_URL)
-    session = sessionmaker(bind=engine)
-    try:
-       with session() as session: 
-            session.add(data)
-            session.commit()
-            return True
-    except:
-        return False
-
-async def get_user_service(user_id: str) -> UserDto | None:
-    engine = create_engine(DATABASE_URL)
-    session = sessionmaker(bind=engine)
-    try:
-        statement = select(UserModel).where(UserModel.user_id == user_id)
-        with session() as session:
-            user = session.scalar(statement)
-            if not user:
-                return None
-            return UserDto(user_name=user.user_name)
-    except:
-        return None
-
-async def update_user_service(user_id: str, payload: UserDto) -> bool:
-    engine = create_engine(DATABASE_URL)
-    session = sessionmaker(bind=engine)
-    try:
-        statement = (
-            update(UserModel)
-            .where(UserModel.user_id == user_id)
-            .values(user_name=payload.user_name)
-        )
-        with session() as session:
-            session.execute(statement)
-            session.commit()
-            return True
+async def get_user_name_service(user_login: payload) -> str:
+    query = select(UserModel).join(LoginModel,
+            UserModel.user_id == LoginModel.user_id).where(LoginModel.user_login == user_login)
+    try: 
+        engine = create_engine(DATABASE_URL)
+        Session = sessionmaker(bind = engine)
+        with Session() as session:
+            data = session.scalars(query).one()
+            if data.user_name == '':
+                return ''
+            return data.user_name
     except Exception as e:
-        print('ERROR:', e)
-        return False
+        print(e)
+        return ''
 
-async def delete_user_service(user_id: str) -> bool:
-    engine = create_engine(DATABASE_URL)
-    session = sessionmaker(bind=engine)
-    try:
-        statement = delete(UserModel).where(UserModel.user_id == user_id)
-        with session() as session:
-            session.execute(statement)
-            session.commit()
-            return True
-    except:
-        return False        
+       
 # endregion
 
 # region user settings 
