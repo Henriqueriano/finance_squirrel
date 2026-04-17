@@ -21,7 +21,6 @@ export function DateField() {
 
   return (
     <View className="gap-2">
-      
       <TouchableOpacity onPress={() => setShow(true)}>
         <View pointerEvents="none">
           <InputField

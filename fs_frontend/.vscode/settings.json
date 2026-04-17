@@ -5,5 +5,13 @@
     "source.sortMembers": "explicit",
   },
   "typescript.preferences.quoteStyle": "double",
-  "typescript.format.semicolons": "remove"
+  "typescript.format.semicolons": "remove",
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  // ===> MATERIAL ICON
+  "material-icon-theme.folders.associations": {
+    "imagens": "Images",
+  },
+  "material-icon-theme.folders.color": "#5C80BC",
 }
