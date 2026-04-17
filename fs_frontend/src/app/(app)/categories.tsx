@@ -3,7 +3,7 @@ import { api } from "@/src/services/api"
 import { Category } from "@/src/types/category/types"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { Redirect } from "expo-router"
-import { Plus } from "lucide-react-native"
+import { Pencil, Plus, Trash, X } from "lucide-react-native"
 import React, { useEffect, useState } from "react"
 import {
   FlatList,
@@ -32,6 +32,7 @@ const colorOptions = [
 export default function CategoriesScreen() {
   const { user, isAuthenticated } = useAuth()
   const [modalVisible, setModalVisible] = useState(false)
+  const [selectedCategory, setSelectedCategory] = useState("")
   const [categoryName, setCategoryName] = useState("")
   const [selectedColor, setSelectedColor] = useState("#f87171")
   const [search, setSearch] = useState("")
@@ -59,7 +60,7 @@ export default function CategoriesScreen() {
       })
 
       const created = {
-        id: new Date().toString(),
+        id: Date.now().toString(),
         label: response.data.category_name,
         color: response.data.category_color,
       }
@@ -134,23 +135,66 @@ export default function CategoriesScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ gap: 10 }}
         renderItem={({ item }) => (
-          <View className="flex-row gap-2 items-center">
+          <TouchableOpacity
+            className="flex-row gap-2 items-center"
+            activeOpacity={1}
+            onPress={() => {
+              setSelectedCategory(item.label)
+            }}
+          >
             <View
-              className="w-10 h-10 rounded-lg border border-lightBorder"
+              className="w-10 h-10 rounded-full border border-lightBorder items-center justify-center"
               style={{ backgroundColor: item.color }}
-            />
+            >
+              {selectedCategory === item.label ? (
+                <View className="h-4 w-4 bg-white rounded-xl" />
+              ) : (
+                <View />
+              )}
+            </View>
             <Text className="text-white text-xl">{item.label}</Text>
-          </View>
+          </TouchableOpacity>
         )}
       />
 
-      <TouchableOpacity
-        className="flex-row items-center bg-accent px-4 py-3 rounded-lg absolute bottom-5 right-5"
-        onPress={() => setModalVisible(true)}
-      >
-        <Text className="text-white">Nova Categoria</Text>
-        <Plus size={30} color={"#235347"} />
-      </TouchableOpacity>
+      <View className="absolute bottom-5 right-5 gap-2">
+        {selectedCategory && (
+          <View className="flex-row gap-2 justify-end">
+            <TouchableOpacity
+              className="p-3 bg-menuColor rounded-full"
+              onPress={() => {
+                setSelectedCategory("")
+              }}
+            >
+              <Pencil size={20} color={"#f5f5f5"} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              className="p-3 bg-menuColor rounded-full"
+              onPress={() => {
+                setSelectedCategory("")
+              }}
+            >
+              <Trash size={20} color={"#f5f5f5"} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              className="p-3 bg-menuColor rounded-full"
+              onPress={() => {
+                setSelectedCategory("")
+              }}
+            >
+              <X size={20} color={"#f5f5f5"} />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        <TouchableOpacity
+          className="flex-row items-center bg-accent px-4 py-3 rounded-lg"
+          onPress={() => setModalVisible(true)}
+        >
+          <Text className="text-white">Nova Categoria</Text>
+          <Plus size={30} color={"#235347"} />
+        </TouchableOpacity>
+      </View>
 
       <Modal
         visible={modalVisible}
