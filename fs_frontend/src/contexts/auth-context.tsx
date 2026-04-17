@@ -25,7 +25,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       const userData = {
         id: data?.id,
-        name: data?.name,
+        name: data?.user_name,
         email: email,
       }
       const userToken = data.auth
@@ -57,7 +57,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       const userData = {
         id: data?.id,
-        name,
+        name: data?.user_name,
         email,
       }
 
