@@ -21,16 +21,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
         user_login: email,
         user_password: password,
       })
-      const data = response.data
+      const data = await response.data
 
       const userData = {
-        id: data?.id,
-        name: data?.name,
+        id: data.user_id,
+        name: data.user_name,
         email: email,
       }
       const userToken = data.auth
       const cleanToken = userToken.replace(/^Bearer\s+/i, "")
-      await AsyncStorage.setItem("token", cleanToken)
+      await AsyncStorage.setItem("@token", cleanToken)
 
       setUser(userData)
     } catch (e: unknown) {
@@ -56,14 +56,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const data = response.data
 
       const userData = {
-        id: data?.id,
+        id: data?.user_id,
         name,
         email,
       }
 
       const userToken = data.auth
       const cleanToken = userToken.replace(/^Bearer\s+/i, "")
-      await AsyncStorage.setItem("token", cleanToken)
+      await AsyncStorage.setItem("@token", cleanToken)
 
       setUser(userData)
     } catch (e: unknown) {

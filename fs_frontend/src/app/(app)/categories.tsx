@@ -1,52 +1,122 @@
-import Entypo from "@expo/vector-icons/Entypo"
-import React, { useState } from "react"
-import { FlatList, Modal, Text, TextInput, TouchableOpacity, View } from "react-native"
+import { useAuth } from "@/src/hooks/use-auth"
+import { api } from "@/src/services/api"
+import { Category } from "@/src/types/category/types"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import { Redirect } from "expo-router"
+import { Plus } from "lucide-react-native"
+import React, { useEffect, useState } from "react"
+import {
+  FlatList,
+  Modal,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native"
 
-type Category = {
-  id: string
-  label: string
-  color: string
-}
+const colorOptions = [
+  "#f87171",
+  "#fb923c",
+  "#facc15",
+  "#4ade80",
+  "#22c55e",
+  "#2dd4bf",
+  "#38bdf8",
+  "#60a5fa",
+  "#818cf8",
+  "#c084fc",
+  "#e879f9",
+  "#f472b6",
+]
 
 export default function CategoriesScreen() {
+  const { user, isAuthenticated } = useAuth()
   const [modalVisible, setModalVisible] = useState(false)
   const [categoryName, setCategoryName] = useState("")
   const [selectedColor, setSelectedColor] = useState("#f87171")
   const [search, setSearch] = useState("")
-  const [categories, setCategories] = useState<Category[]>([
-    { id: "1", color: "#fb923c", label: "Moradia"},
-    { id: "2", color: "#c084fc", label: "Alimentação"},
-    { id: "3", color: "#818cf8", label: "Lazer"},
-    { id: "4", color: "#38bdf8", label: "Transporte"},
-    { id: "5", color: "#22c55e", label: "Investimentos"},
-    { id: "6", color: "#f87171", label: "Mercado"},
-  ])
+  const [categories, setCategories] = useState<Category[]>([])
 
-  const colorOptions = [
-    "#f87171", "#fb923c", "#facc15",
-    "#4ade80", "#22c55e", "#2dd4bf",
-    "#38bdf8", "#60a5fa", "#818cf8",
-    "#c084fc", "#e879f9", "#f472b6"
-  ]
+  async function handleAddCategory() {
+    console.log(user)
 
-  function handleAddCategory() {
-    const newCategory = {
-      id: Date.now().toString(),
-      label: categoryName.trim(),
-      color: selectedColor,
+    try {
+      if (!categoryName.trim()) return
+
+      const token = await AsyncStorage.getItem("@token")
+      if (!token || !user?.id) return
+
+      const body = {
+        category_name: categoryName.trim(),
+        category_color: selectedColor,
+      }
+
+      const response = await api.post("/categories/register/", body, {
+        headers: {
+          authorization: `Bearer ${token}`,
+          "x-request-id": user.id,
+        },
+      })
+
+      const created = {
+        id: new Date().toString(),
+        label: response.data.category_name,
+        color: response.data.category_color,
+      }
+
+      setCategories((prev) => [...prev, created])
+
+      console.log(user)
+
+      // reset
+      setCategoryName("")
+      setSelectedColor("#f87171")
+      setModalVisible(false)
+    } catch (error) {
+      console.error("Erro ao criar categoria:", error)
     }
-
-    setCategories((prev) => [...prev, newCategory])
-
-    // reset
-    setCategoryName("")
-    setSelectedColor("#f87171")
-    setModalVisible(false)
   }
 
   const filteredCategories = categories.filter((item) =>
-    item.label.toLowerCase().includes(search.toLowerCase())
+    item.label.toLowerCase().includes(search.toLowerCase()),
   )
+
+  useEffect(() => {
+    if (!isAuthenticated || !user?.id) return
+
+    async function getCategories() {
+      try {
+        const token = await AsyncStorage.getItem("@token")
+
+        if (!token) return
+
+        console.log("categorias", token)
+
+        const response = await api.get("/categories/all/", {
+          headers: {
+            authorization: `Bearer ${token}`,
+            "x-request-id": user?.id,
+          },
+        })
+
+        const formatted = response.data.map((item: any) => ({
+          id: new Date().toString(),
+          label: item.category_name,
+          color: item.category_color,
+        }))
+
+        setCategories(formatted)
+      } catch (error) {
+        console.error("Erro ao buscar categorias:", error)
+      }
+    }
+
+    getCategories()
+  }, [isAuthenticated, user])
+
+  if (!isAuthenticated) {
+    return <Redirect href="/signin" />
+  }
 
   return (
     <View className="flex-1 bg-background p-5 gap-5">
@@ -69,19 +139,17 @@ export default function CategoriesScreen() {
               className="w-10 h-10 rounded-lg border border-lightBorder"
               style={{ backgroundColor: item.color }}
             />
-            <Text className="text-white text-xl">
-              {item.label}
-            </Text>
+            <Text className="text-white text-xl">{item.label}</Text>
           </View>
         )}
       />
 
-      <TouchableOpacity 
+      <TouchableOpacity
         className="flex-row items-center bg-accent px-4 py-3 rounded-lg absolute bottom-5 right-5"
         onPress={() => setModalVisible(true)}
       >
         <Text className="text-white">Nova Categoria</Text>
-        <Entypo name="plus" size={30} color="#235347" />
+        <Plus size={30} color={"#235347"} />
       </TouchableOpacity>
 
       <Modal
@@ -96,9 +164,7 @@ export default function CategoriesScreen() {
           onPressOut={() => setModalVisible(false)}
         >
           <TouchableOpacity activeOpacity={1} className="w-[90%]">
-            
             <View className="bg-card p-5 rounded-2xl gap-4">
-              
               <Text className="text-white text-xl font-bold">
                 Nova Categoria
               </Text>
@@ -117,15 +183,11 @@ export default function CategoriesScreen() {
                   className="w-5 h-5 rounded-full"
                   style={{ backgroundColor: selectedColor }}
                 />
-                <Text className="text-white">
-                  Cor selecionada
-                </Text>
+                <Text className="text-white">Cor selecionada</Text>
               </View>
 
               {/* Seletor de cores */}
-              <Text className="text-white">
-                Selecione uma cor:
-              </Text>
+              <Text className="text-white">Selecione uma cor:</Text>
 
               <View className="flex-row flex-wrap gap-3">
                 {colorOptions.map((color) => (
@@ -146,11 +208,10 @@ export default function CategoriesScreen() {
 
               {/* Botões */}
               <View className="flex-row items-center justify-end gap-3 mt-3">
-                
                 <TouchableOpacity
                   onPress={() => {
-                    setModalVisible(false);
-                    setCategoryName("");
+                    setModalVisible(false)
+                    setCategoryName("")
                   }}
                 >
                   <Text className="text-white">Cancelar</Text>
@@ -158,9 +219,7 @@ export default function CategoriesScreen() {
 
                 <TouchableOpacity
                   className={`px-4 py-2 rounded-lg ${
-                    categoryName.trim()
-                      ? "bg-accent"
-                      : "bg-gray-400"
+                    categoryName.trim() ? "bg-accent" : "bg-gray-400"
                   }`}
                   disabled={!categoryName.trim()}
                   onPress={handleAddCategory}
