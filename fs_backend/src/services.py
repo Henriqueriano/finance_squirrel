@@ -61,16 +61,25 @@ async def login_service(payload: LoginDteo) -> AuthReturnDto:
         engine = create_engine(DATABASE_URL)
         Session = sessionmaker(bind = engine)
         query = select(LoginModel, UserModel).join(UserModel,
-                                                   LoginModel.user_id == UserModel.user_id).where(
-                                                           LoginModel.user_login == payload.user_login)
+                      LoginModel.user_id == UserModel.user_id).where(
+                      LoginModel.user_login == payload.user_login)
+        if_exists = select(LoginModel, UserModel).join(UserModel,
+                      LoginModel.user_id == UserModel.user_id).where(
+                      LoginModel.user_login == payload.user_login).exists()
+
 
         with Session() as session:
-            lm, um = session.execute(query).first()
-            passw: str = lm.user_password.encode('utf-8')
-            if bcrypt.checkpw(payload.user_password.encode('utf-8'), passw):
-                data.id = str(lm.user_id)
-                data.name = um.user_name
-                data.auth = aux_create_jwt(str(lm.user_id))
+            exists = session.scalar(select(if_exists)) 
+            if exists:
+                try: 
+                    lm, um = session.execute(query).first()
+                    passw: str = lm.user_password.encode('utf-8')
+                    if bcrypt.checkpw(payload.user_password.encode('utf-8'), passw):
+                        data.id = str(lm.user_id)
+                        data.name = um.user_name
+                        data.auth = aux_create_jwt(str(lm.user_id))
+                except:
+                    return data # prevents salt error
             return data
 
     except Exception as e:
