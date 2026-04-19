@@ -1,69 +1,46 @@
+import json
 from .dtos import *
 from .services import *
 from fastapi.responses import JSONResponse
-from fastapi import APIRouter, HTTPException, Header
+from fastapi import APIRouter, Header
 
 # region auth
 auth = APIRouter(prefix = "/auth")
 @auth.post('/login/')
-async def login(payload: LoginDto) -> str:
-    if (payload.user_login == '' 
-        or payload.user_password == ''):
-        raise HTTPException(status_code = 404,
-                            detail = "login or pass cannot be empty" )
+async def login(payload: LoginDto) -> AuthReturnDto:
     service_response = await login_service(payload)
-    user_id = await get_user_id_service(payload.user_login)
-    user_name = await get_user_name_service(payload.user_login)
-    if (service_response == '' or user_id == ''):
-        raise JSONResponse(
-                status_code=500,
-                content = { 'msg': 'server error'})
-    headers: object = { 'Authorization' : f'Bearer {service_response}', 'X-request-id' : str(user_id) }
-    return JSONResponse(status_code = 200,
-                        headers = headers,
-                        content = {'user_id' : str(user_id),
-                                   'auth' : f'Bearer {service_response}',
-                                   'user_name': user_name})
+    if not service_response.id:
+        return JSONResponse(status_code = 404,
+               content = {'msg' : "user or password's incorrect"})
+    headers = {'Authorization':f'Bearer {service_response.auth}'}
+    return JSONResponse( status_code = 200,
+            content = service_response.__dict__,
+            headers = headers)
 
 @auth.post('/register/')
 async def register(payload: RegisterDto) -> str:
-    if (payload.user_name == '' 
-        or payload.user_login == '' 
-        or payload.user_password == ''):
-        raise JSONResponse(status_code = 404,
-                           content = { 'msg': "name, login or pass cannot be empty" })
+    if await user_exists_service(payload.user_login):
+        return JSONResponse( status_code = 409,
+                content = {'msg' : 'user already exists'})
     service_response = await register_service(payload)
-    user_id = await get_user_id_service(payload.user_login) # confirmed insertion
-    user_name = await get_user_name_service(payload.user_login)
-    if (service_response == 'exists'):
-        return JSONResponse(
-            status_code=500,
-            content = { 'msg': 'user login already exists' })
-
-    if (service_response == 'error' or user_id == ''):
-        return JSONResponse(
-            status_code=500,
-            content = {'msg' : 'server error' })
-    headers: object = { 'Authorization' : f'Bearer {service_response}', 'X-request-id' : str(user_id) }
-    return JSONResponse(status_code = 200,
-                        headers = headers,
-                        content = {'user_id' : str(user_id),
-                                   'auth' : f'Bearer {service_response}',
-                                   'user_name': user_name})
+    headers = {'Authorization':f'Bearer {service_response.auth}'}
+    return JSONResponse( status_code = 200,
+                        content = service_response.__dict__,
+                        headers = headers)
 # endregion
 
 # region expenses: 
 expenses = APIRouter(prefix = "/expenses")
 @expenses.post('/register/')
-async def bulk_register(payload: list[ExpensesDto], x_request_id : str = Header(None)) -> None:
+async def bulk_register(payload: list[ExpenseDto], x_request_id : str = Header(None)) -> None:
     service_response = await expenses_bulk_register_service(payload, x_request_id)
     if (not service_response):
         raise HTTPException(
                 status_code=500,
                 detail='server error')
 
-@expenses.get('/all/', response_model = list[ExpensesReturnDto])
-async def all_expenses(x_request_id = Header(None)) -> list[ExpensesReturnDto]:
+@expenses.get('/all/', response_model = list[ExpenseReturnDto])
+async def all_expenses(x_request_id = Header(None)) -> list[ExpenseReturnDto]:
     if x_request_id == '':
         raise HTTPException(
                 status_code=400,
@@ -76,7 +53,7 @@ async def all_expenses(x_request_id = Header(None)) -> list[ExpensesReturnDto]:
     return service_response
 
 @expenses.patch('/update/')
-async def update_expense(expense_id: int, payload: ExpensesDto, x_request_id : str = Header(None)) -> None:
+async def update_expense(expense_id: int, payload: ExpenseDto, x_request_id : str = Header(None)) -> None:
     if expense_id == '':
         raise HTTPException(
                 status_code=400,
@@ -102,46 +79,55 @@ async def delete_expense(expense_id: int, x_request_id = Header(None)) -> None:
 
 # region categories:
 categories = APIRouter(prefix = "/categories")
-@categories.delete('/delete/')
-async def delete_category(category_id : int, x_request_id : str = Header(None)) -> None:
-    if category_id == '' and x_request_id == '':
-        raise HTTPException(
-                status_code=404,
-                detail='missed things')
-    service_response = await delete_category_service(category_id, x_request_id)
-    if (not service_response):
-        raise HTTPException(
-                status_code=500,
-                detail='server error')
-
 @categories.post('/register/')
-async def categories_register(payload: ExpensesCategoryDto, x_request_id: str = Header(None)) -> None:
-    service_response = await categories_register_service(payload, x_request_id)
-    if (not service_response):
-        raise HTTPException(
-                status_code=500,
-                detail='server error')
+async def categories_register(payload: ExpenseCategoryDto) -> JSONResponse:
+    service_response = await categories_register_service(payload.user_id, payload.category)
+    if service_response.category_id == -1:
+        return JSONResponse( status_code = 500,
+               content = { 'msg' : 'server error while saving' })
+
+    return JSONResponse(status_code = 200, content = service_response.__dict__)
+
+@categories.delete('/delete/')
+async def delete_category(category_id : int, user_id: str) -> JSONResponse :
+    if not category_id or not user_id:
+            return JSONResponse( status_code = 404,
+            content = {'msg' : 'missing category id or user id'})
+
+    service_response = await delete_category_service(user_id, category_id)
+    if service_response.category_id == -1:
+        return JSONResponse( status_code = 500,
+               content = { 'msg' : 'server error while deleting or category don\'t exists' })
+
+    return JSONResponse(status_code = 200, content = service_response.__dict__)
 
 @categories.patch('/update/', response_model = None)
-async def update_category(category_id: str, payload: ExpensesCategoryDto, x_request_id: str = Header(None)) -> None:
-    service_response = await update_category_service(category_id, x_request_id, payload)
-    if (not service_response):
-        raise HTTPException(
-                status_code=500,
-                detail='server error')
+async def update_category(payload: ExpenseCategoryUpdateDto) -> JSONResponse:
+    if not payload.user_id:
+      raise JSONResponse(
+                status_code = 404,
+                content = { 'msg' : 'user_id cannot be None'} )
+                
+    service_response = await update_category_service(payload)     
+    if service_response.category_id == -1:
+         return JSONResponse( status_code = 500,
+               content = { 'msg' : 'server error while updating' })
 
-@categories.get('/all/', response_model = list[ExpensesCategoryReturnDto])
-async def get_all_categories(x_request_id: str = Header(None)) -> list[ExpensesCategoryReturnDto]:
-    if x_request_id == '':
-        raise HTTPException(
-                status_code=400,
-                detail='request id cannot be None')
-    service_response = await get_all_categories_service(x_request_id)
-    if (len(service_response) == 0):
-        raise HTTPException(
-                status_code=500,
-                detail='nothing on the base')
-    return service_response
+    return JSONResponse(status_code = 200, content = service_response.__dict__)
+
+@categories.get('/all/', response_model = list[ExpenseCategoryReturnDto])
+async def get_all_categories(user_id: str) -> list[ExpenseCategoryReturnDto]:
+    if not user_id:
+       raise JSONResponse(
+                status_code = 404,
+                content = { 'msg' : 'user_id cannot be None'} )
+
+    service_response = await get_all_categories_service(user_id)
+    if service_response[0].category_id == -1:
+        return JSONResponse( status_code = 500,
+               content = { 'msg' : 'server error while getting data' })
+            
+    return JSONResponse(status_code = 200, content = [data.__dict__ for data in service_response])
 # endregion
 
 # region user:

@@ -15,11 +15,11 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 # region aux methods
+
 def aux_create_user(user_name) -> str:
     data: UserModel = UserModel(
-        user_name = user_name,
-        is_active = 1
-    )
+            user_name = user_name,
+            is_active = 1)
     try:
         engine = create_engine(DATABASE_URL)
         Session = sessionmaker(engine)
@@ -28,69 +28,83 @@ def aux_create_user(user_name) -> str:
             session.flush()
             session.commit()
             return data.user_id
-    except:
-        return ''
-    
+    except Exception as e:
+        raise Exception(f'Aux create user error > {e}')
+
 def aux_create_jwt(payload: str) -> str:
     expiration_time = datetime.now(timezone.utc) + timedelta(minutes = 30)
-    data: object = { 'data': payload, 'expires_at': expiration_time.strftime("%Y-%m-%d %H:%M:%S")}
+    data: object = { 'data': payload,
+                    'expires_at': expiration_time.strftime("%Y-%m-%d %H:%M:%S")}
     return jwt.encode( data, SECRET_KEY, algorithm="HS256")
+
 # endregion
 
 # region auth
-async def get_user_id_service(user_login: str):
-    try:
-        engine = create_engine(DATABASE_URL)
-        Session = sessionmaker(bind = engine)
-        with Session() as session:
-            db = session.query(LoginModel).where(
-                LoginModel.user_login == user_login).first()
-            if db.user_id != '':
-                return db.user_id
-            return ''
-    except:
-        return ''
 
-async def login_service(payload: LoginDto) -> str:
+async def user_exists_service(user_login: str) -> bool:
+    query = select(LoginModel).where(LoginModel.user_login == user_login)
     try:
         engine = create_engine(DATABASE_URL)
         Session = sessionmaker(bind = engine)
         with Session() as session:
-            db = session.query(LoginModel).where(
-            LoginModel.user_login == payload.user_login).first()
-            if db.user_id == '':
-                return ''
-            passw: str = db.user_password.encode('utf-8')
-            if bcrypt.checkpw(payload.user_password.encode('utf-8'), passw):
-                return aux_create_jwt(str(db.user_id))
+            data = session.execute(query).first()
+            if data == None:
+                return False
+            return True
     except Exception as e:
-        return ''
-    
-async def register_service(payload: RegisterDto) -> str:
-    if (not await get_user_id_service(payload.user_login) == ''):
-        return 'exists'     
-    user_id = aux_create_user(payload.user_name)
-    passw: str = payload.user_password.encode('utf-8')  
-    decoded_bpass =  bcrypt.hashpw(passw , bcrypt.gensalt(rounds=5)
-                    ).decode('utf-8') # https://stackoverflow.com/questions/34548846/flask-bcrypt-valueerror-invalid-salt
-    data: LoginModel = LoginModel(
-        user_id = user_id,
-        user_login = payload.user_login,
-        user_password = decoded_bpass
-    )
+        raise Exception(f'Error in user exists service > {e}')
+
+
+async def login_service(payload: LoginDteo) -> AuthReturnDto:
+    data: AuthReturnDto = AuthReturnDto(id = '', name = '', auth = '')
     try:
         engine = create_engine(DATABASE_URL)
+        Session = sessionmaker(bind = engine)
+        query = select(LoginModel, UserModel).join(UserModel,
+                                                   LoginModel.user_id == UserModel.user_id).where(
+                                                           LoginModel.user_login == payload.user_login)
+
+        with Session() as session:
+            lm, um = session.execute(query).first()
+            passw: str = lm.user_password.encode('utf-8')
+            if bcrypt.checkpw(payload.user_password.encode('utf-8'), passw):
+                data.id = str(lm.user_id)
+                data.name = um.user_name
+                data.auth = aux_create_jwt(str(lm.user_id))
+            return data
+
+    except Exception as e:
+        raise Exception(f'Login service exception > {e}') 
+
+async def register_service(payload: RegisterDto) -> AuthReturnDto:
+    backdata: AuthReturnDto = AuthReturnDto(id = '', name = '', auth = '')
+    try:
+        encoded_pass = (payload.user_password + SECRET_KEY).encode('utf-8')
+        data: LoginModel = LoginModel(
+                user_id = aux_create_user(payload.user_name),
+                user_login = payload.user_login,
+                user_password = bcrypt.hashpw(encoded_pass, bcrypt.gensalt(rounds = 4))
+                )
+        engine = create_engine(DATABASE_URL) 
         Session = sessionmaker(bind = engine)
         with Session() as session:
             session.add(data)
+            session.flush()
             session.commit()
-            return aux_create_jwt(str(user_id))
-    except:
-        return 'error'
+
+            # setup return
+            backdata.id = str(data.user_id)
+            backdata.name = payload.user_name
+            backdata.auth = aux_create_jwt(str(data.user_id))
+
+            return backdata
+    except Exception as e:
+        raise Exception(f'Register service error > {e}')
+
 # endregion
 
 # region expenses
-async def expenses_bulk_register_service(payload: list[ExpensesDto], x_request_id) -> bool: 
+async def expenses_bulk_register_service(payload: list[ExpenseDto], x_request_id) -> bool: 
     data: list[ExpenseModel] = [ExpenseModel(
         user_id = x_request_id,
         expense_value = e.expense_value,
@@ -101,21 +115,21 @@ async def expenses_bulk_register_service(payload: list[ExpensesDto], x_request_i
     engine = create_engine(DATABASE_URL)
     session = sessionmaker(bind=engine)
     try:
-       with session() as session: 
+        with session() as session: 
             session.add_all(data)
             session.commit()
             return True
     except:
         return False
 
-async def get_expenses(user_id: str) -> list[ExpensesReturnDto]:
+async def get_expenses(user_id: str) -> list[ExpenseReturnDto]:
     engine = create_engine(DATABASE_URL)
     session = sessionmaker(bind=engine)
     try:
         statement = select(ExpenseModel).where(ExpenseModel.user_id == user_id)
         with session() as session:
             db_data = session.scalars(statement).all()
-            data: list[ExpensesReturnDto] = [ExpensesReturnDto(
+            data: list[ExpenseReturnDto] = [ExpenseReturnDto(
                 expense_id = d.expense_id,
                 expense_value = d.expense_value,
                 expense_date = d.expense_date,
@@ -126,63 +140,28 @@ async def get_expenses(user_id: str) -> list[ExpensesReturnDto]:
     except:
         return []
 
-async def update_expense_service(expense_id: str, x_request_id: str, payload: ExpensesDto) -> bool:
+async def update_expense_service(expense_id: str, x_request_id: str, payload: ExpenseDto) -> bool:
     statement = update(ExpenseModel).values(
-        expense_value = payload.expense_value,
-        expense_date = payload.expense_date,
-        expense_type = payload.expense_type,
-        category_id = payload.category_id,
-        expense_desc = payload.expense_desc).where(ExpenseModel.expense_id == expense_id 
-                                                        and ExpenseModel.user_id == x_request_id)
+            expense_value = payload.expense_value,
+            expense_date = payload.expense_date,
+            expense_type = payload.expense_type,
+            category_id = payload.category_id,
+            expense_desc = payload.expense_desc).where(ExpenseModel.expense_id == expense_id 
+                                                       and ExpenseModel.user_id == x_request_id)
     engine = create_engine(DATABASE_URL)
     session = sessionmaker(bind=engine)
     try: 
         with session() as session:
             session.execute(statement)
-            session.commit()
-            return True
-    except:
-       return False
-
-async def delete_expense_service(expense_id: int, x_request_id: str) -> bool:
-    statement = delete(ExpenseModel).where(ExpenseModel.expense_id == expense_id 
-                                           and ExpenseModel.user_id == x_request_id)
-    engine = create_engine(DATABASE_URL)
-    session = sessionmaker(bind=engine)
-    try: 
-       with session() as session:
-          session.execute(statement)
-          session.commit()
-          return True
-    except:
-       return False
-# endregion
-
-# region categoryes 
-async def categories_register_service(payload: ExpensesCategoryDto, user_id: str) -> bool:
-    data: ExpenseCategoryModel = ExpenseCategoryModel(
-        category_name = payload.category_name,
-        category_color = payload.category_color,
-        user_id = user_id) 
-    engine = create_engine(DATABASE_URL)
-    session = sessionmaker(bind=engine)
-    try:
-       with session() as session: 
-            session.add(data)
             session.commit()
             return True
     except:
         return False
 
-async def update_category_service(category_id: str, x_request_id: str, payload: ExpensesCategoryDto) -> str:
-    data: ExpenseCategoryModel = ExpenseCategoryModel(
-        category_name = payload.category_name,
-        user_id = x_request_id)
-    statement = update(ExpenseCategoryModel).values(
-        category_name = payload.category_name,
-        category_color = payload.category_color).where(
-        ExpenseCategoryModel.category_id == category_id 
-        and ExpenseCategoryModel.user_id == x_request_id)
+async def delete_expense_service(expense_id: int, x_request_id: str) -> bool:
+    statement = delete(ExpenseModel).where(
+            ExpenseModel.expense_id == expense_id,
+            ExpenseModel.user_id == x_request_id)
     engine = create_engine(DATABASE_URL)
     session = sessionmaker(bind=engine)
     try: 
@@ -191,42 +170,126 @@ async def update_category_service(category_id: str, x_request_id: str, payload: 
             session.commit()
             return True
     except:
-       return False
+        return False
+# endregion
 
-async def delete_category_service(category_id: int, x_request_id: str) -> bool:
-    statement = delete(ExpenseCategoryModel).where(ExpenseCategoryModel.category_id == category_id 
-                                                   and ExpenseCategoryModel.user_id == x_request_id)
-    engine = create_engine(DATABASE_URL)
-    session = sessionmaker(bind=engine)
-    try: 
-       with session() as session:
-          session.execute(statement)
-          session.commit()
-          return True
-    except:
-       return False
-
-async def get_all_categories_service(user_id: str) -> list[ExpensesCategoryReturnDto]:
-    engine = create_engine(DATABASE_URL)
-    session = sessionmaker(bind=engine)
+# region categoryes 
+async def categories_register_service(user_id: str, payload: CategoryDto) -> ExpenseCategoryReturnDto:
+    backdata: ExpenseCategoryReturnDto = ExpenseCategoryReturnDto( 
+                                            category_id = -1,
+                                            category_name = '',
+                                            category_color = '')
+    data: ExpenseCategoryModel = ExpenseCategoryModel(
+            category_name = payload.category_name,
+            category_color = payload.category_color,
+            user_id = user_id) 
     try:
-        statement = select(ExpenseCategoryModel).where(ExpenseCategoryModel.user_id == user_id)
+        engine = create_engine(DATABASE_URL)
+        session = sessionmaker(bind=engine)
+        with session() as session: 
+            session.add(data)
+            session.flush()
+            session.commit()
+
+            # setup data:
+            backdata.category_id = data.category_id
+            backdata.category_name = data.category_name
+            backdata.category_color = data.category_color
+
+            return backdata
+    except Exception as e :
+        raise Exception(f'Error in categories register service > {e}')
+
+async def update_category_service(payload: ExpenseCategoryUpdateDto) -> ExpenseCategoryReturnDto:
+    backdata: ExpenseCategoryReturnDto = ExpenseCategoryReturnDto(
+               category_id = -1,
+               category_name = '',
+               category_color = ''
+            )
+    sel_statement = select(ExpenseCategoryModel).where(
+            ExpenseCategoryModel.category_id == payload.category_id)
+ 
+    query = update(ExpenseCategoryModel).where(
+            ExpenseCategoryModel.user_id == payload.user_id,
+            ExpenseCategoryModel.category_id == payload.category_id).values(payload.category.__dict__)
+
+    try:
+        engine = create_engine(DATABASE_URL)
+        Session = sessionmaker(bind = engine)
+        with Session() as session:
+            db = session.scalars(sel_statement).first()
+            session.execute(query)
+            session.commit()
+
+            backdata.category_id = db.category_id
+            backdata.category_name = db.category_name
+            backdata.category_color = db.category_color
+            return backdata
+    except Exception as e:
+        print(e)
+        return backdata
+                        
+async def delete_category_service(user_id: str, category_id: int) -> ExpenseCategoryReturnDto:
+    backdata: ExpenseCategoryReturnDto = ExpenseCategoryReturnDto(
+               category_id = -1,
+               category_name = '',
+               category_color = ''
+            )
+    sel_statement = select(ExpenseCategoryModel).where(
+            ExpenseCategoryModel.category_id == category_id)
+    del_statement = delete(ExpenseCategoryModel).where(
+    ExpenseCategoryModel.category_id == category_id,
+    ExpenseCategoryModel.user_id == user_id)
+
+    try: 
+        engine = create_engine(DATABASE_URL)
+        session = sessionmaker(bind=engine)
+        with session() as session:
+            db = session.scalars(sel_statement).first()
+            if db == None:
+                return backdata
+            
+            backdata.category_id = db.category_id
+            backdata.category_name = db.category_name
+            backdata.category_color = db.category_color
+            session.execute(del_statement)
+            session.commit()
+            return backdata
+    except Exception as e:
+        print(e)
+        return backdata
+
+async def get_all_categories_service(user_id: str) -> list[ExpenseCategoryReturnDto]:
+    backdata: list[ExpenseCategoryReturnDto] = [ExpenseCategoryReturnDto(
+                category_id = -1,
+                category_name = '',
+                category_color = ''
+            )]
+    statement = select(ExpenseCategoryModel).where(ExpenseCategoryModel.user_id == user_id)
+    try:
+        engine = create_engine(DATABASE_URL)
+        session = sessionmaker(bind=engine)
         with session() as session:
             db_data = session.scalars(statement).all()
-            data: list[ExpensesCategoryReturnDto] = [ExpensesCategoryReturnDto(
+            if len(db_data) == 0:
+                return backdata
+
+            backdata = []
+            backdata: list[ExpenseCategoryReturnDto] = [ExpenseCategoryReturnDto(
                 category_id = d.category_id,
                 category_name = d.category_name,
                 category_color = d.category_color) for d in db_data]
-            return data
-    except:
-        return data
+            return backdata
+    except Exception as e:
+        print(e)
+        return backdata
 # endregion
 
 
 # region user 
 async def get_user_name_service(user_login: payload) -> str:
     query = select(UserModel).join(LoginModel,
-            UserModel.user_id == LoginModel.user_id).where(LoginModel.user_login == user_login)
+                                   UserModel.user_id == LoginModel.user_id).where(LoginModel.user_login == user_login)
     try: 
         engine = create_engine(DATABASE_URL)
         Session = sessionmaker(bind = engine)
@@ -239,7 +302,7 @@ async def get_user_name_service(user_login: payload) -> str:
         print(e)
         return ''
 
-       
+
 # endregion
 
 # region user settings 
