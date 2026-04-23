@@ -33,8 +33,6 @@ export default function SignIn() {
 
       router.replace("/")
     } catch (err: any) {
-      console.error("Erro no login:", err)
-
       if (err instanceof Error) {
         setMsgError(err.message)
       } else {
