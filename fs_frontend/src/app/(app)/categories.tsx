@@ -172,8 +172,10 @@ export default function CategoriesScreen() {
   }
 
   return (
-    <View className="flex-1 bg-background p-5 gap-5">
-      <Text className="text-2xl text-white font-bold">Buscar categorias:</Text>
+    <View className="flex-1 bg-background p-2 gap-5">
+      <Text className="text-2xl text-white font-bold mt-2">
+        Buscar categorias:
+      </Text>
 
       <View className="relative">
         <TextInput
@@ -194,6 +196,7 @@ export default function CategoriesScreen() {
         )}
       </View>
 
+      {/* Categorias */}
       <FlatList
         data={filteredCategories}
         keyExtractor={(item) => item.id}
@@ -228,7 +231,8 @@ export default function CategoriesScreen() {
         )}
       />
 
-      <View className="absolute bottom-5 right-5 gap-2">
+      {/* Nova categoria */}
+      <View className="absolute bottom-2 right-2 gap-2">
         {selectedCategory && (
           <View className="flex-row gap-2 justify-end">
             {/* Editar categoria */}
@@ -264,7 +268,7 @@ export default function CategoriesScreen() {
         )}
 
         <TouchableOpacity
-          className="flex-row items-center bg-accent px-4 py-3 rounded-lg"
+          className="flex-row items-center bg-accent p-2 rounded-lg gap-2"
           onPress={() => setModalVisible(true)}
         >
           <Text className="text-white">Nova Categoria</Text>

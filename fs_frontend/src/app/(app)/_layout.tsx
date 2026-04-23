@@ -1,4 +1,5 @@
 import { useAuth } from "@/src/hooks/use-auth"
+import { capitalizeFirstLetter } from "@/src/utils/capitalize-first-letter"
 import { Redirect, Tabs, useRouter } from "expo-router"
 import {
   BookmarkPlus,
@@ -98,7 +99,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "DashBoard",
-          headerTitle: `DashBoard - ${user?.name}`,
+          headerTitle: `DashBoard - ${capitalizeFirstLetter(user?.name)}`,
           headerRight: ({}) => (
             <TouchableOpacity
               className="mr-5"

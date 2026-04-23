@@ -14,22 +14,20 @@ export function TransactionListItem({
   cont,
   id,
   canRemove,
-  onRemove
+  onRemove,
 }: TransactionListItemProps) {
-  const [transactionTypeSelected, setTransactionTypeSelected] = useState("receita")
+  const [transactionTypeSelected, setTransactionTypeSelected] =
+    useState("receita")
 
   const transactions = [
     { key: "receita", label: "Receita" },
-    { key: "despesa", label: "Despesa" }
+    { key: "despesa", label: "Despesa" },
   ]
   return (
     <View className="bg-card rounded-xl p-4">
-
       {/* HEADER */}
       <View className="flex-row justify-between items-center">
-        <Text className="text-white text-2xl font-bold">
-          Transação {cont}
-        </Text>
+        <Text className="text-white text-2xl font-bold">Transação {cont}</Text>
 
         {canRemove && (
           <TouchableOpacity onPress={() => onRemove(id)}>
@@ -41,16 +39,18 @@ export function TransactionListItem({
       {/* FORMULÁRIO */}
       <View className="gap-4 mt-4">
         {/* Tipo */}
-        <View className="gap-2 flex-row items-center">
+        <View className="flex-row items-center gap-2">
           <Text className="text-white">Tipo de Transação:</Text>
 
-          <View className="flex-row gap-3">
+          <View className="flex-1 flex-row gap-2">
             {transactions.map((transaction) => (
               <TouchableOpacity
                 key={transaction.key}
                 onPress={() => setTransactionTypeSelected(transaction.key)}
-                className={`flex-row items-center px-2 py-2 rounded-lg gap-1 ${
-                  transactionTypeSelected === transaction.key ? 'bg-accent' : 'bg-transparent'
+                className={`flex-1 flex-row items-center justify-center p-2 rounded-lg ${
+                  transactionTypeSelected === transaction.key
+                    ? "bg-accent"
+                    : "bg-transparent"
                 }`}
               >
                 <Text className="text-white">{transaction.label}</Text>
@@ -77,7 +77,7 @@ export function TransactionListItem({
         </View>
 
         {/* Descrição */}
-        <View className="gap-3">
+        <View className="gap-2">
           <Text className="text-white">Descrição:</Text>
           <TextInput
             className="bg-white rounded-lg px-3 py-3 h-28"

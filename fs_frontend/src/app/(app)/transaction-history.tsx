@@ -1,37 +1,171 @@
 import { formatCurrency } from "@/src/utils/format-currency"
 import { parseDate } from "@/src/utils/parse-date"
-import AntDesign from '@expo/vector-icons/AntDesign'
+import { ChevronDown } from "lucide-react-native"
 
 import { useMemo, useState } from "react"
-import {
-  FlatList,
-  Modal,
-  Text,
-  TouchableOpacity,
-  View
-} from "react-native"
+import { FlatList, Modal, Text, TouchableOpacity, View } from "react-native"
 
 const data = [
-  { id: "1", date: "Jun/2026", categorie: "Alimentação", description: "...", value: 10, type: "Despesa" },
-  { id: "2", date: "Dez/2025", categorie: "Jogos", description: "Minecraft", value: 109.90, type: "Despesa" },
-  { id: "3", date: "Jan/2026", categorie: "Alimentação", description: "Arroz, Feijão", value: 17.90, type: "Despesa" },
-  { id: "4", date: "Abr/2025", categorie: "Alimentação", description: "Macarrão, Leite", value: 9.50, type: "Despesa" },
-  { id: "5", date: "Fev/2026", categorie: "Transporte", description: "Uber", value: 23.40, type: "Despesa" },
-  { id: "6", date: "Mar/2026", categorie: "Salário", description: "Empresa X", value: 3500, type: "Receita" },
-  { id: "7", date: "Jan/2025", categorie: "Lazer", description: "Cinema", value: 45.00, type: "Despesa" },
-  { id: "8", date: "Out/2025", categorie: "Saúde", description: "Farmácia", value: 78.20, type: "Despesa" },
-  { id: "9", date: "Nov/2025", categorie: "Educação", description: "Curso online", value: 199.90, type: "Despesa" },
-  { id: "10", date: "Ago/2026", categorie: "Freelance", description: "Projeto React", value: 800, type: "Receita" },
-  { id: "11", date: "Jul/2026", categorie: "Alimentação", description: "Restaurante", value: 65.30, type: "Despesa" },
-  { id: "12", date: "Set/2025", categorie: "Transporte", description: "Combustível", value: 150, type: "Despesa" },
-  { id: "13", date: "Mai/2026", categorie: "Investimentos", description: "Dividendos", value: 120.50, type: "Receita" },
-  { id: "14", date: "Abr/2026", categorie: "Moradia", description: "Aluguel", value: 1200, type: "Despesa" },
-  { id: "15", date: "Jun/2025", categorie: "Lazer", description: "Viagem", value: 950, type: "Despesa" },
-  { id: "16", date: "Fev/2025", categorie: "Saúde", description: "Consulta médica", value: 200, type: "Despesa" },
-  { id: "17", date: "Mar/2025", categorie: "Salário", description: "Empresa X", value: 3200, type: "Receita" },
-  { id: "18", date: "Out/2026", categorie: "Educação", description: "Faculdade", value: 600, type: "Despesa" },
-  { id: "19", date: "Dez/2026", categorie: "Bônus", description: "Fim de ano", value: 1500, type: "Receita" },
-  { id: "20", date: "Nov/2026", categorie: "Alimentação", description: "Supermercado", value: 230.75, type: "Despesa" }
+  {
+    id: "1",
+    date: "Jun/2026",
+    categorie: "Alimentação",
+    description: "...",
+    value: 10,
+    type: "Despesa",
+  },
+  {
+    id: "2",
+    date: "Dez/2025",
+    categorie: "Jogos",
+    description: "Minecraft",
+    value: 109.9,
+    type: "Despesa",
+  },
+  {
+    id: "3",
+    date: "Jan/2026",
+    categorie: "Alimentação",
+    description: "Arroz, Feijão",
+    value: 17.9,
+    type: "Despesa",
+  },
+  {
+    id: "4",
+    date: "Abr/2025",
+    categorie: "Alimentação",
+    description: "Macarrão, Leite",
+    value: 9.5,
+    type: "Despesa",
+  },
+  {
+    id: "5",
+    date: "Fev/2026",
+    categorie: "Transporte",
+    description: "Uber",
+    value: 23.4,
+    type: "Despesa",
+  },
+  {
+    id: "6",
+    date: "Mar/2026",
+    categorie: "Salário",
+    description: "Empresa X",
+    value: 3500,
+    type: "Receita",
+  },
+  {
+    id: "7",
+    date: "Jan/2025",
+    categorie: "Lazer",
+    description: "Cinema",
+    value: 45.0,
+    type: "Despesa",
+  },
+  {
+    id: "8",
+    date: "Out/2025",
+    categorie: "Saúde",
+    description: "Farmácia",
+    value: 78.2,
+    type: "Despesa",
+  },
+  {
+    id: "9",
+    date: "Nov/2025",
+    categorie: "Educação",
+    description: "Curso online",
+    value: 199.9,
+    type: "Despesa",
+  },
+  {
+    id: "10",
+    date: "Ago/2026",
+    categorie: "Freelance",
+    description: "Projeto React",
+    value: 800,
+    type: "Receita",
+  },
+  {
+    id: "11",
+    date: "Jul/2026",
+    categorie: "Alimentação",
+    description: "Restaurante",
+    value: 65.3,
+    type: "Despesa",
+  },
+  {
+    id: "12",
+    date: "Set/2025",
+    categorie: "Transporte",
+    description: "Combustível",
+    value: 150,
+    type: "Despesa",
+  },
+  {
+    id: "13",
+    date: "Mai/2026",
+    categorie: "Investimentos",
+    description: "Dividendos",
+    value: 120.5,
+    type: "Receita",
+  },
+  {
+    id: "14",
+    date: "Abr/2026",
+    categorie: "Moradia",
+    description: "Aluguel",
+    value: 1200,
+    type: "Despesa",
+  },
+  {
+    id: "15",
+    date: "Jun/2025",
+    categorie: "Lazer",
+    description: "Viagem",
+    value: 950,
+    type: "Despesa",
+  },
+  {
+    id: "16",
+    date: "Fev/2025",
+    categorie: "Saúde",
+    description: "Consulta médica",
+    value: 200,
+    type: "Despesa",
+  },
+  {
+    id: "17",
+    date: "Mar/2025",
+    categorie: "Salário",
+    description: "Empresa X",
+    value: 3200,
+    type: "Receita",
+  },
+  {
+    id: "18",
+    date: "Out/2026",
+    categorie: "Educação",
+    description: "Faculdade",
+    value: 600,
+    type: "Despesa",
+  },
+  {
+    id: "19",
+    date: "Dez/2026",
+    categorie: "Bônus",
+    description: "Fim de ano",
+    value: 1500,
+    type: "Receita",
+  },
+  {
+    id: "20",
+    date: "Nov/2026",
+    categorie: "Alimentação",
+    description: "Supermercado",
+    value: 230.75,
+    type: "Despesa",
+  },
 ]
 
 type listItem = {
@@ -45,11 +179,15 @@ type listItem = {
 
 export default function TransactionHistoryScreen() {
   const [tipoSelecionado, setTipoSelecionado] = useState<string | null>(null)
-  const [categoriaSelecionada, setCategoriaSelecionada] = useState<string | null>(null)
+  const [categoriaSelecionada, setCategoriaSelecionada] = useState<
+    string | null
+  >(null)
   const [dataSelecionada, setDataSelecionada] = useState<string | null>(null)
 
   const [modalVisivel, setModalVisivel] = useState(false)
-  const [filtroAtivo, setFiltroAtivo] = useState<"tipo" | "categoria" | "data" | null>(null)
+  const [filtroAtivo, setFiltroAtivo] = useState<
+    "tipo" | "categoria" | "data" | null
+  >(null)
   const [ordenarPor, setOrdenarPor] = useState<"data" | "valor">("data")
 
   const tipos = ["Receita", "Despesa"]
@@ -60,7 +198,7 @@ export default function TransactionHistoryScreen() {
     "Lazer",
     "Saúde",
     "Educação",
-    "Moradia"
+    "Moradia",
   ]
 
   const datas = ["2026", "2025"]
@@ -70,9 +208,7 @@ export default function TransactionHistoryScreen() {
 
     // 🔎 FILTRO
     result = result.filter((item) => {
-      const matchTipo = tipoSelecionado
-        ? item.type === tipoSelecionado
-        : true
+      const matchTipo = tipoSelecionado ? item.type === tipoSelecionado : true
 
       const matchCategoria = categoriaSelecionada
         ? item.categorie === categoriaSelecionada
@@ -88,8 +224,7 @@ export default function TransactionHistoryScreen() {
     // 🔃 ORDENAÇÃO
     if (ordenarPor === "data") {
       result.sort(
-        (a, b) =>
-          parseDate(b.date).getTime() - parseDate(a.date).getTime()
+        (a, b) => parseDate(b.date).getTime() - parseDate(a.date).getTime(),
       )
     }
 
@@ -98,13 +233,7 @@ export default function TransactionHistoryScreen() {
     }
 
     return result
-  }, [
-    data,
-    tipoSelecionado,
-    categoriaSelecionada,
-    dataSelecionada,
-    ordenarPor
-  ])
+  }, [data, tipoSelecionado, categoriaSelecionada, dataSelecionada, ordenarPor])
 
   const TableHeader = () => (
     <View className="flex-row gap-2 border-b border-gray-600 py-2 bg-background">
@@ -114,7 +243,7 @@ export default function TransactionHistoryScreen() {
       <Text className="flex-1 text-accent font-bold text-xs">Valor</Text>
       <Text className="flex-1 text-accent font-bold text-xs">Tipo</Text>
     </View>
-  ) 
+  )
   const renderItem = ({ item }: { item: listItem }) => (
     <View className="flex-row gap-2 py-1 border-b border-gray-800">
       <Text className="flex-1 text-white text-xs">{item.date}</Text>
@@ -130,92 +259,97 @@ export default function TransactionHistoryScreen() {
   )
 
   return (
-    <View className="flex-1 bg-background p-5 gap-3">
+    <View className="flex-1 bg-background p-2 gap-6">
+      <View className="gap-4">
+        {/* FILTROS */}
+        <View className="gap-2">
+          <Text className="text-white text-2xl font-bold mt-2">Filtros:</Text>
+          <View className="flex-row gap-2 bg-card p-2 rounded-lg items-center">
+            <TouchableOpacity
+              className="flex-1 bg-accent p-2 rounded-lg justify-center"
+              onPress={() => {
+                setFiltroAtivo("tipo")
+                setModalVisivel(true)
+              }}
+            >
+              {tipoSelecionado ? (
+                <View className="flex-row justify-between items-center">
+                  <Text className="text-white">{tipoSelecionado}</Text>
+                  <ChevronDown size={24} color="#235347" />
+                </View>
+              ) : (
+                <View className="flex-row justify-between items-center">
+                  <Text className="text-white">Tipo</Text>
+                  <ChevronDown size={24} color="#235347" />
+                </View>
+              )}
+            </TouchableOpacity>
 
-      {/* FILTROS */}
-      <Text className="text-white text-2xl font-bold">Filtros:</Text>
-      <View className="flex-row gap-2 bg-card p-2 rounded-lg items-center">
-        <TouchableOpacity
-          className="flex-1 bg-accent p-2 rounded-lg justify-center"
-          onPress={() => {
-            setFiltroAtivo("tipo")
-            setModalVisivel(true)
-          }}
-        >
-          {tipoSelecionado ? (
-            <View className="flex-row justify-between items-center">
-              <Text className="text-white">{tipoSelecionado}</Text> 
-              <AntDesign name="caret-down" size={24} color="#235347" />
-            </View>
-          ) : (
-            <View className="flex-row justify-between items-center">
-              <Text className="text-white">Tipo</Text> 
-              <AntDesign name="caret-down" size={24} color="#235347" />
-            </View>
-          )}
-        </TouchableOpacity>
+            <TouchableOpacity
+              className="flex-1 bg-accent p-2 rounded-lg"
+              onPress={() => {
+                setFiltroAtivo("categoria")
+                setModalVisivel(true)
+              }}
+            >
+              {categoriaSelecionada ? (
+                <View className="flex-row justify-between items-center">
+                  <Text className="text-white">{categoriaSelecionada}</Text>
+                  <ChevronDown size={24} color="#235347" />
+                </View>
+              ) : (
+                <View className="flex-row justify-between items-center">
+                  <Text className="text-white">Categoria</Text>
+                  <ChevronDown size={24} color="#235347" />
+                </View>
+              )}
+            </TouchableOpacity>
 
-        <TouchableOpacity
-          className="flex-1 bg-accent p-2 rounded-lg"
-          onPress={() => {
-            setFiltroAtivo("categoria")
-            setModalVisivel(true)
-          }}
-        >
-          {categoriaSelecionada ? (
-            <View className="flex-row justify-between items-center">
-              <Text className="text-white">{categoriaSelecionada}</Text> 
-              <AntDesign name="caret-down" size={24} color="#235347" />
-            </View>
-          ) : (
-            <View className="flex-row justify-between items-center">
-              <Text className="text-white">Categoria</Text> 
-              <AntDesign name="caret-down" size={24} color="#235347" />
-            </View>
-          )}
-        </TouchableOpacity>
+            <TouchableOpacity
+              className="flex-1 bg-accent p-2 rounded-lg"
+              onPress={() => {
+                setFiltroAtivo("data")
+                setModalVisivel(true)
+              }}
+            >
+              {dataSelecionada ? (
+                <View className="flex-row justify-between items-center">
+                  <Text className="text-white">{dataSelecionada}</Text>
+                  <ChevronDown size={24} color="#235347" />
+                </View>
+              ) : (
+                <View className="flex-row justify-between items-center">
+                  <Text className="text-white">Data</Text>
+                  <ChevronDown size={24} color="#235347" />
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
 
-        <TouchableOpacity
-          className="flex-1 bg-accent p-2 rounded-lg"
-          onPress={() => {
-            setFiltroAtivo("data")
-            setModalVisivel(true)
-          }}
-        >
-          {dataSelecionada ? (
-            <View className="flex-row justify-between items-center">
-              <Text className="text-white">{dataSelecionada}</Text> 
-              <AntDesign name="caret-down" size={24} color="#235347" />
-            </View>
-          ) : (
-            <View className="flex-row justify-between items-center">
-              <Text className="text-white">Data</Text> 
-              <AntDesign name="caret-down" size={24} color="#235347" />
-            </View>
-          )}
-        </TouchableOpacity>
-      </View>
+        {/* ORDENAÇÃO */}
+        <View className="gap-2">
+          <Text className="text-white text-2xl font-bold">Ordenar por:</Text>
+          <View className="flex-row bg-card p-2 rounded-lg justify-between">
+            <TouchableOpacity
+              className={`w-[50%] py-2 rounded-lg justify-center items-center ${
+                ordenarPor === "data" ? "bg-accent" : ""
+              }`}
+              onPress={() => setOrdenarPor("data")}
+            >
+              <Text className="text-white">Data</Text>
+            </TouchableOpacity>
 
-      {/* ORDENAÇÃO */}
-      <Text className="text-white text-2xl font-bold mt-4">Ordenar por:</Text>
-      <View className="flex-row bg-card p-2 rounded-lg justify-between">
-        <TouchableOpacity
-          className={`w-[50%] py-2 rounded-lg justify-center items-center ${
-            ordenarPor === "data" ? "bg-accent" : ""
-          }`}
-          onPress={() => setOrdenarPor("data")}
-        >
-          <Text className="text-white">Data</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          className={`w-[50%] py-2 rounded-lg justify-center items-center ${
-            ordenarPor === "valor" ? "bg-accent" : ""
-          }`}
-          onPress={() => setOrdenarPor("valor")}
-        >
-          <Text className="text-white">Valor</Text>
-        </TouchableOpacity>
+            <TouchableOpacity
+              className={`w-[50%] py-2 rounded-lg justify-center items-center ${
+                ordenarPor === "valor" ? "bg-accent" : ""
+              }`}
+              onPress={() => setOrdenarPor("valor")}
+            >
+              <Text className="text-white">Valor</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
 
       {/* LISTA */}
@@ -234,25 +368,33 @@ export default function TransactionHistoryScreen() {
           onPress={() => setModalVisivel(false)}
         >
           <View className="bg-card w-4/5 rounded-xl p-4 gap-2">
-            <Text className="text-white text-xl mb-2">
-              {(filtroAtivo === "tipo" ? "Tipo" :
-              filtroAtivo === "categoria" ? "Categorias" :
-              "Data")+":"}
-            </Text>
-            <TouchableOpacity
-              className="p-2 bg-accent rounded-lg"
-              onPress={() => {
-                if (filtroAtivo === "tipo") setTipoSelecionado(null)
-                if (filtroAtivo === "categoria") setCategoriaSelecionada(null)
-                if (filtroAtivo === "data") setDataSelecionada(null)
-                setModalVisivel(false)
-              }}
-            >
-              <Text className="text-white">Nenhum</Text>
-            </TouchableOpacity>
-            {(filtroAtivo === "tipo" ? tipos :
-              filtroAtivo === "categoria" ? categorias :
-              datas
+            <View className="flex-row justify-between">
+              <Text className="text-white text-xl mb-2">
+                {(filtroAtivo === "tipo"
+                  ? "Tipo"
+                  : filtroAtivo === "categoria"
+                    ? "Categorias"
+                    : "Data") + ":"}
+              </Text>
+              <TouchableOpacity
+                className="p-2 bg-blue-400 rounded-lg"
+                onPress={() => {
+                  if (filtroAtivo === "tipo") setTipoSelecionado(null)
+                  if (filtroAtivo === "categoria") setCategoriaSelecionada(null)
+                  if (filtroAtivo === "data") setDataSelecionada(null)
+                  setModalVisivel(false)
+                }}
+              >
+                <Text className="text-white">Limpar Filtro</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Filtros */}
+            {(filtroAtivo === "tipo"
+              ? tipos
+              : filtroAtivo === "categoria"
+                ? categorias
+                : datas
             ).map((item) => (
               <TouchableOpacity
                 key={item}
@@ -268,7 +410,6 @@ export default function TransactionHistoryScreen() {
                 <Text className="text-white">{item}</Text>
               </TouchableOpacity>
             ))}
-
           </View>
         </TouchableOpacity>
       </Modal>

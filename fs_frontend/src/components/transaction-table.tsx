@@ -1,4 +1,4 @@
-import { FlatList, Text, View } from "react-native"
+import { Text, View } from "react-native"
 import { Transaction } from "../types/transaction/types"
 import { formatCurrency } from "../utils/format-currency"
 
@@ -16,7 +16,7 @@ const TableHeader = () => (
   </View>
 )
 const renderItem = ({ item }: { item: Transaction }) => (
-  <View className="flex-row gap-2 py-1 border-b border-gray-800">
+  <View className="flex-row gap-2 py-1 border-b border-gray-800" key={item.id}>
     <Text className="flex-1 text-white text-xs">{item.date}</Text>
     <Text className="flex-1 text-white text-xs">{item.category}</Text>
     <Text className="flex-1 text-white text-xs" numberOfLines={1}>
@@ -31,13 +31,10 @@ const renderItem = ({ item }: { item: Transaction }) => (
 
 export default function TransactionTable({ data }: TransactionTableProps) {
   return (
-    <FlatList
-      data={data}
-      keyExtractor={(item) => item.id}
-      renderItem={renderItem}
-      ListHeaderComponent={TableHeader}
-      stickyHeaderIndices={[0]} // header fixo
-      contentContainerStyle={{ gap: 6 }}
-    />
+    <View style={{ gap: 6 }}>
+      <TableHeader />
+      {/* Linhas */}
+      {data.map((item) => renderItem({ item }))}
+    </View>
   )
 }
