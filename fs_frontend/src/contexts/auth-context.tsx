@@ -24,8 +24,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const data = await response.data
 
       const userData = {
-        id: data.user_id,
-        name: data.user_name,
+        id: data.id,
+        name: data.name,
         email: email,
       }
       const userToken = data.auth
