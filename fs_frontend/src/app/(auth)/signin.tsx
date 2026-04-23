@@ -13,8 +13,8 @@ import {
 } from "react-native"
 
 export default function SignIn() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const [email, setEmail] = useState("lucas@email")
+  const [password, setPassword] = useState("123")
   const [loading, setLoading] = useState(false)
   const [msgError, setMsgError] = useState("")
   const { signIn } = useAuth()

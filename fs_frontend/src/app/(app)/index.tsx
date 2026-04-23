@@ -8,6 +8,7 @@ import {
   PieGraphData,
 } from "@/src/types/dashboard/types"
 import { Transaction } from "@/src/types/transaction/types"
+import { formatCurrency } from "@/src/utils/format-currency"
 import { Link } from "expo-router"
 import {
   BanknoteArrowDown,
@@ -17,14 +18,7 @@ import {
   Plus,
 } from "lucide-react-native"
 import { JSX, useEffect, useState } from "react"
-import {
-  FlatList,
-  Modal,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native"
+import { Modal, ScrollView, Text, TouchableOpacity, View } from "react-native"
 import { LineChart, PieChart } from "react-native-gifted-charts"
 
 const pieData: PieGraphData[] = [
@@ -142,12 +136,13 @@ export default function Index() {
             strokeWidth={2}
             strokeColor="#333"
           />
-          <FlatList
-            data={dashboardData.pieData}
-            contentContainerStyle={{ gap: 5 }}
-            scrollEnabled={false}
-            renderItem={({ item }) => (
-              <View className="flex-row gap-2">
+          <View className="flex-1 gap-2">
+            {dashboardData.pieData.map((item, index) => (
+              <View
+                key={index}
+                className="flex-row gap-2"
+                style={{ marginBottom: 5 }}
+              >
                 <View
                   style={{
                     backgroundColor: item.color,
@@ -155,11 +150,11 @@ export default function Index() {
                     height: 20,
                     borderRadius: 5,
                   }}
-                ></View>
+                />
                 <Text className="text-white">{item.text}</Text>
               </View>
-            )}
-          />
+            ))}
+          </View>
         </View>
       </>
     ),
@@ -170,25 +165,41 @@ export default function Index() {
           Evolução Mensal (2026)
         </Text>
         <View className="bg-card rounded-lg p-5 mt-2">
+          <View className="flex-1 flex-row justify-center mb-5 gap-5">
+            <View className="flex-row gap-2">
+              <View className="h-5 w-5 bg-sky-300 rounded-md" />
+              <Text className="text-white">Receita</Text>
+            </View>
+
+            <View className="flex-row gap-2">
+              <View className="h-5 w-5 bg-orange-400 rounded-md" />
+              <Text className="text-white">Despesa</Text>
+            </View>
+          </View>
+
           <LineChart
             data={dashboardData.lineData1}
             data2={dashboardData.lineData2}
-            width={250}
+            width={280}
             color1="skyblue"
             color2="orange"
             dataPointsHeight={6}
             dataPointsWidth={6}
             dataPointsColor1="blue"
             dataPointsColor2="red"
-            textFontSize={13}
-            maxValue={2500}
+            textFontSize={12}
+            backgroundColor={"rgb(0 0 0 / 0.7)"}
+            // X axis
+            xAxisColor="#fff"
+            xAxisLabelTextStyle={{ color: "#fff", fontSize: 12 }}
+            // Y axis
             noOfSections={5}
             stepValue={500}
-            xAxisColor="#fff"
+            maxValue={2500}
             yAxisColor="#fff"
-            xAxisLabelTextStyle={{ color: "#fff", fontSize: 12 }}
             yAxisTextStyle={{ color: "#fff", fontSize: 10 }}
-            yAxisLabelPrefix="R$"
+            yAxisLabelWidth={40}
+            yAxisLabelPrefix="R$ "
           />
         </View>
       </>
@@ -238,16 +249,16 @@ export default function Index() {
   return (
     <>
       <ScrollView className="flex-1">
-        <View className="flex-1 bg-background justify-center p-5 gap-2">
+        <View className="flex-1 bg-background justify-center p-2">
           {/* Saldo e Tot. Receita/Despesa */}
           <View className="flex-1 flex-row justify-between gap-2">
             {/* Saldo */}
-            <View className="flex-1 flex-row items-center justify-around bg-card rounded-lg p-2">
-              <Landmark size={40} color={"#DAF1DE"} />
+            <View className="flex-1 flex-row items-center bg-card rounded-lg p-2 gap-2">
+              <Landmark size={60} color={"#DAF1DE"} />
               <View>
                 <Text className="font-bold text-sm text-white">Saldo</Text>
-                <Text className="text-2xl text-white mt-2">
-                  R${dashboardData.balance.toFixed(2)}
+                <Text className="text-3xl text-white">
+                  {formatCurrency(dashboardData.balance)}
                 </Text>
                 <Link href="/transaction-history">
                   <View className="flex-row items-center">
@@ -259,7 +270,7 @@ export default function Index() {
             </View>
 
             {/* Total Receita/Despesa */}
-            <View className="flex-1 bg-card rounded-lg p-2 gap-2">
+            <View className="bg-card rounded-lg p-2 gap-2">
               <View className="flex-row gap-3">
                 <BanknoteArrowUp size={30} color={"#8EB69B"} />
                 <View>
@@ -267,7 +278,7 @@ export default function Index() {
                     Total Receitas
                   </Text>
                   <Text className="text-white">
-                    R${dashboardData.totalIncome.toFixed(2)}
+                    {formatCurrency(dashboardData.totalIncome)}
                   </Text>
                 </View>
               </View>
@@ -279,7 +290,7 @@ export default function Index() {
                     Total Despesas
                   </Text>
                   <Text className="text-white">
-                    R${dashboardData.totalExpense.toFixed(2)}
+                    {formatCurrency(dashboardData.totalExpense)}
                   </Text>
                 </View>
               </View>
@@ -335,14 +346,13 @@ export default function Index() {
         </Modal>
       </ScrollView>
 
+      {/* Transação rápida */}
       <TouchableOpacity
-        className="absolute bottom-5 right-5 bg-accent p-3 rounded-lg"
+        className="flex-row items-center gap-2 absolute bottom-2 right-2 bg-accent p-2 rounded-lg"
         onPress={() => setModalVisible(true)}
       >
-        <View className="flex-row items-center gap-2">
-          <Text className="text-white">Transação rápida</Text>
-          <Plus size={30} color={"#235347"} />
-        </View>
+        <Text className="text-white">Transação rápida</Text>
+        <Plus size={30} color={"#235347"} />
       </TouchableOpacity>
     </>
   )

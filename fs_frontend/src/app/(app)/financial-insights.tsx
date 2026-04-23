@@ -77,9 +77,9 @@ export default function FinancialInsights() {
 
   return (
     <ScrollView>
-      <View className="flex-1 bg-background p-5 gap-8">
+      <View className="flex-1 bg-background p-2 gap-4">
         {/* Gasto por categoria (Total) */}
-        <View className="flex-1">
+        <View className="flex-1 mt-2">
           <Text className="text-white text-2xl font-bold mb-2">
             Gastos por Categorias (Total)
           </Text>
@@ -87,8 +87,9 @@ export default function FinancialInsights() {
             <BarChart
               data={categories}
               disablePress
+              backgroundColor={"rgb(0 0 0 / 0.7)"}
               // 📏 Dimensão
-              width={250}
+              width={280}
               // 🎯 Estilo das barras
               barBorderTopLeftRadius={5}
               barBorderTopRightRadius={5}
@@ -101,8 +102,9 @@ export default function FinancialInsights() {
               xAxisColor="#fff"
               spacing={50}
               initialSpacing={40}
-              endSpacing={10}
+              endSpacing={5}
               // 📊 Eixo Y (labels)
+              yAxisLabelWidth={40}
               yAxisTextStyle={{ color: "#fff", fontSize: 10 }}
               yAxisThickness={1}
               yAxisColor="#fff"
@@ -139,52 +141,59 @@ export default function FinancialInsights() {
             <LineChart
               data={lineData1}
               data2={lineData2}
-              width={250}
+              width={280}
+              backgroundColor={"rgb(0 0 0 / 0.7)"}
               color1="skyblue"
               color2="orange"
               dataPointsHeight={6}
               dataPointsWidth={6}
               dataPointsColor1="blue"
               dataPointsColor2="red"
-              textFontSize={13}
-              maxValue={2500}
+              endSpacing={5}
+              textFontSize={12}
+              // X axis
+              xAxisColor="#fff"
+              xAxisLabelTextStyle={{ color: "#fff", fontSize: 12 }}
+              // Y axis
               noOfSections={5}
               stepValue={500}
-              xAxisColor="#fff"
+              maxValue={2500}
+              yAxisLabelWidth={40}
               yAxisColor="#fff"
-              xAxisLabelTextStyle={{ color: "#fff", fontSize: 12 }}
               yAxisTextStyle={{ color: "#fff", fontSize: 10 }}
               yAxisLabelPrefix="R$"
             />
           </View>
         </View>
 
-        {/* Entrada vc saída (mês) */}
+        {/* Entrada vs saída (mês) */}
         <View className="flex-1">
           <Text className="text-white text-2xl font-bold mb-2">
             Entradas vs Saídas (Mês)
           </Text>
           <View className="bg-card rounded-lg p-5 items-center">
             <BarChart
-              width={200}
               data={data}
-              spacing={60}
-              initialSpacing={50}
-              endSpacing={10}
+              width={280}
+              backgroundColor={"rgb(0 0 0 / 0.7)"}
               barBorderTopLeftRadius={5}
               barBorderTopRightRadius={5}
-              noOfSections={5}
-              maxValue={6000}
+              initialSpacing={60}
+              spacing={100}
+              endSpacing={5}
               xAxisLabelTextStyle={{
                 color: "#fff",
                 fontSize: 10,
               }}
               xAxisColor="#fff"
+              // Y axis
+              noOfSections={5}
+              maxValue={6000}
               yAxisTextStyle={{ color: "#fff", fontSize: 10 }}
               yAxisColor="#fff"
-              rulesColor="#fff"
               yAxisLabelPrefix="R$"
-              yAxisLabelContainerStyle={{ width: 50 }}
+              yAxisLabelWidth={40}
+              rulesColor="#fff"
             />
           </View>
         </View>
@@ -315,6 +324,7 @@ export default function FinancialInsights() {
           </View>
         </View>
       </View>
+
       {show && (
         <DateTimePicker
           value={
