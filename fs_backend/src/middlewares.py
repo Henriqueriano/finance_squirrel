@@ -47,10 +47,11 @@ async def is_authenticated(request: Request, call_next):
         content = {'not allowed' : 'missing authorization header'})
 
     jwt_token: str = request.headers.get("authorization").replace("Bearer", "").strip()
-    if not aux_verify_jwt(jwt_token):
-       return JSONResponse( status_code = 401,
+    if aux_verify_jwt(jwt_token):
+        return response
+
+    return JSONResponse( status_code = 401,
         content = {'user_id': "the user is not authenticated"})
 
-    return response
 # endregion
 

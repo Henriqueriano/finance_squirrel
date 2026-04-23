@@ -32,49 +32,51 @@ async def register(payload: RegisterDto) -> str:
 # region expenses: 
 expenses = APIRouter(prefix = "/expenses")
 @expenses.post('/register/')
-async def bulk_register(payload: list[ExpenseDto], x_request_id : str = Header(None)) -> None:
-    service_response = await expenses_bulk_register_service(payload, x_request_id)
-    if (not service_response):
-        raise HTTPException(
-                status_code=500,
-                detail='server error')
+async def bulk_register(payload: ExpenseRegisterDto) -> list[ExpenseReturnDto]:
+    user_id: str = payload.user_id
+    if not user_id:
+        return JSONResponse(status_code = 400, content = {'msg' : 'user_id cannot be empty'})
 
-@expenses.get('/all/', response_model = list[ExpenseReturnDto])
-async def all_expenses(x_request_id = Header(None)) -> list[ExpenseReturnDto]:
-    if x_request_id == '':
-        raise HTTPException(
-                status_code=400,
-                detail='user_id cannot be None')
-    service_response = await get_expenses(x_request_id)
+    service_response = await expenses_bulk_register_service(user_id, payload)
     if (len(service_response) == 0):
-        raise HTTPException(
-                status_code=500,
-                detail='nothing on the base')
-    return service_response
+        return JSONResponse(status_code = 500, content = {'msg' : 'error while insert data'})
+    print()
+    return JSONResponse(status_code = 200, content = [data.__dict__ for data in service_response])
+
+@expenses.get('/all/')
+async def all_expenses(user_id: str) -> list[ExpenseReturnDto]:
+    if not user_id:
+        return JSONResponse(status_code = 400, content = {'msg' : 'user_id cannot be empty'})
+
+    service_response = await get_expenses(user_id)
+    return JSONResponse(status_code = 200, content = [data.__dict__ for data in service_response])
 
 @expenses.patch('/update/')
-async def update_expense(expense_id: int, payload: ExpenseDto, x_request_id : str = Header(None)) -> None:
-    if expense_id == '':
-        raise HTTPException(
-                status_code=400,
-                detail='expense_id cannot be None')
-    service_response = await update_expense_service(expense_id, x_request_id, payload)
-    if (not service_response):
-        raise HTTPException(
+async def update_expense(payload: ExpenseUpdateDto) -> ExpenseReturnDto:
+    user_id, expense_id = payload.user_id, payload.expense_id
+    if not user_id or not expense_id:
+        return JSONResponse(status_code = 400, content = {'msg' : 'user_id or expense_id cannot be empty'})
+
+    service_response = await update_expense_service(user_id, expense_id, payload.expense)
+    if (service_response.expense_id == -1):
+        return JSONResponse(
                 status_code=500,
-                detail='server error')
+                content= {'msg' : 'Error while updating expense'})
+    return JSONResponse(status_code = 200, content = service_response.__dict__)
 
 @expenses.delete('/delete/')
-async def delete_expense(expense_id: int, x_request_id = Header(None)) -> None:
-    if expense_id is None:
-        raise HTTPException(
-                status_code=400,
-                detail='expense_id cannot be None')
-    service_response = await delete_expense_service(expense_id, x_request_id)
-    if (not service_response):
-        raise HTTPException(
+async def delete_expense(user_id: str, expense_id: int) -> ExpenseReturnDto:
+    if not expense_id or not user_id:
+        return JSONResponse(
+                status_code = 400,
+                content = { 'msg': 'user_id or expense_id cannot be None'} )
+
+    service_response = await delete_expense_service(user_id, expense_id)
+    if (service_response.expense_id == -1):
+        return JSONResponse(
                 status_code=500,
-                detail='server error')
+                content ='Error while deleting')
+    return JSONResponse( status_code = 200, content = service_response.__dict__)
 # endregion
 
 # region categories:

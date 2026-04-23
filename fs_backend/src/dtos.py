@@ -7,6 +7,14 @@ class CategoryDto(BaseModel):
     category_name: str
     category_color: str
 
+class ExpenseReturnDto(BaseModel):
+    expense_id: int
+    expense_value: int
+    expense_date: str
+    expense_type: bool
+    category_id: int
+    expense_desc: str
+
 # endregion
 
 # region dtos
@@ -30,6 +38,15 @@ class ExpenseDto(BaseModel):
     expense_type: bool
     category_id: int
     expense_desc: str
+
+class ExpenseRegisterDto(BaseModel):
+    user_id: str
+    expenses: list[ExpenseDto]
+
+class ExpenseUpdateDto(BaseModel):
+    user_id: str
+    expense_id: int
+    expense: ExpenseDto
 
 class ExpenseReturnDto(BaseModel):
     expense_id: int
