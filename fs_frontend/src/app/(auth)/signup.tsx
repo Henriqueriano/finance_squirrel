@@ -1,20 +1,20 @@
 import { PasswordInput } from "@/src/components/password-input"
 import { useAuth } from "@/src/hooks/use-auth"
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons"
 import { LinearGradient } from "expo-linear-gradient"
 import { useRouter } from "expo-router"
+import { LogIn } from "lucide-react-native"
 import { useState } from "react"
 import { Text, TextInput, TouchableOpacity, View } from "react-native"
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view"
 
 export default function SignUp() {
+  const { signUp } = useAuth()
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const { signUp } = useAuth()
   const router = useRouter()
 
   const handleSignUp = async () => {
@@ -110,9 +110,7 @@ export default function SignUp() {
               {loading ? "Criando..." : "Criar conta"}
             </Text>
 
-            {!loading && (
-              <MaterialCommunityIcons name="login" size={24} color="#8EB69B" />
-            )}
+            {!loading && <LogIn size={24} color="#8EB69B" />}
           </TouchableOpacity>
         </View>
       </LinearGradient>

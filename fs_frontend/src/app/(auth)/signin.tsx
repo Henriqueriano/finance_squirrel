@@ -1,8 +1,8 @@
 import { PasswordInput } from "@/src/components/password-input"
 import { useAuth } from "@/src/hooks/use-auth"
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons"
 import { LinearGradient } from "expo-linear-gradient"
 import { useRouter } from "expo-router"
+import { LogIn } from "lucide-react-native"
 import { useState } from "react"
 import {
   ActivityIndicator,
@@ -95,7 +95,7 @@ export default function SignIn() {
           ) : (
             <>
               <Text className="text-white text-xl">Login</Text>
-              <MaterialCommunityIcons name="login" size={24} color="#8EB69B" />
+              <LogIn size={24} color="#8EB69B" />
             </>
           )}
         </TouchableOpacity>

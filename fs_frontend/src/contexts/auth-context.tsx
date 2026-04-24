@@ -18,7 +18,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   async function signIn(email: string, password: string) {
     try {
       const response = await api.post("/auth/login/", {
-        user_login: email,
+        user_login: email.trim(),
         user_password: password,
       })
       const data = await response.data
@@ -48,8 +48,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   async function signUp(name: string, email: string, password: string) {
     try {
       const bodyData = {
-        user_name: name,
-        user_login: email,
+        user_name: name.trim(),
+        user_login: email.trim(),
         user_password: password,
       }
       const response = await api.post("/auth/register/", bodyData)
