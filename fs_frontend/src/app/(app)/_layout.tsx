@@ -10,7 +10,7 @@ import {
   Layers,
   Settings,
 } from "lucide-react-native"
-import { Text, TouchableOpacity } from "react-native"
+import { TouchableOpacity } from "react-native"
 
 export default function TabLayout() {
   const { user, isAuthenticated } = useAuth()
@@ -75,11 +75,6 @@ export default function TabLayout() {
         options={{
           title: "Registrar",
           headerTitle: "Registro de Transações",
-          headerRight: () => (
-            <TouchableOpacity className="bg-accent p-2 rounded-lg mr-2">
-              <Text className="text-white">Salvar Transações</Text>
-            </TouchableOpacity>
-          ),
           tabBarIcon: ({ color, size }) => (
             <BookmarkPlus size={size} color={color} />
           ),
