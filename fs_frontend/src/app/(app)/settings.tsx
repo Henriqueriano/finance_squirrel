@@ -1,24 +1,33 @@
+import { useTheme } from "@/src/contexts/theme-context"
 import { useAuth } from "@/src/hooks/use-auth"
 import { useDashboard } from "@/src/hooks/use-dashboard"
+import { useThemeColors } from "@/src/hooks/use-theme"
 import { useRouter } from "expo-router"
 import { LeafyGreen, LogOut, Menu, Moon, SunMedium } from "lucide-react-native"
 import { useState } from "react"
 import { Text, TouchableOpacity, View } from "react-native"
 import DraggableFlatList from "react-native-draggable-flatlist"
 
-const themes = [
+type ThemeType = "claro" | "escuro" | "verde"
+
+type ThemeOption = {
+  key: ThemeType
+  label: string
+  icon: React.ReactNode
+}
+const themes: ThemeOption[] = [
   {
-    key: "light",
+    key: "claro",
     label: "claro",
     icon: <SunMedium size={20} color="#fff" />,
   },
   {
-    key: "dark",
+    key: "escuro",
     label: "escuro",
     icon: <Moon size={20} color="#fff" />,
   },
   {
-    key: "green",
+    key: "verde",
     label: "verde",
     icon: <LeafyGreen size={20} color="#fff" />,
   },
@@ -37,6 +46,8 @@ const moneyType = [
 
 export default function SettingsScreen() {
   const { signOut } = useAuth()
+  const { theme, setTheme } = useTheme()
+  const colors = useThemeColors()
   const { dashboardItems, setDashboardItems } = useDashboard()
   const [selectedTheme, setSelectedTheme] = useState("light")
   const [selectedTypeMoney, setSelectedTypeMoney] = useState("real")
@@ -45,26 +56,37 @@ export default function SettingsScreen() {
   const router = useRouter()
 
   return (
-    <View className="flex-1 bg-background p-2 gap-4">
-      <Text className="text-2xl text-white font-bold mt-2">
+    <View
+      className="flex-1 p-2 gap-4"
+      style={{ backgroundColor: colors.background }}
+    >
+      <Text className="text-2xl font-bold mt-2" style={{ color: colors.text }}>
         Personalização:
       </Text>
 
-      <View className="bg-card p-3 rounded-lg gap-4">
+      <View
+        className="p-3 rounded-lg gap-4"
+        style={{ backgroundColor: colors.card }}
+      >
         {/* Temas */}
         <View className="flex-row items-center gap-2">
-          <Text className="flex-1/3 text-white text-xl">Tema:</Text>
+          <Text className="flex-1/3 text-xl" style={{ color: colors.text }}>
+            Tema:
+          </Text>
           <View className="flex-1 flex-row gap-2">
-            {themes.map((theme) => (
+            {themes.map((tm) => (
               <TouchableOpacity
-                key={theme.key}
-                onPress={() => setSelectedTheme(theme.key)}
-                className={`flex-row items-center justify-center p-2 rounded-lg gap-2 flex-1 ${
-                  selectedTheme === theme.key ? "bg-accent" : "bg-transparent"
-                }`}
+                key={tm.key}
+                onPress={() => setTheme(tm.key)}
+                className={`flex-row items-center justify-center p-2 rounded-lg gap-2 flex-1`}
+                style={
+                  theme === tm.key
+                    ? { backgroundColor: colors.accent }
+                    : { backgroundColor: "transparent" }
+                }
               >
-                <Text className="text-white">{theme.label}</Text>
-                {theme.icon}
+                <Text style={{ color: colors.text }}>{tm.label}</Text>
+                {tm.icon}
               </TouchableOpacity>
             ))}
           </View>
