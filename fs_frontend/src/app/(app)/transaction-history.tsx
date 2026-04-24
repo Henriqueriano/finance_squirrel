@@ -1,8 +1,14 @@
+import { useAuth } from "@/src/hooks/use-auth"
+import { api } from "@/src/services/api"
+import { Category } from "@/src/types/category/types"
 import { formatCurrency } from "@/src/utils/format-currency"
+import { formatDateToMonthYear } from "@/src/utils/format-date-to-month-year"
 import { parseDate } from "@/src/utils/parse-date"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import { Redirect } from "expo-router"
 import { ChevronDown } from "lucide-react-native"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { FlatList, Modal, Text, TouchableOpacity, View } from "react-native"
 
 const data = [
@@ -177,7 +183,20 @@ type listItem = {
   type: string
 }
 
+type Expense = {
+  id: string
+  amount: string
+  date: Date
+  type: boolean
+  category: string
+  desc: string
+}
+
 export default function TransactionHistoryScreen() {
+  const { user, isAuthenticated } = useAuth()
+  const [categories, setCategories] = useState<Category[]>([])
+  const [expenses, setExpenses] = useState<Expense[]>([])
+
   const [tipoSelecionado, setTipoSelecionado] = useState<string | null>(null)
   const [categoriaSelecionada, setCategoriaSelecionada] = useState<
     string | null
@@ -192,21 +211,29 @@ export default function TransactionHistoryScreen() {
 
   const tipos = ["Receita", "Despesa"]
 
-  const categorias = [
-    "Alimentação",
-    "Transporte",
-    "Lazer",
-    "Saúde",
-    "Educação",
-    "Moradia",
-  ]
-
   const datas = ["2026", "2025"]
 
-  const finalData = useMemo(() => {
-    let result = [...data]
+  const normalizedData = useMemo(() => {
+    if (!expenses.length || !categories.length) return []
 
-    // 🔎 FILTRO
+    return expenses.map((exp) => {
+      const category = categories.find((cat) => cat.id === exp.category)
+
+      return {
+        id: exp.id,
+        date: formatDateToMonthYear(exp.date), // você pode criar isso
+        categorie: category?.label ?? "Sem categoria",
+        description: exp.desc,
+        value: Number(exp.amount),
+        type: exp.type ? "Receita" : "Despesa",
+      }
+    })
+  }, [expenses, categories])
+
+  const finalData = useMemo(() => {
+    let result = [...normalizedData]
+
+    // FILTRO
     result = result.filter((item) => {
       const matchTipo = tipoSelecionado ? item.type === tipoSelecionado : true
 
@@ -221,7 +248,7 @@ export default function TransactionHistoryScreen() {
       return matchTipo && matchCategoria && matchData
     })
 
-    // 🔃 ORDENAÇÃO
+    // ORDENAÇÃO
     if (ordenarPor === "data") {
       result.sort(
         (a, b) => parseDate(b.date).getTime() - parseDate(a.date).getTime(),
@@ -233,7 +260,13 @@ export default function TransactionHistoryScreen() {
     }
 
     return result
-  }, [data, tipoSelecionado, categoriaSelecionada, dataSelecionada, ordenarPor])
+  }, [
+    normalizedData,
+    tipoSelecionado,
+    categoriaSelecionada,
+    dataSelecionada,
+    ordenarPor,
+  ])
 
   const TableHeader = () => (
     <View className="flex-row gap-2 border-b border-gray-600 py-2 bg-background">
@@ -257,6 +290,75 @@ export default function TransactionHistoryScreen() {
       <Text className="flex-1 text-white text-xs">{item.type}</Text>
     </View>
   )
+
+  useEffect(() => {
+    if (!isAuthenticated || !user?.id) return
+
+    async function getCategories() {
+      try {
+        const token = await AsyncStorage.getItem("@token")
+
+        if (!token) return
+
+        const response = await api.get(`/categories/all/?user_id=${user?.id}`, {
+          headers: {
+            authorization: `Bearer ${token}`,
+          },
+        })
+
+        const formattedCategories = response.data.map((item: any) => ({
+          id: item.category_id,
+          label: item.category_name,
+          color: item.category_color,
+        }))
+
+        setCategories(formattedCategories)
+      } catch (error) {
+        console.error("Erro ao buscar categorias:", error)
+      }
+    }
+
+    getCategories()
+  }, [isAuthenticated, user])
+
+  useEffect(() => {
+    if (!isAuthenticated || !user?.id) return
+
+    async function getExpenses() {
+      try {
+        const token = await AsyncStorage.getItem("@token")
+
+        if (!token) return
+
+        const response = await api.get(`/expenses/all/?user_id=${user?.id}`, {
+          headers: {
+            authorization: `Bearer ${token}`,
+          },
+        })
+
+        const formattedExpenses = response.data.map((item: any) => ({
+          id: item.expense_id,
+          amount: Number(item.expense_value),
+          date: new Date(item.expense_date),
+          type: !!item.expense_type,
+          category: item.category_id,
+          desc: item.expense_desc,
+        }))
+
+        console.log("foi", formattedExpenses)
+
+        setExpenses(formattedExpenses)
+      } catch (error) {
+        console.error("Erro ao buscar expenses:", error)
+      }
+    }
+
+    getExpenses()
+  }, [])
+
+  if (!isAuthenticated) {
+    return <Redirect href="/signin" />
+  }
 
   return (
     <View className="flex-1 bg-background p-2 gap-6">
@@ -393,7 +495,7 @@ export default function TransactionHistoryScreen() {
             {(filtroAtivo === "tipo"
               ? tipos
               : filtroAtivo === "categoria"
-                ? categorias
+                ? categories.map((cat) => cat.label)
                 : datas
             ).map((item) => (
               <TouchableOpacity

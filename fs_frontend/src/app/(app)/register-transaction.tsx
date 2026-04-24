@@ -54,7 +54,7 @@ export default function RegisterTransactionScreen() {
         </TouchableOpacity>
       ),
     })
-  }, [navigation, data])
+  }, [navigation, data, isDisabled])
 
   function handleChangeCategory(id: string, category: Category | null) {
     setData((prev) =>
@@ -101,14 +101,23 @@ export default function RegisterTransactionScreen() {
         console.log("Preencha todos os campos")
         return
       }
+      console.log("Data", data)
 
-      const expenses = data.map((item) => ({
-        expense_value: Number(item.amount.replace(",", ".")),
-        expense_date: item.date?.toISOString(),
-        expense_type: item.type === "receita", // 👈 conversão
-        category_id: item.category?.id,
-        expense_desc: item.description.trim(),
-      }))
+      const expenses = data.map((item) => {
+        const parsedAmount = Number(item.amount.replace(",", ".").trim())
+
+        if (isNaN(parsedAmount)) {
+          throw new Error(`Valor inválido: ${item.amount}`)
+        }
+
+        return {
+          expense_value: parsedAmount,
+          expense_date: item.date!.toISOString(),
+          expense_type: item.type === "receita",
+          category_id: Number(item.category!.id),
+          expense_desc: item.description.trim(),
+        }
+      })
 
       const payload = {
         user_id: user.id,
@@ -117,7 +126,7 @@ export default function RegisterTransactionScreen() {
 
       console.log("Payload:", payload)
 
-      await api.post("/expenses/register", payload, {
+      await api.post("/expenses/register/", payload, {
         headers: {
           authorization: `Bearer ${token}`,
         },
@@ -134,6 +143,7 @@ export default function RegisterTransactionScreen() {
           description: "",
         },
       ])
+      setNextId(2)
     } catch (error) {
       console.error("Erro ao salvar:", error)
     }
