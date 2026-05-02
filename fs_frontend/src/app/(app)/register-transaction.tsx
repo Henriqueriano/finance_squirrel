@@ -2,12 +2,14 @@ import { TransactionListItem } from "@/src/components/transaction-list-item"
 import { useAuth } from "@/src/hooks/use-auth"
 import { api } from "@/src/services/api"
 import { Category } from "@/src/types/category/types"
+import { parseCurrencyToCents } from "@/src/utils/parse-currency-to-cents"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useNavigation } from "@react-navigation/native"
 import { Redirect } from "expo-router"
 import { Plus } from "lucide-react-native"
 import { useEffect, useLayoutEffect, useState } from "react"
-import { FlatList, Text, TouchableOpacity, View } from "react-native"
+import { Text, TouchableOpacity, View } from "react-native"
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view"
 
 type TransactionForm = {
   id: string
@@ -37,9 +39,10 @@ export default function RegisterTransactionScreen() {
   const navigation = useNavigation()
 
   const isDisabled = data.some(
-    (item) => !item.amount || !item.category || !item.description || !item.date,
+    (item) => !item.amount || !item.category || !item.date,
   )
 
+  // Exibir btn salvar no header
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -93,22 +96,16 @@ export default function RegisterTransactionScreen() {
       if (!token || !user?.id) return
 
       const hasInvalid = data.some(
-        (item) =>
-          !item.amount || !item.category || !item.description || !item.date,
+        (item) => !item.amount || !item.category || !item.date,
       )
 
       if (hasInvalid) {
         console.log("Preencha todos os campos")
         return
       }
-      console.log("Data", data)
 
       const expenses = data.map((item) => {
-        const parsedAmount = Number(item.amount.replace(",", ".").trim())
-
-        if (isNaN(parsedAmount)) {
-          throw new Error(`Valor inválido: ${item.amount}`)
-        }
+        const parsedAmount = parseCurrencyToCents(item.amount)
 
         return {
           expense_value: parsedAmount,
@@ -132,7 +129,6 @@ export default function RegisterTransactionScreen() {
         },
       })
 
-      console.log("Salvo com sucesso!")
       setData([
         {
           id: "1",
@@ -143,6 +139,7 @@ export default function RegisterTransactionScreen() {
           description: "",
         },
       ])
+      setCategories([])
       setNextId(2)
     } catch (error) {
       console.error("Erro ao salvar:", error)
@@ -172,6 +169,7 @@ export default function RegisterTransactionScreen() {
     setData((prev) => prev.filter((item) => item.id !== id))
   }
 
+  // Pegar categorias da API
   useEffect(() => {
     async function getCategories() {
       try {
@@ -205,32 +203,35 @@ export default function RegisterTransactionScreen() {
   }
 
   return (
-    <View className="flex-1 bg-background px-2">
-      <FlatList
-        data={data}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item, index }) => (
-          <TransactionListItem
-            cont={index + 1}
-            id={item.id}
-            data={item}
-            categories={categories}
-            onChangeCategory={handleChangeCategory}
-            onChangeDescription={handleChangeDescription}
-            onChangeAmount={handleChangeAmount}
-            onChangeType={handleChangeType}
-            onChangeDate={handleChangeDate}
-            onRemove={removeTransaction}
-            canRemove={index !== 0}
-          />
-        )}
+    <>
+      <KeyboardAwareScrollView
         contentContainerStyle={{
-          gap: 8,
-          paddingTop: 8,
-          paddingBottom: 60,
+          flexGrow: 1,
+          backgroundColor: "#051F20",
         }}
-      />
-
+        enableOnAndroid={true}
+        extraScrollHeight={20}
+      >
+        <View className="flex-1 bg-background px-2 py-3 gap-3">
+          {data.map((item, index) => (
+            <TransactionListItem
+              key={item.id}
+              cont={index + 1}
+              id={item.id}
+              data={item}
+              categories={categories}
+              onChangeCategory={handleChangeCategory}
+              onChangeDescription={handleChangeDescription}
+              onChangeAmount={handleChangeAmount}
+              onChangeType={handleChangeType}
+              onChangeDate={handleChangeDate}
+              onRemove={removeTransaction}
+              canRemove={index !== 0}
+            />
+          ))}
+        </View>
+        <View className="p-10"></View>
+      </KeyboardAwareScrollView>
       <TouchableOpacity
         onPress={addTransaction}
         className="flex-row items-center bg-accent p-2 gap-2 rounded-lg absolute bottom-2 right-2"
@@ -238,6 +239,6 @@ export default function RegisterTransactionScreen() {
         <Text className="text-white">Adicionar Transação</Text>
         <Plus size={30} color="#235347" />
       </TouchableOpacity>
-    </View>
+    </>
   )
 }
