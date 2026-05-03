@@ -14,7 +14,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 ALLOWED_ROUTES = os.getenv('ALLOWED_ROUTES').split(',')
 
 # region aux
-def aux_verify_jwt(my_jwt: str) -> bool:
+def aux_verify_jwt(my_jwt: str) -> str:
     date_format: str = "%Y-%m-%d %H:%M:%S"
     # decode and convert values of payload, this takes me a lot (rage screams) (this really got me a lot)
     payload: str = jwt.decode(my_jwt, SECRET_KEY, algorithms=["HS256"])
@@ -22,9 +22,9 @@ def aux_verify_jwt(my_jwt: str) -> bool:
     now = datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
     user_id = payload["data"].strip()
     if (user_id != '' and (expires_at >= now)):
-        return True
+        return user_id
     
-    return False # zero trust
+    return '' # zero trust
 # endregion 
 
 # region timers middlewares
@@ -38,16 +38,21 @@ async def process_timer(request: Request, call_next):
 
 # region auth middleware
 async def is_authenticated(request: Request, call_next):
-    response = await call_next(request)
     if (request.scope['path'] in ALLOWED_ROUTES): 
+        response = await call_next(request)
         return response # first entry
 
     elif ('authorization' not in request.headers):
         return JSONResponse(status_code = 403,
         content = {'not allowed' : 'missing authorization header'})
 
+
     jwt_token: str = request.headers.get("authorization").replace("Bearer", "").strip()
-    if aux_verify_jwt(jwt_token):
+    user_id: str = aux_verify_jwt(jwt_token)
+    request.state.user_id = user_id
+
+    if user_id:
+        response = await call_next(request)
         return response
 
     return JSONResponse( status_code = 401,

@@ -4,8 +4,8 @@ from pydantic import BaseModel
 
 # region aux
 class CategoryDto(BaseModel):
-    category_name: str
-    category_color: str
+    name: str
+    color: str
 
 class ExpenseReturnDto(BaseModel):
     expense_id: int
@@ -33,42 +33,32 @@ class RegisterDto(BaseModel):
     user_name: str
 
 class ExpenseDto(BaseModel):
-    expense_value: int
-    expense_date: datetime
-    expense_type: bool
+    value: int
+    date: datetime
+    type: bool
     category_id: int
-    expense_desc: str
+    description: str
 
 class ExpenseRegisterDto(BaseModel):
-    user_id: str
-    expenses: list[ExpenseDto]
+    items: list[ExpenseDto]
 
 class ExpenseUpdateDto(BaseModel):
-    user_id: str
     expense_id: int
     expense: ExpenseDto
 
 class ExpenseReturnDto(BaseModel):
-    expense_id: int
-    expense_value: int
-    expense_date: datetime
-    expense_type: bool
+    id: int
+    value: int
+    date: datetime
+    type: bool
+    id: int
     category_id: int
-    expense_desc: str
-
-class ExpenseCategoryDto(BaseModel):
-    user_id: str
-    category: CategoryDto
-
-class ExpenseCategoryUpdateDto(BaseModel):
-    user_id: str
-    category_id: int
-    category: CategoryDto
+    description: str
 
 class ExpenseCategoryReturnDto(BaseModel):
-    category_id: int
-    category_name: str
-    category_color: str
+    id: int
+    name: str
+    color: str
 
 class UserSettingDto(BaseModel):
     theme_config: str

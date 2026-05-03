@@ -2,7 +2,8 @@ import json
 from .dtos import *
 from .services import *
 from fastapi.responses import JSONResponse
-from fastapi import APIRouter, Header
+from fastapi import APIRouter, Request, Header
+
 
 # region auth
 auth = APIRouter(prefix = "/auth")
@@ -31,101 +32,113 @@ async def register(payload: RegisterDto) -> str:
 
 # region expenses: 
 expenses = APIRouter(prefix = "/expenses")
-@expenses.post('/register/')
-async def bulk_register(payload: ExpenseRegisterDto) -> list[ExpenseReturnDto]:
-    user_id: str = payload.user_id
+@expenses.post('/')
+async def bulk_register(payload: ExpenseRegisterDto, request: Request) -> list[ExpenseReturnDto]:
+    user_id: str = request.state.user_id
     if not user_id:
         return JSONResponse(status_code = 400, content = {'msg' : 'user_id cannot be empty'})
 
     service_response = await expenses_bulk_register_service(user_id, payload)
     if (len(service_response) == 0):
         return JSONResponse(status_code = 500, content = {'msg' : 'error while insert data'})
-    print()
+
     return JSONResponse(status_code = 200, content = [data.__dict__ for data in service_response])
 
-@expenses.get('/all/')
-async def all_expenses(user_id: str) -> list[ExpenseReturnDto]:
+@expenses.get('/')
+async def all_expenses(request: Request) -> list[ExpenseReturnDto]:
+    user_id: str = request.state.user_id
     if not user_id:
         return JSONResponse(status_code = 400, content = {'msg' : 'user_id cannot be empty'})
 
     service_response = await get_expenses(user_id)
     return JSONResponse(status_code = 200, content = [data.__dict__ for data in service_response])
 
-@expenses.patch('/update/')
-async def update_expense(payload: ExpenseUpdateDto) -> ExpenseReturnDto:
-    user_id, expense_id = payload.user_id, payload.expense_id
+@expenses.patch('/{expense_id}')
+async def update_expense(payload: ExpenseDto,
+                         request: Request,
+                         expense_id: int) -> ExpenseReturnDto:
+    user_id, expense_id = request.state.user_id, expense_id
     if not user_id or not expense_id:
         return JSONResponse(status_code = 400, content = {'msg' : 'user_id or expense_id cannot be empty'})
-
-    service_response = await update_expense_service(user_id, expense_id, payload.expense)
-    if (service_response.expense_id == -1):
+    service_response = await update_expense_service(user_id, expense_id, payload)
+    if (service_response.id == -1):
         return JSONResponse(
                 status_code=500,
                 content= {'msg' : 'Error while updating expense'})
     return JSONResponse(status_code = 200, content = service_response.__dict__)
 
-@expenses.delete('/delete/')
-async def delete_expense(user_id: str, expense_id: int) -> ExpenseReturnDto:
+@expenses.delete('/{expense_id}')
+async def delete_expense(expense_id: int,
+                         request: Request) -> ExpenseReturnDto:
+    user_id: str = request.state.user_id
     if not expense_id or not user_id:
         return JSONResponse(
                 status_code = 400,
                 content = { 'msg': 'user_id or expense_id cannot be None'} )
 
     service_response = await delete_expense_service(user_id, expense_id)
-    if (service_response.expense_id == -1):
+    if (service_response.id == -1):
         return JSONResponse(
                 status_code=500,
-                content ='Error while deleting')
+                content ={ 'msg' : 'Error while deleting'})
     return JSONResponse( status_code = 200, content = service_response.__dict__)
 # endregion
 
 # region categories:
 categories = APIRouter(prefix = "/categories")
-@categories.post('/register/')
-async def categories_register(payload: ExpenseCategoryDto) -> JSONResponse:
-    service_response = await categories_register_service(payload.user_id, payload.category)
-    if service_response.category_id == -1:
+@categories.post('/')
+async def categories_register(payload: CategoryDto,
+                              request: Request) -> JSONResponse:
+    user_id: str = request.state.user_id
+    service_response = await categories_register_service(user_id, payload)
+    if service_response.id == -1:
         return JSONResponse( status_code = 500,
                content = { 'msg' : 'server error while saving' })
 
     return JSONResponse(status_code = 200, content = service_response.__dict__)
 
-@categories.delete('/delete/')
-async def delete_category(category_id : int, user_id: str) -> JSONResponse :
+@categories.delete('/{category_id}')
+async def delete_category(category_id: int,
+                          request: Request) -> JSONResponse :
+    user_id: str = request.state.user_id
     if not category_id or not user_id:
             return JSONResponse( status_code = 404,
             content = {'msg' : 'missing category id or user id'})
 
     service_response = await delete_category_service(user_id, category_id)
-    if service_response.category_id == -1:
+    if service_response.id == -1:
         return JSONResponse( status_code = 500,
                content = { 'msg' : 'server error while deleting or category don\'t exists' })
 
     return JSONResponse(status_code = 200, content = service_response.__dict__)
 
-@categories.patch('/update/', response_model = None)
-async def update_category(payload: ExpenseCategoryUpdateDto) -> JSONResponse:
-    if not payload.user_id:
+@categories.patch('/{category_id}', response_model = None)
+async def update_category(category_id: int,
+                          payload: CategoryDto,
+                          request: Request) -> JSONResponse:
+    user_id: str = request.state.user_id
+    if not user_id:
       raise JSONResponse(
                 status_code = 404,
                 content = { 'msg' : 'user_id cannot be None'} )
                 
-    service_response = await update_category_service(payload)     
-    if service_response.category_id == -1:
+    service_response = await update_category_service(category_id, user_id, payload)     
+    if service_response.id == -1:
          return JSONResponse( status_code = 500,
                content = { 'msg' : 'server error while updating' })
 
     return JSONResponse(status_code = 200, content = service_response.__dict__)
 
-@categories.get('/all/', response_model = list[ExpenseCategoryReturnDto])
-async def get_all_categories(user_id: str) -> list[ExpenseCategoryReturnDto]:
+@categories.get('/', response_model = list[ExpenseCategoryReturnDto])
+async def get_all_categories(request: Request) -> list[ExpenseCategoryReturnDto]:
+    user_id: str = request.state.user_id
     if not user_id:
        raise JSONResponse(
                 status_code = 404,
                 content = { 'msg' : 'user_id cannot be None'} )
 
     service_response = await get_all_categories_service(user_id)
-    if service_response[0].category_id == -1:
+    if service_response[0].id == -1:
         return JSONResponse( status_code = 500,
                content = { 'msg' : 'server error while getting data' })
             
