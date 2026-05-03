@@ -4,7 +4,6 @@ from .services import *
 from fastapi.responses import JSONResponse
 from fastapi import APIRouter, Request, Header
 
-
 # region auth
 auth = APIRouter(prefix = "/auth")
 @auth.post('/login/')
@@ -164,4 +163,19 @@ async def get_setting(x_request_id: str = Header('X-request-id')) -> UserSetting
         raise HTTPException(status_code=500,
                          detail='server error')
     return service_response
+# endregion
+
+# region computed endpoints
+computed = APIRouter(prefix = '/computed')
+@computed.get('/categorical')
+async def categories_expenses(request: Request) -> JSONResponse:
+    user_id: str = request.state.user_id
+    service_response = await categories_expenses_service(user_id)
+    return JSONResponse(status_code = 200, content = service_response)
+
+@computed.get('/balance')
+async def total_expenses(request: Request) -> dict:
+    user_id: str = request.state.user_id
+    service_response = await total_balance_service(user_id)
+    return JSONResponse(status_code = 200, content = service_response)
 # endregion

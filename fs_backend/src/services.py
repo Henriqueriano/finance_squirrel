@@ -8,7 +8,7 @@ from datetime import datetime
 from datetime import timedelta
 from dotenv import load_dotenv
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine, select, update, delete
+from sqlalchemy import create_engine, select, update, delete, func
 
 # environment setup
 load_dotenv()
@@ -382,3 +382,44 @@ async def get_settings_service(payload: UserSettingDto, user_id: str) -> UserSet
             print(data)
     except:
         return ''
+# endregion
+
+# region computed
+async def categories_expenses_service(user_id: str) -> dict:
+    backdata : dict = {} 
+    query = select(ExpenseCategoryModel.category_name,
+            func.sum(ExpenseModel.expense_value)).join(ExpenseModel,
+            ExpenseCategoryModel.category_id == ExpenseModel.category_id
+            ).where(ExpenseModel.user_id == user_id).group_by(ExpenseCategoryModel.category_name) 
+    try: 
+        engine = create_engine(DATABASE_URL)
+        Session = sessionmaker(bind = engine)
+        with Session() as session:
+            data = session.execute(query)
+            for k, v in data:
+                backdata[f'{k}'] = v
+            return backdata
+    except Exception as e:
+        print(f'Exception in categories_expenses_service > {e}')
+        return backdata
+
+async def total_balance_service(user_id: str) -> dict:
+    backdata : dict = {'receitas' : 0, 'despesas' : 0}
+    query = select(ExpenseModel.expense_type,
+                   func.sum(ExpenseModel.expense_value)).where(ExpenseModel.user_id == user_id
+                   ).group_by(ExpenseModel.expense_type)
+    try: 
+        engine = create_engine(DATABASE_URL)
+        Session = sessionmaker(bind = engine)
+        with Session() as session:
+            data = session.execute(query)
+            for k, v in data:
+                if k:
+                    backdata['receitas'] = v
+                    continue
+                backdata['despesas'] = v
+            return backdata
+
+    except Exception as e:
+        print(f'Exception in total_balance_service > {e}')
+        return backdata
