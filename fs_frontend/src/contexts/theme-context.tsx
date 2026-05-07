@@ -1,24 +1,19 @@
-import { createContext, ReactNode, useContext, useState } from "react"
+import { createContext, ReactNode, useMemo, useState } from "react"
+import { themes } from "../themes/themes"
+import { ThemeContextType, ThemeType } from "../types/themes/types"
 
-type ThemeType = "claro" | "escuro" | "verde"
-
-type ThemeContextType = {
-  theme: ThemeType
-  setTheme: (theme: ThemeType) => void
-}
-
-const ThemeContext = createContext({} as ThemeContextType)
+export const ThemeContext = createContext({} as ThemeContextType)
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<ThemeType>("verde")
 
-  return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
-      {children}
-    </ThemeContext.Provider>
-  )
-}
+  const value = useMemo(() => {
+    return {
+      theme,
+      setTheme,
+      colors: themes[theme],
+    }
+  }, [theme])
 
-export function useTheme() {
-  return useContext(ThemeContext)
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
 }

@@ -1,5 +1,12 @@
-import { useEffect, useState } from "react"
-import { Text, TextInput, TouchableOpacity, View } from "react-native"
+import { useEffect, useMemo, useState } from "react"
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native"
+import { useTheme } from "../hooks/use-theme"
 import { Category } from "../types/category/types"
 import { DateField } from "./date-field"
 import { InputField } from "./input-field"
@@ -53,6 +60,23 @@ export function TransactionListItem({
     cat.label.toLowerCase().includes(normalizedSearch),
   )
 
+  const { colors } = useTheme()
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        card: {
+          backgroundColor: colors.card,
+        },
+        text: {
+          color: colors.text,
+        },
+        btn: {
+          backgroundColor: colors.btn,
+        },
+      }),
+    [colors],
+  )
+
   useEffect(() => {
     if (data.category) {
       setSearch(data.category.label)
@@ -60,10 +84,12 @@ export function TransactionListItem({
   }, [data.category])
 
   return (
-    <View className="bg-card rounded-xl p-4">
+    <View className="rounded-xl p-4" style={styles.card}>
       {/* HEADER */}
       <View className="flex-row justify-between items-center">
-        <Text className="text-white text-2xl font-bold">Transação {cont}</Text>
+        <Text className="text-2xl font-bold" style={styles.text}>
+          Transação {cont}
+        </Text>
 
         {canRemove && (
           <TouchableOpacity onPress={() => onRemove(id)}>
@@ -76,18 +102,17 @@ export function TransactionListItem({
       <View className="gap-4 mt-4">
         {/* Tipo */}
         <View className="flex-row items-center gap-2">
-          <Text className="text-white">Tipo de Transação:</Text>
+          <Text style={styles.text}>Tipo de Transação:</Text>
 
           <View className="flex-1 flex-row gap-2">
             {transactions.map((transaction) => (
               <TouchableOpacity
                 key={transaction.key}
                 onPress={() => onChangeType(id, transaction.key as any)}
-                className={`flex-1 flex-row items-center justify-center p-2 rounded-lg ${
-                  data.type === transaction.key ? "bg-accent" : "bg-transparent"
-                }`}
+                className="flex-1 flex-row items-center justify-center p-2 rounded-lg"
+                style={data.type === transaction.key ? styles.btn : ""}
               >
-                <Text className="text-white">{transaction.label}</Text>
+                <Text style={styles.text}>{transaction.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -111,7 +136,9 @@ export function TransactionListItem({
 
         {/* Categoria */}
         <View className="flex-row items-center gap-3 z-10">
-          <Text className="text-white w-24">Categoria:</Text>
+          <Text className="w-24" style={styles.text}>
+            Categoria:
+          </Text>
           <View className="flex-1 relative">
             <TextInput
               className="flex-1 bg-white rounded-lg px-3 py-2"
@@ -150,7 +177,7 @@ export function TransactionListItem({
 
         {/* Descrição */}
         <View className="gap-2">
-          <Text className="text-white">Descrição:</Text>
+          <Text style={styles.text}>Descrição:</Text>
           <TextInput
             className="bg-white rounded-lg px-3 py-3 h-28"
             multiline

@@ -1,6 +1,8 @@
 import { useAuth } from "@/src/hooks/use-auth"
+import { useTheme } from "@/src/hooks/use-theme"
 import { api } from "@/src/services/api"
 import { Category } from "@/src/types/category/types"
+import { capitalizeFirstLetter } from "@/src/utils/capitalize-first-letter"
 import { formatCurrency } from "@/src/utils/format-currency"
 import { formatDateToMonthYear } from "@/src/utils/format-date-to-month-year"
 import { parseDate } from "@/src/utils/parse-date"
@@ -8,7 +10,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage"
 import { Redirect, useFocusEffect } from "expo-router"
 import { ChevronDown } from "lucide-react-native"
 import { useCallback, useMemo, useState } from "react"
-import { FlatList, Modal, Text, TouchableOpacity, View } from "react-native"
+import {
+  FlatList,
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native"
 
 type listItem = {
   id: string
@@ -28,6 +37,8 @@ type Expense = {
   desc: string
 }
 
+const tipos = ["Receita", "Despesa"]
+
 export default function TransactionHistoryScreen() {
   const { user, isAuthenticated } = useAuth()
   const [categories, setCategories] = useState<Category[]>([])
@@ -45,7 +56,28 @@ export default function TransactionHistoryScreen() {
   >(null)
   const [ordenarPor, setOrdenarPor] = useState<"data" | "valor">("data")
 
-  const tipos = ["Receita", "Despesa"]
+  const { colors } = useTheme()
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          backgroundColor: colors.background,
+        },
+        card: {
+          backgroundColor: colors.card,
+        },
+        text: {
+          color: colors.text,
+        },
+        btn: {
+          backgroundColor: colors.btn,
+        },
+        accent: {
+          color: colors.accent,
+        },
+      }),
+    [colors],
+  )
 
   const datas = useMemo(() => {
     if (!expenses.length) return []
@@ -113,25 +145,45 @@ export default function TransactionHistoryScreen() {
   ])
 
   const TableHeader = () => (
-    <View className="flex-row gap-2 border-b border-gray-600 py-2 bg-background">
-      <Text className="flex-1 text-accent font-bold text-xs">Data</Text>
-      <Text className="flex-1 text-accent font-bold text-xs">Categoria</Text>
-      <Text className="flex-1 text-accent font-bold text-xs">Descrição</Text>
-      <Text className="flex-1 text-accent font-bold text-xs">Valor</Text>
-      <Text className="flex-1 text-accent font-bold text-xs">Tipo</Text>
+    <View
+      className="flex-row gap-2 border-b border-gray-600 py-2"
+      style={styles.container}
+    >
+      <Text className="flex-1 font-bold text-xs" style={styles.accent}>
+        Data
+      </Text>
+      <Text className="flex-1 font-bold text-xs" style={styles.accent}>
+        Categoria
+      </Text>
+      <Text className="flex-1 font-bold text-xs" style={styles.accent}>
+        Descrição
+      </Text>
+      <Text className="flex-1 font-bold text-xs" style={styles.accent}>
+        Valor
+      </Text>
+      <Text className="flex-1 font-bold text-xs" style={styles.accent}>
+        Tipo
+      </Text>
     </View>
   )
+
   const renderItem = ({ item }: { item: listItem }) => (
     <View className="flex-row gap-2 py-1 border-b border-gray-800">
-      <Text className="flex-1 text-white text-xs">{item.date}</Text>
-      <Text className="flex-1 text-white text-xs">{item.categorie}</Text>
-      <Text className="flex-1 text-white text-xs" numberOfLines={1}>
+      <Text className="flex-1 text-xs" style={styles.text}>
+        {item.date}
+      </Text>
+      <Text className="flex-1 text-xs" style={styles.text}>
+        {item.categorie}
+      </Text>
+      <Text className="flex-1 text-xs" style={styles.text} numberOfLines={1}>
         {item.description}
       </Text>
-      <Text className="flex-1 text-white text-xs">
+      <Text className="flex-1 text-xs" style={styles.text}>
         {formatCurrency(item.value)}
       </Text>
-      <Text className="flex-1 text-white text-xs">{item.type}</Text>
+      <Text className="flex-1 text-xs" style={styles.text}>
+        {item.type}
+      </Text>
     </View>
   )
 
@@ -207,68 +259,76 @@ export default function TransactionHistoryScreen() {
   }
 
   return (
-    <View className="flex-1 bg-background p-2 gap-6">
+    <View className="flex-1 p-2 gap-6" style={styles.container}>
       <View className="gap-4">
         {/* FILTROS */}
         <View className="gap-2">
-          <Text className="text-white text-2xl font-bold mt-2">Filtros:</Text>
-          <View className="flex-row gap-2 bg-card p-2 rounded-lg items-center">
+          <Text className="text-2xl font-bold mt-2" style={styles.text}>
+            Filtros:
+          </Text>
+          <View
+            className="flex-row gap-2 p-2 rounded-lg items-center"
+            style={styles.card}
+          >
             <TouchableOpacity
-              className="flex-1 bg-accent p-2 rounded-lg justify-center"
+              className="flex-1 p-2 rounded-lg justify-center"
               onPress={() => {
                 setFiltroAtivo("tipo")
                 setModalVisivel(true)
               }}
+              style={styles.btn}
             >
               {tipoSelecionado ? (
                 <View className="flex-row justify-between items-center">
-                  <Text className="text-white">{tipoSelecionado}</Text>
-                  <ChevronDown size={24} color="#235347" />
+                  <Text style={styles.text}>{tipoSelecionado}</Text>
+                  <ChevronDown size={24} color={colors.icon} />
                 </View>
               ) : (
                 <View className="flex-row justify-between items-center">
-                  <Text className="text-white">Tipo</Text>
-                  <ChevronDown size={24} color="#235347" />
+                  <Text style={styles.text}>Tipo</Text>
+                  <ChevronDown size={24} color={colors.icon} />
                 </View>
               )}
             </TouchableOpacity>
 
             <TouchableOpacity
-              className="flex-1 bg-accent p-2 rounded-lg"
+              className="flex-1 p-2 rounded-lg"
               onPress={() => {
                 setFiltroAtivo("categoria")
                 setModalVisivel(true)
               }}
+              style={styles.btn}
             >
               {categoriaSelecionada ? (
                 <View className="flex-row justify-between items-center">
-                  <Text className="text-white">{categoriaSelecionada}</Text>
-                  <ChevronDown size={24} color="#235347" />
+                  <Text style={styles.text}>{categoriaSelecionada}</Text>
+                  <ChevronDown size={24} color={colors.icon} />
                 </View>
               ) : (
                 <View className="flex-row justify-between items-center">
-                  <Text className="text-white">Categoria</Text>
-                  <ChevronDown size={24} color="#235347" />
+                  <Text style={styles.text}>Categoria</Text>
+                  <ChevronDown size={24} color={colors.icon} />
                 </View>
               )}
             </TouchableOpacity>
 
             <TouchableOpacity
-              className="flex-1 bg-accent p-2 rounded-lg"
+              className="flex-1 p-2 rounded-lg"
               onPress={() => {
                 setFiltroAtivo("data")
                 setModalVisivel(true)
               }}
+              style={styles.btn}
             >
               {dataSelecionada ? (
                 <View className="flex-row justify-between items-center">
-                  <Text className="text-white">{dataSelecionada}</Text>
-                  <ChevronDown size={24} color="#235347" />
+                  <Text style={styles.text}>{dataSelecionada}</Text>
+                  <ChevronDown size={24} color={colors.icon} />
                 </View>
               ) : (
                 <View className="flex-row justify-between items-center">
-                  <Text className="text-white">Data</Text>
-                  <ChevronDown size={24} color="#235347" />
+                  <Text style={styles.text}>Data</Text>
+                  <ChevronDown size={24} color={colors.icon} />
                 </View>
               )}
             </TouchableOpacity>
@@ -277,24 +337,27 @@ export default function TransactionHistoryScreen() {
 
         {/* ORDENAÇÃO */}
         <View className="gap-2">
-          <Text className="text-white text-2xl font-bold">Ordenar por:</Text>
-          <View className="flex-row bg-card p-2 rounded-lg justify-between">
+          <Text className=" text-2xl font-bold" style={styles.text}>
+            Ordenar por:
+          </Text>
+          <View
+            className="flex-row p-2 rounded-lg justify-between"
+            style={styles.card}
+          >
             <TouchableOpacity
-              className={`w-[50%] py-2 rounded-lg justify-center items-center ${
-                ordenarPor === "data" ? "bg-accent" : ""
-              }`}
+              className="w-[50%] py-2 rounded-lg justify-center items-center"
+              style={ordenarPor === "data" ? styles.btn : ""}
               onPress={() => setOrdenarPor("data")}
             >
-              <Text className="text-white">Data</Text>
+              <Text style={styles.text}>Data</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              className={`w-[50%] py-2 rounded-lg justify-center items-center ${
-                ordenarPor === "valor" ? "bg-accent" : ""
-              }`}
+              className="w-[50%] py-2 rounded-lg justify-center items-center"
+              style={ordenarPor === "valor" ? styles.btn : ""}
               onPress={() => setOrdenarPor("valor")}
             >
-              <Text className="text-white">Valor</Text>
+              <Text style={styles.text}>Valor</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -315,14 +378,11 @@ export default function TransactionHistoryScreen() {
           className="flex-1 bg-black/50 justify-center items-center"
           onPress={() => setModalVisivel(false)}
         >
-          <View className="bg-card w-4/5 rounded-xl p-4 gap-2">
+          <View className="w-4/5 rounded-xl p-4 gap-2" style={styles.card}>
+            {/* Título e Btn limpar */}
             <View className="flex-row justify-between">
-              <Text className="text-white text-xl mb-2">
-                {(filtroAtivo === "tipo"
-                  ? "Tipo"
-                  : filtroAtivo === "categoria"
-                    ? "Categorias"
-                    : "Data") + ":"}
+              <Text className="text-xl mb-2" style={styles.text}>
+                {capitalizeFirstLetter(filtroAtivo?.toString()) + ":"}
               </Text>
               <TouchableOpacity
                 className="p-2 bg-blue-400 rounded-lg"
@@ -333,7 +393,7 @@ export default function TransactionHistoryScreen() {
                   setModalVisivel(false)
                 }}
               >
-                <Text className="text-white">Limpar Filtro</Text>
+                <Text style={styles.text}>Limpar Filtro</Text>
               </TouchableOpacity>
             </View>
 
@@ -346,7 +406,8 @@ export default function TransactionHistoryScreen() {
             ).map((item) => (
               <TouchableOpacity
                 key={item}
-                className="p-2 bg-accent rounded-lg"
+                className="p-2 rounded-lg"
+                style={styles.btn}
                 onPress={() => {
                   if (filtroAtivo === "tipo") setTipoSelecionado(item)
                   if (filtroAtivo === "categoria") setCategoriaSelecionada(item)
@@ -355,7 +416,7 @@ export default function TransactionHistoryScreen() {
                   setModalVisivel(false)
                 }}
               >
-                <Text className="text-white">{item}</Text>
+                <Text style={styles.text}>{item}</Text>
               </TouchableOpacity>
             ))}
           </View>

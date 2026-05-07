@@ -1,7 +1,7 @@
-import { DateField } from "@/src/components/date-field"
 import { InputField } from "@/src/components/input-field"
 import TransactionTable from "@/src/components/transaction-table"
 import { useDashboard } from "@/src/hooks/use-dashboard"
+import { useTheme } from "@/src/hooks/use-theme"
 import {
   DashboardData,
   LineGraphData,
@@ -17,8 +17,15 @@ import {
   Landmark,
   Plus,
 } from "lucide-react-native"
-import { JSX, useEffect, useState } from "react"
-import { Modal, ScrollView, Text, TouchableOpacity, View } from "react-native"
+import { JSX, useEffect, useMemo, useState } from "react"
+import {
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native"
 import { LineChart, PieChart } from "react-native-gifted-charts"
 
 const pieData: PieGraphData[] = [
@@ -120,18 +127,44 @@ export default function Index() {
   const [modalVisible, setModalVisible] = useState(false)
   const { dashboardItems } = useDashboard()
 
+  const { colors } = useTheme()
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          backgroundColor: colors.background,
+        },
+        card: {
+          backgroundColor: colors.card,
+        },
+        text: {
+          color: colors.text,
+        },
+        anchor: {
+          color: colors.anchor,
+        },
+        btn: {
+          backgroundColor: colors.btn,
+        },
+      }),
+    [colors],
+  )
+
   const dashboardComponents: Record<DashboardItemId, () => JSX.Element> = {
     category: () => (
       <>
-        <Text className="text-2xl text-white font-bold mt-5">
+        <Text className="text-2xl font-bold mt-5" style={styles.text}>
           Gastos por Categoria (Mês)
         </Text>
-        <View className="flex-row bg-card rounded-lg items-center gap-5 p-5 mt-2">
+        <View
+          className="flex-row rounded-lg items-center gap-5 p-5 mt-2"
+          style={styles.card}
+        >
           <PieChart
             radius={100}
             data={relativeDataPercent}
             showText
-            textColor="#fff"
+            textColor={colors.text}
             textSize={14}
             strokeWidth={2}
             strokeColor="#333"
@@ -151,7 +184,7 @@ export default function Index() {
                     borderRadius: 5,
                   }}
                 />
-                <Text className="text-white">{item.text}</Text>
+                <Text style={styles.text}>{item.text}</Text>
               </View>
             ))}
           </View>
@@ -161,19 +194,19 @@ export default function Index() {
 
     monthly: () => (
       <>
-        <Text className="text-2xl text-white font-bold mt-5">
+        <Text className="text-2xl font-bold mt-5" style={styles.text}>
           Evolução Mensal (2026)
         </Text>
-        <View className="bg-card rounded-lg p-5 mt-2">
+        <View className="rounded-lg p-5 mt-2" style={styles.card}>
           <View className="flex-1 flex-row justify-center mb-5 gap-5">
             <View className="flex-row gap-2">
               <View className="h-5 w-5 bg-sky-300 rounded-md" />
-              <Text className="text-white">Receita</Text>
+              <Text style={styles.text}>Receita</Text>
             </View>
 
             <View className="flex-row gap-2">
               <View className="h-5 w-5 bg-orange-400 rounded-md" />
-              <Text className="text-white">Despesa</Text>
+              <Text style={styles.text}>Despesa</Text>
             </View>
           </View>
 
@@ -190,14 +223,14 @@ export default function Index() {
             textFontSize={12}
             backgroundColor={"rgb(0 0 0 / 0.7)"}
             // X axis
-            xAxisColor="#fff"
-            xAxisLabelTextStyle={{ color: "#fff", fontSize: 12 }}
+            xAxisColor={colors.text}
+            xAxisLabelTextStyle={{ color: colors.text, fontSize: 12 }}
             // Y axis
             noOfSections={5}
             stepValue={500}
             maxValue={2500}
-            yAxisColor="#fff"
-            yAxisTextStyle={{ color: "#fff", fontSize: 10 }}
+            yAxisColor={colors.text}
+            yAxisTextStyle={{ color: colors.text, fontSize: 10 }}
             yAxisLabelWidth={40}
             yAxisLabelPrefix="R$ "
           />
@@ -207,7 +240,7 @@ export default function Index() {
 
     recent: () => (
       <>
-        <Text className="text-2xl text-white font-bold mt-5">
+        <Text className="text-2xl font-bold mt-5" style={styles.text}>
           Últimas Movimentações (Mês)
         </Text>
         <TransactionTable data={dashboardData.transactions} />
@@ -249,35 +282,40 @@ export default function Index() {
   return (
     <>
       <ScrollView className="flex-1">
-        <View className="flex-1 bg-background justify-center p-2">
+        <View className="flex-1 justify-center p-2" style={styles.container}>
           {/* Saldo e Tot. Receita/Despesa */}
           <View className="flex-1 flex-row justify-between gap-2">
             {/* Saldo */}
-            <View className="flex-1 flex-row items-center bg-card rounded-lg p-2 gap-2">
-              <Landmark size={60} color={"#DAF1DE"} />
+            <View
+              className="flex-1 flex-row items-center rounded-lg p-2 gap-2"
+              style={styles.card}
+            >
+              <Landmark size={60} color={colors.text} />
               <View>
-                <Text className="font-bold text-sm text-white">Saldo</Text>
-                <Text className="text-3xl text-white">
+                <Text className="font-bold text-sm" style={styles.text}>
+                  Saldo
+                </Text>
+                <Text className="text-3xl" style={styles.text}>
                   {formatCurrency(dashboardData.balance)}
                 </Text>
                 <Link href="/transaction-history">
                   <View className="flex-row items-center">
-                    <Text className="text-accent">Ver histórico</Text>
-                    <ChevronRight size={14} color={"#8EB69B"} />
+                    <Text style={styles.anchor}>Ver histórico</Text>
+                    <ChevronRight size={14} color={colors.anchor} />
                   </View>
                 </Link>
               </View>
             </View>
 
             {/* Total Receita/Despesa */}
-            <View className="bg-card rounded-lg p-2 gap-2">
+            <View className="rounded-lg p-2 gap-2" style={styles.card}>
               <View className="flex-row gap-3">
                 <BanknoteArrowUp size={30} color={"#8EB69B"} />
                 <View>
-                  <Text className="text-white font-bold text-sm">
+                  <Text className="font-bold text-sm" style={styles.text}>
                     Total Receitas
                   </Text>
-                  <Text className="text-white">
+                  <Text style={styles.text}>
                     {formatCurrency(dashboardData.totalIncome)}
                   </Text>
                 </View>
@@ -286,10 +324,10 @@ export default function Index() {
               <View className="flex-row gap-3">
                 <BanknoteArrowDown size={30} color={"#DB5461"} />
                 <View>
-                  <Text className="text-white font-bold text-sm">
+                  <Text className="font-bold text-sm" style={styles.text}>
                     Total Despesas
                   </Text>
-                  <Text className="text-white">
+                  <Text style={styles.text}>
                     {formatCurrency(dashboardData.totalExpense)}
                   </Text>
                 </View>
@@ -303,57 +341,59 @@ export default function Index() {
             return <View key={item.id}>{Component?.()}</View>
           })}
         </View>
-
-        {/* Modal para Transação Rápida */}
-        <Modal visible={modalVisible} transparent animationType="fade">
-          <TouchableOpacity
-            className="flex-1 justify-center items-center bg-black/50"
-            activeOpacity={1}
-            onPressOut={() => setModalVisible(false)}
-          >
-            <TouchableOpacity activeOpacity={1} className="w-[90%]">
-              <View className="bg-card p-5 rounded-2xl gap-4">
-                <Text className="text-white text-xl font-bold">
-                  Transação Rápida
-                </Text>
-
-                <InputField
-                  label="Valor:"
-                  placeholder="0,00"
-                  keyboardType="numeric"
-                  leftElement={<Text className="text-gray-500">R$</Text>}
-                />
-
-                {/* Data */}
-                <DateField />
-
-                {/* Botões */}
-                <View className="flex-row items-center justify-end gap-3 mt-3">
-                  <TouchableOpacity
-                    onPress={() => {
-                      setModalVisible(false)
-                    }}
-                  >
-                    <Text className="text-white">Sair</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity className="px-4 py-2 rounded-lg bg-accent">
-                    <Text className="text-white">Salvar</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </TouchableOpacity>
-          </TouchableOpacity>
-        </Modal>
       </ScrollView>
 
       {/* Transação rápida */}
       <TouchableOpacity
-        className="flex-row items-center gap-2 absolute bottom-2 right-2 bg-accent p-2 rounded-lg"
+        className="flex-row items-center gap-2 absolute bottom-2 right-2 p-2 rounded-lg"
         onPress={() => setModalVisible(true)}
+        style={styles.btn}
       >
-        <Text className="text-white">Transação rápida</Text>
-        <Plus size={30} color={"#235347"} />
+        <Text style={styles.text}>Transação rápida</Text>
+        <Plus size={30} color={colors.icon} />
       </TouchableOpacity>
+
+      {/* Modal para Transação Rápida */}
+      <Modal visible={modalVisible} transparent animationType="fade">
+        <TouchableOpacity
+          className="flex-1 justify-center items-center bg-black/50"
+          activeOpacity={1}
+          onPressOut={() => setModalVisible(false)}
+        >
+          <TouchableOpacity activeOpacity={1} className="w-[90%]">
+            <View className="p-5 rounded-2xl gap-4" style={styles.card}>
+              <Text className="text-xl font-bold" style={styles.text}>
+                Transação Rápida
+              </Text>
+
+              <InputField
+                label="Valor:"
+                placeholder="0,00"
+                keyboardType="numeric"
+                leftElement={<Text className="text-gray-500">R$</Text>}
+              />
+
+              {/* Data */}
+              {/* <DateField /> */}
+
+              {/* Botões */}
+              <View className="flex-row items-center justify-end gap-3 mt-3">
+                <TouchableOpacity
+                  onPress={() => {
+                    setModalVisible(false)
+                  }}
+                >
+                  <Text style={styles.text}>Sair</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity className="px-4 py-2 rounded-lg bg-accent">
+                  <Text style={styles.text}>Salvar</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </>
   )
 }

@@ -1,5 +1,6 @@
 import { TransactionListItem } from "@/src/components/transaction-list-item"
 import { useAuth } from "@/src/hooks/use-auth"
+import { useTheme } from "@/src/hooks/use-theme"
 import { api } from "@/src/services/api"
 import { Category } from "@/src/types/category/types"
 import { parseCurrencyToCents } from "@/src/utils/parse-currency-to-cents"
@@ -7,8 +8,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useNavigation } from "@react-navigation/native"
 import { Redirect } from "expo-router"
 import { Plus } from "lucide-react-native"
-import { useEffect, useLayoutEffect, useState } from "react"
-import { Text, TouchableOpacity, View } from "react-native"
+import { useEffect, useLayoutEffect, useMemo, useState } from "react"
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native"
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view"
 
 type TransactionForm = {
@@ -42,6 +43,30 @@ export default function RegisterTransactionScreen() {
     (item) => !item.amount || !item.category || !item.date,
   )
 
+  const { colors } = useTheme()
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          flexGrow: 1,
+          backgroundColor: colors.background,
+        },
+        background: {
+          backgroundColor: colors.background,
+        },
+        text: {
+          color: colors.text,
+        },
+        btn: {
+          backgroundColor: colors.btn,
+        },
+        btnConfirm: {
+          backgroundColor: colors.btnConfirm,
+        },
+      }),
+    [colors],
+  )
+
   // Exibir btn salvar no header
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -49,11 +74,10 @@ export default function RegisterTransactionScreen() {
         <TouchableOpacity
           onPress={handleSave}
           disabled={isDisabled}
-          className={`p-2 rounded-lg mr-2 ${
-            isDisabled ? "bg-gray-400" : "bg-accent"
-          }`}
+          className={`p-2 mr-2 rounded-lg  ${isDisabled ? "bg-gray-400" : ""}`}
+          style={isDisabled ? "" : styles.btnConfirm}
         >
-          <Text className="text-white">Salvar Transações</Text>
+          <Text style={styles.text}>Salvar Transações</Text>
         </TouchableOpacity>
       ),
     })
@@ -205,14 +229,11 @@ export default function RegisterTransactionScreen() {
   return (
     <>
       <KeyboardAwareScrollView
-        contentContainerStyle={{
-          flexGrow: 1,
-          backgroundColor: "#051F20",
-        }}
+        contentContainerStyle={styles.container}
         enableOnAndroid={true}
         extraScrollHeight={20}
       >
-        <View className="flex-1 bg-background px-2 py-3 gap-3">
+        <View className="flex-1 px-2 py-3 gap-3" style={styles.background}>
           {data.map((item, index) => (
             <TransactionListItem
               key={item.id}
@@ -234,10 +255,11 @@ export default function RegisterTransactionScreen() {
       </KeyboardAwareScrollView>
       <TouchableOpacity
         onPress={addTransaction}
-        className="flex-row items-center bg-accent p-2 gap-2 rounded-lg absolute bottom-2 right-2"
+        className="flex-row items-center p-2 gap-2 rounded-lg absolute bottom-2 right-2"
+        style={styles.btn}
       >
-        <Text className="text-white">Adicionar Transação</Text>
-        <Plus size={30} color="#235347" />
+        <Text style={styles.text}>Adicionar Transação</Text>
+        <Plus size={30} color={colors.icon} />
       </TouchableOpacity>
     </>
   )
