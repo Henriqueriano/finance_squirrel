@@ -258,9 +258,9 @@ async def categories_register_service(user_id: str, payload: CategoryDto) -> Exp
             session.commit()
 
             # setup data:
-            backdata.category_id = data.id
-            backdata.category_name = data.name
-            backdata.category_color = data.color
+            backdata.id = data.category_id
+            backdata.name = data.category_name
+            backdata.color = data.category_color
 
             return backdata
     except Exception as e :
@@ -291,6 +291,7 @@ async def update_category_service(category_id: int, user_id: str, payload: Categ
             backdata.name = db.category_name
             backdata.color = db.category_color
             return backdata
+
     except Exception as e:
         print(e)
         return backdata
