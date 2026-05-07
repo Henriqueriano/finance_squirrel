@@ -327,11 +327,7 @@ async def delete_category_service(user_id: str, category_id: int) -> ExpenseCate
         return backdata
 
 async def get_all_categories_service(user_id: str) -> list[ExpenseCategoryReturnDto]:
-    backdata: list[ExpenseCategoryReturnDto] = [ExpenseCategoryReturnDto(
-                id = -1,
-                name = '',
-                color = ''
-            )]
+    backdata: list[ExpenseCategoryReturnDto] = []
     statement = select(ExpenseCategoryModel).where(ExpenseCategoryModel.user_id == user_id)
     try:
         engine = create_engine(DATABASE_URL)

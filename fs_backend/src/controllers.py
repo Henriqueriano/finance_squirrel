@@ -137,10 +137,6 @@ async def get_all_categories(request: Request) -> list[ExpenseCategoryReturnDto]
                 content = { 'msg' : 'user_id cannot be None'} )
 
     service_response = await get_all_categories_service(user_id)
-    if service_response[0].id == -1:
-        return JSONResponse( status_code = 500,
-               content = { 'msg' : 'server error while getting data' })
-            
     return JSONResponse(status_code = 200, content = [data.__dict__ for data in service_response])
 # endregion
 
