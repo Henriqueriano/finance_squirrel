@@ -15,6 +15,11 @@ class ExpenseReturnDto(BaseModel):
     category_id: int
     expense_desc: str
 
+class AllCategoriesReturnDto(BaseModel):
+    id: int
+    value: int
+    color: str
+    name: str
 # endregion
 
 # region dtos

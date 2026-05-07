@@ -167,7 +167,7 @@ computed = APIRouter(prefix = '/computed')
 async def categories_expenses(request: Request) -> JSONResponse:
     user_id: str = request.state.user_id
     service_response = await categories_expenses_service(user_id)
-    return JSONResponse(status_code = 200, content = service_response)
+    return JSONResponse(status_code = 200, content = [data.__dict__ for data in service_response])
 
 @computed.get('/balance')
 async def total_expenses(request: Request) -> dict:
