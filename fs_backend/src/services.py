@@ -388,7 +388,7 @@ async def categories_expenses_service(user_id: str) -> dict:
             func.sum(ExpenseModel.expense_value)).join(ExpenseModel,
             ExpenseCategoryModel.category_id == ExpenseModel.category_id
             ).where(ExpenseModel.user_id == user_id,
-                    ExpenseModel.expense_type == 't').group_by(ExpenseCategoryModel.category_name) 
+                    ExpenseModel.expense_type == 'f').group_by(ExpenseCategoryModel.category_name) 
     try: 
         engine = create_engine(DATABASE_URL)
         Session = sessionmaker(bind = engine)
