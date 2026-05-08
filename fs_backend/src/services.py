@@ -410,7 +410,7 @@ async def categories_expenses_service(user_id: str) -> list[AllCategoriesReturnD
 
 async def total_balance_service(user_id: str) -> dict:
     backdata : dict = {'receitas' : 0, 'despesas' : 0}
-    query = select(ExpenseModel,
+    query = select(ExpenseModel.expense_type,
                    func.sum(ExpenseModel.expense_value)).where(ExpenseModel.user_id == user_id
                    ).group_by(ExpenseModel.expense_type)
     try: 
