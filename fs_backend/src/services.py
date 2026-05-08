@@ -8,7 +8,7 @@ from datetime import datetime
 from datetime import timedelta
 from dotenv import load_dotenv
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine, select, update, delete
+from sqlalchemy import create_engine, select, update, delete, func
 
 # environment setup
 load_dotenv()
@@ -113,11 +113,11 @@ async def register_service(payload: RegisterDto) -> AuthReturnDto:
 async def expenses_bulk_register_service(user_id: str, payload: list[ExpenseDto]) -> list[ExpenseReturnDto]: 
     data: list[ExpenseModel] = [ExpenseModel(
         user_id = user_id,
-        expense_value = e.expense_value,
-        expense_date = e.expense_date,
-        expense_type = e.expense_type,
+        expense_value = e.value,
+        expense_date = e.date,
+        expense_type = e.type,
         category_id = e.category_id,
-        expense_desc = e.expense_desc) for e in payload.expenses]
+        expense_desc = e.description) for e in payload.items]
     statement = select(ExpenseModel).where(ExpenseModel.user_id == user_id)
     backdata: list[ExpenseReturnDto] = []
     try:
@@ -130,16 +130,16 @@ async def expenses_bulk_register_service(user_id: str, payload: list[ExpenseDto]
             for exp in data:
                 session.refresh(exp)
                 backdata.append(ExpenseReturnDto(
-                    expense_id = exp.expense_id,
-                    expense_value = exp.expense_value,
-                    expense_date = exp.expense_date,
-                    expense_type = exp.expense_type,
+                    id = exp.expense_id,
+                    value = exp.expense_value,
+                    date = exp.expense_date,
+                    type = exp.expense_type,
                     category_id = exp.category_id,
-                    expense_desc = exp.expense_desc
+                    description = exp.expense_desc
                 ))
 
         for exp in backdata:
-            exp.expense_date = str(exp.expense_date)
+            exp.date = exp.date.strftime("%Y-%m-%dT%H:%M:%SZ")
 
         return backdata
 
@@ -157,15 +157,15 @@ async def get_expenses(user_id: str) -> list[ExpenseReturnDto]:
             db_data = session.scalars(statement).all()
             for d in db_data:
                 backdata.append(ExpenseReturnDto(
-                expense_id = d.expense_id,
-                expense_value = d.expense_value,
-                expense_date = str(d.expense_date),
-                expense_type = d.expense_type,
+                id = d.expense_id,
+                value = d.expense_value,
+                date = d.expense_date,
+                type = d.expense_type,
                 category_id = d.category_id,
-                expense_desc = d.expense_desc))
+                description = d.expense_desc))
 
             for d in backdata:
-                d.expense_date = str(d.expense_date)
+                d.date = d.date.strftime("%Y-%m-%dT%H:%M:%SZ")
 
             print(backdata)
             return backdata
@@ -176,19 +176,19 @@ async def get_expenses(user_id: str) -> list[ExpenseReturnDto]:
 async def update_expense_service(user_id, expense_id, payload: ExpenseDto) -> ExpenseReturnDto:
     sel_statement = select(ExpenseModel).where(ExpenseModel.expense_id == expense_id)
     statement = update(ExpenseModel).values(
-            expense_value = payload.expense_value,
-            expense_date = payload.expense_date,
-            expense_type = payload.expense_type,
+            expense_value = payload.value,
+            expense_date = payload.date,
+            expense_type = payload.type,
             category_id = payload.category_id,
-            expense_desc = payload.expense_desc).where(
+            expense_desc = payload.description).where(
                     ExpenseModel.expense_id == expense_id 
                     and ExpenseModel.user_id == user_id)
-    backdata: ExpenseReturnDto = ExpenseReturnDto(expense_id = -1, 
-                    expense_value = -1,
-                    expense_date = datetime.now(),
-                    expense_type = False,
+    backdata: ExpenseReturnDto = ExpenseReturnDto(id = -1, 
+                    value = -1,
+                    date = datetime.now(),
+                    type = False,
                     category_id = -1,
-                    expense_desc = '')   
+                    description = '')   
 
     try: 
         engine = create_engine(DATABASE_URL)
@@ -198,12 +198,12 @@ async def update_expense_service(user_id, expense_id, payload: ExpenseDto) -> Ex
             if db_data:        
                 session.execute(statement)
                 session.commit()
-                backdata.expense_id = db_data.expense_id
-                backdata.expense_value = db_data.expense_value
-                backdata.expense_date = str(db_data.expense_date)
-                backdata.expense_type = db_data.expense_type
+                backdata.id = db_data.expense_id
+                backdata.value = db_data.expense_value
+                backdata.date = str(db_data.expense_date)
+                backdata.type = db_data.expense_type
                 backdata.category_id = db_data.category_id
-                backdata.expense_desc = db_data.expense_desc
+                backdata.description = db_data.expense_desc
             return backdata
     except Exception as e:
         raise Exception(f'Update expense service error > {e}')
@@ -214,24 +214,24 @@ async def delete_expense_service(user_id: str, expense_id: int) -> ExpenseReturn
             ExpenseModel.expense_id == expense_id,
             ExpenseModel.user_id == user_id)
     backdata: ExpenseReturnDto = ExpenseReturnDto(
-                    expense_id = -1, 
-                    expense_value = -1,
-                    expense_date = datetime.now(timezone.utc),
-                    expense_type = False,
+                    id = -1, 
+                    value = -1,
+                    date = datetime.now(timezone.utc),
+                    type = False,
                     category_id = -1,
-                    expense_desc = '')
+                    description = '')
     try: 
         engine = create_engine(DATABASE_URL)
         session = sessionmaker(bind=engine)
         with session() as session:
             db_data = session.scalar(sel_statement)
             if db_data:        
-                backdata.expense_id = db_data.expense_id
-                backdata.expense_value = db_data.expense_value
-                backdata.expense_date = str(db_data.expense_date)
-                backdata.expense_type = db_data.expense_type
+                backdata.id = db_data.expense_id
+                backdata.value = db_data.expense_value
+                backdata.date = str(db_data.expense_date)
+                backdata.type = db_data.expense_type
                 backdata.category_id = db_data.category_id
-                backdata.expense_desc = db_data.expense_desc
+                backdata.description = db_data.expense_desc
                 session.execute(statement)
                 session.commit()
             return backdata
@@ -242,12 +242,12 @@ async def delete_expense_service(user_id: str, expense_id: int) -> ExpenseReturn
 # region categoryes 
 async def categories_register_service(user_id: str, payload: CategoryDto) -> ExpenseCategoryReturnDto:
     backdata: ExpenseCategoryReturnDto = ExpenseCategoryReturnDto( 
-                                            category_id = -1,
-                                            category_name = '',
-                                            category_color = '')
+                                            id = -1,
+                                            name = '',
+                                            color = '')
     data: ExpenseCategoryModel = ExpenseCategoryModel(
-            category_name = payload.category_name,
-            category_color = payload.category_color,
+            category_name = payload.name,
+            category_color = payload.color,
             user_id = user_id) 
     try:
         engine = create_engine(DATABASE_URL)
@@ -258,26 +258,26 @@ async def categories_register_service(user_id: str, payload: CategoryDto) -> Exp
             session.commit()
 
             # setup data:
-            backdata.category_id = data.category_id
-            backdata.category_name = data.category_name
-            backdata.category_color = data.category_color
+            backdata.id = data.category_id
+            backdata.name = data.category_name
+            backdata.color = data.category_color
 
             return backdata
     except Exception as e :
         raise Exception(f'Error in categories register service > {e}')
 
-async def update_category_service(payload: ExpenseCategoryUpdateDto) -> ExpenseCategoryReturnDto:
+async def update_category_service(category_id: int, user_id: str, payload: CategoryDto) -> ExpenseCategoryReturnDto:
     backdata: ExpenseCategoryReturnDto = ExpenseCategoryReturnDto(
-               category_id = -1,
-               category_name = '',
-               category_color = ''
+               id = -1,
+               name = '',
+               color = ''
             )
     sel_statement = select(ExpenseCategoryModel).where(
-            ExpenseCategoryModel.category_id == payload.category_id)
+            ExpenseCategoryModel.category_id == category_id)
  
     query = update(ExpenseCategoryModel).where(
-            ExpenseCategoryModel.user_id == payload.user_id,
-            ExpenseCategoryModel.category_id == payload.category_id).values(payload.category.__dict__)
+            ExpenseCategoryModel.user_id == user_id,
+            ExpenseCategoryModel.category_id == category_id).values(category_name = payload.name, category_color = payload.color)
 
     try:
         engine = create_engine(DATABASE_URL)
@@ -287,19 +287,20 @@ async def update_category_service(payload: ExpenseCategoryUpdateDto) -> ExpenseC
             session.execute(query)
             session.commit()
 
-            backdata.category_id = db.category_id
-            backdata.category_name = db.category_name
-            backdata.category_color = db.category_color
+            backdata.id = db.category_id
+            backdata.name = db.category_name
+            backdata.color = db.category_color
             return backdata
+
     except Exception as e:
         print(e)
         return backdata
                         
 async def delete_category_service(user_id: str, category_id: int) -> ExpenseCategoryReturnDto:
     backdata: ExpenseCategoryReturnDto = ExpenseCategoryReturnDto(
-               category_id = -1,
-               category_name = '',
-               category_color = ''
+               id = -1,
+               name = '',
+               color = ''
             )
     sel_statement = select(ExpenseCategoryModel).where(
             ExpenseCategoryModel.category_id == category_id)
@@ -315,9 +316,9 @@ async def delete_category_service(user_id: str, category_id: int) -> ExpenseCate
             if db == None:
                 return backdata
             
-            backdata.category_id = db.category_id
-            backdata.category_name = db.category_name
-            backdata.category_color = db.category_color
+            backdata.id = db.category_id
+            backdata.name = db.category_name
+            backdata.color = db.category_color
             session.execute(del_statement)
             session.commit()
             return backdata
@@ -326,11 +327,7 @@ async def delete_category_service(user_id: str, category_id: int) -> ExpenseCate
         return backdata
 
 async def get_all_categories_service(user_id: str) -> list[ExpenseCategoryReturnDto]:
-    backdata: list[ExpenseCategoryReturnDto] = [ExpenseCategoryReturnDto(
-                category_id = -1,
-                category_name = '',
-                category_color = ''
-            )]
+    backdata: list[ExpenseCategoryReturnDto] = []
     statement = select(ExpenseCategoryModel).where(ExpenseCategoryModel.user_id == user_id)
     try:
         engine = create_engine(DATABASE_URL)
@@ -342,9 +339,9 @@ async def get_all_categories_service(user_id: str) -> list[ExpenseCategoryReturn
 
             backdata = []
             backdata: list[ExpenseCategoryReturnDto] = [ExpenseCategoryReturnDto(
-                category_id = d.category_id,
-                category_name = d.category_name,
-                category_color = d.category_color) for d in db_data]
+                id = d.category_id,
+                name = d.category_name,
+                color = d.category_color) for d in db_data]
             return backdata
     except Exception as e:
         print(e)
@@ -382,3 +379,52 @@ async def get_settings_service(payload: UserSettingDto, user_id: str) -> UserSet
             print(data)
     except:
         return ''
+# endregion
+
+# region computed
+async def categories_expenses_service(user_id: str) -> list[AllCategoriesReturnDto]:
+    backdata : list[AllCategoriesReturnDto] = []
+    query = select(
+            ExpenseCategoryModel.category_id,
+            ExpenseCategoryModel.category_name,
+            ExpenseCategoryModel.category_color,
+            func.sum(ExpenseModel.expense_value)).join(ExpenseModel,
+            ExpenseCategoryModel.category_id == ExpenseModel.category_id
+            ).where(ExpenseModel.user_id == user_id,
+                    ExpenseModel.expense_type == 'f').group_by(ExpenseCategoryModel.category_id) 
+    try: 
+        engine = create_engine(DATABASE_URL)
+        Session = sessionmaker(bind = engine)
+        with Session() as session:
+            data = session.execute(query)
+            for id, name, color, value in data:
+                backdata.append(AllCategoriesReturnDto(
+                    id = id,
+                    name = name,
+                    color = color,
+                    value = value))
+            return backdata
+    except Exception as e:
+        print(f'Exception in categories_expenses_service > {e}')
+        return backdata
+
+async def total_balance_service(user_id: str) -> dict:
+    backdata : dict = {'receitas' : 0, 'despesas' : 0}
+    query = select(ExpenseModel.expense_type,
+                   func.sum(ExpenseModel.expense_value)).where(ExpenseModel.user_id == user_id
+                   ).group_by(ExpenseModel.expense_type)
+    try: 
+        engine = create_engine(DATABASE_URL)
+        Session = sessionmaker(bind = engine)
+        with Session() as session:
+            data = session.execute(query)
+            for k, v in data:
+                if k:
+                    backdata['receitas'] = v
+                    continue
+                backdata['despesas'] = v
+            return backdata
+
+    except Exception as e:
+        print(f'Exception in total_balance_service > {e}')
+        return backdata
