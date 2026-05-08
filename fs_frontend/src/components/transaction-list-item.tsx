@@ -14,7 +14,7 @@ import { InputField } from "./input-field"
 type TransactionForm = {
   id: string
   type: "despesa" | "receita"
-  amount: string
+  value: string
   date: Date | null
   category: Category | null
   description: string
@@ -28,7 +28,7 @@ interface TransactionListItemProps {
   onChangeCategory: (id: string, category: Category | null) => void
   onChangeDescription: (id: string, description: string) => void
   onChangeType: (id: string, type: "receita" | "despesa") => void
-  onChangeAmount: (id: string, amount: string) => void
+  onChangeValue: (id: string, value: string) => void
   onChangeDate: (id: string, date: Date | null) => void
   onRemove: (id: string) => void
   canRemove: boolean
@@ -50,14 +50,14 @@ export function TransactionListItem({
   onChangeDescription,
   onChangeDate,
   onChangeType,
-  onChangeAmount,
+  onChangeValue,
 }: TransactionListItemProps) {
-  const [search, setSearch] = useState(data.category?.label || "")
+  const [search, setSearch] = useState(data.category?.name || "")
 
   const normalizedSearch = search.toLowerCase()
 
   const filteredCategories = categories.filter((cat) =>
-    cat.label.toLowerCase().includes(normalizedSearch),
+    cat.name.toLowerCase().includes(normalizedSearch),
   )
 
   const { colors } = useTheme()
@@ -79,7 +79,7 @@ export function TransactionListItem({
 
   useEffect(() => {
     if (data.category) {
-      setSearch(data.category.label)
+      setSearch(data.category.name)
     }
   }, [data.category])
 
@@ -123,8 +123,8 @@ export function TransactionListItem({
           label="Valor:"
           placeholder="0,00"
           keyboardType="numeric"
-          value={data.amount}
-          onChangeText={(text) => onChangeAmount(id, text)}
+          value={data.value}
+          onChangeText={(text) => onChangeValue(id, text)}
           leftElement={<Text className="text-gray-500">R$</Text>}
         />
 
@@ -163,10 +163,10 @@ export function TransactionListItem({
                       key={cat.id}
                       onPress={() => {
                         onChangeCategory(id, cat)
-                        setSearch(cat.label)
+                        setSearch(cat.name)
                       }}
                     >
-                      <Text>{cat.label}</Text>
+                      <Text>{cat.name}</Text>
                     </TouchableOpacity>
                   ))
                 )}

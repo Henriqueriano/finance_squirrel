@@ -30,14 +30,14 @@ type listItem = {
 
 type Expense = {
   id: string
-  amount: string
+  value: string
   date: Date
   type: boolean
   category: string
   desc: string
 }
 
-const tipos = ["Receita", "Despesa"]
+const expenseTypes = ["Receita", "Despesa"]
 
 export default function TransactionHistoryScreen() {
   const { user, isAuthenticated } = useAuth()
@@ -98,9 +98,9 @@ export default function TransactionHistoryScreen() {
       return {
         id: exp.id,
         date: formatDateToMonthYear(exp.date),
-        categorie: category?.label ?? "Sem categoria",
+        categorie: category?.name ?? "Sem categoria",
         description: exp.desc,
-        value: Number(exp.amount),
+        value: Number(exp.value),
         type: exp.type ? "Receita" : "Despesa",
       }
     })
@@ -187,6 +187,7 @@ export default function TransactionHistoryScreen() {
     </View>
   )
 
+  // GET categories
   useFocusEffect(
     useCallback(() => {
       if (!isAuthenticated || !user?.id) return
@@ -197,22 +198,13 @@ export default function TransactionHistoryScreen() {
 
           if (!token) return
 
-          const response = await api.get(
-            `/categories/all/?user_id=${user?.id}`,
-            {
-              headers: {
-                authorization: `Bearer ${token}`,
-              },
+          const response = await api.get("/categories/", {
+            headers: {
+              authorization: `Bearer ${token}`,
             },
-          )
+          })
 
-          const formattedCategories = response.data.map((item: any) => ({
-            id: item.category_id,
-            label: item.category_name,
-            color: item.category_color,
-          }))
-
-          setCategories(formattedCategories)
+          setCategories(response.data)
         } catch (error) {
           console.error("Erro ao buscar categorias:", error)
         }
@@ -222,6 +214,7 @@ export default function TransactionHistoryScreen() {
     }, [isAuthenticated, user]),
   )
 
+  // GET expenses
   useFocusEffect(
     useCallback(() => {
       async function getExpenses() {
@@ -229,19 +222,19 @@ export default function TransactionHistoryScreen() {
           const token = await AsyncStorage.getItem("@token")
           if (!token || !user?.id) return
 
-          const response = await api.get(`/expenses/all/?user_id=${user?.id}`, {
+          const response = await api.get("/expenses/", {
             headers: {
               authorization: `Bearer ${token}`,
             },
           })
 
           const formattedExpenses = response.data.map((item: any) => ({
-            id: item.expense_id,
-            amount: Number(item.expense_value),
-            date: new Date(item.expense_date),
-            type: !!item.expense_type,
+            id: item.id,
+            value: Number(item.value) / 100,
+            date: new Date(item.date),
+            type: !!item.type,
             category: item.category_id,
-            desc: item.expense_desc,
+            desc: item.description,
           }))
 
           setExpenses(formattedExpenses)
@@ -399,9 +392,9 @@ export default function TransactionHistoryScreen() {
 
             {/* Filtros */}
             {(filtroAtivo === "tipo"
-              ? tipos
+              ? expenseTypes
               : filtroAtivo === "categoria"
-                ? categories.map((cat) => cat.label)
+                ? categories.map((cat) => cat.name)
                 : datas
             ).map((item) => (
               <TouchableOpacity

@@ -60,6 +60,7 @@ export default function TabLayout() {
         name="financial-insights"
         options={{
           title: "Análise",
+          headerTitle: "Análise Financeira",
           tabBarIcon: ({ color, size }) => (
             <ChartNoAxesCombined size={size} color={color} />
           ),

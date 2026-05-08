@@ -1,7 +1,12 @@
+import { useAuth } from "@/src/hooks/use-auth"
 import { useTheme } from "@/src/hooks/use-theme"
+import { api } from "@/src/services/api"
 import { LineGraphData } from "@/src/types/dashboard/types"
+import { roundUp } from "@/src/utils/round-up"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 import DateTimePicker from "@react-native-community/datetimepicker"
-import { useMemo, useState } from "react"
+import { Redirect } from "expo-router"
+import { useEffect, useMemo, useState } from "react"
 import {
   ScrollView,
   StyleSheet,
@@ -10,16 +15,6 @@ import {
   View,
 } from "react-native"
 import { BarChart, LineChart } from "react-native-gifted-charts"
-
-const categories = [
-  { id: "1", value: 850.0, frontColor: "#fb923c", label: "Moradia" },
-  { id: "2", value: 100.0, frontColor: "#c084fc", label: "Alimentação" },
-  { id: "3", value: 200.0, frontColor: "#818cf8", label: "Lazer" },
-  { id: "4", value: 200.0, frontColor: "#38bdf8", label: "Transporte" },
-  { id: "5", value: 300.0, frontColor: "#22c55e", label: "Investimentos" },
-  { id: "6", value: 600.0, frontColor: "#f87171", label: "Mercado" },
-  { id: "7", value: 500.0, frontColor: "#f87171", label: "Shopping" },
-]
 
 const lineData1: LineGraphData[] = [
   { value: 1200, label: "jan" },
@@ -51,12 +46,28 @@ const lineData2: LineGraphData[] = [
   { value: 2300, label: "dez" },
 ]
 
-const data = [
-  { label: "Receita", value: 5920.5, frontColor: "#f00" },
-  { label: "Despesa", value: 3789.95, frontColor: "#0ff" },
-]
+type TotalCategory = {
+  id: string
+  label: string
+  value: number
+  frontColor: string
+}
+
+type TotalBalance = {
+  label: string
+  value: number
+  frontColor: string
+}
 
 export default function FinancialInsights() {
+  const { user, isAuthenticated } = useAuth()
+  // Category
+  const [totalCategories, setTotalCategories] = useState<TotalCategory[]>([])
+  const [maxCategoriesValue, setMaxCategoriesValue] = useState(0)
+  // Balance
+  const [totalBalance, setTotalBalance] = useState<TotalBalance[]>([])
+  const [maxBalanceValue, setMaxBalanceValue] = useState(0)
+
   const [date1, setDate1] = useState<Date | null>(null)
   const [date2, setDate2] = useState<Date | null>(null)
   const [activeField, setActiveField] = useState<"date1" | "date2" | null>(null)
@@ -99,6 +110,83 @@ export default function FinancialInsights() {
     })
   }
 
+  // Gastos por Categoria
+  useEffect(() => {
+    async function getTotalCategories() {
+      try {
+        const token = await AsyncStorage.getItem("@token")
+
+        if (!token) return
+
+        const response = await api.get("/computed/categorical", {
+          headers: {
+            authorization: `Bearer ${token}`,
+          },
+        })
+
+        const formatted = response.data.map((item: any) => ({
+          id: item.id,
+          label: item.name,
+          value: Number(item.value) / 100,
+          frontColor: item.color,
+        }))
+        const maxValue = Math.max(...formatted.map((item: any) => item.value))
+        const roundedMax = roundUp(maxValue, 100)
+
+        setMaxCategoriesValue(roundedMax)
+        setTotalCategories(formatted)
+      } catch (err) {
+        console.log("Erro ao buscar total categorias:", err)
+      }
+    }
+
+    getTotalCategories()
+  }, [user])
+
+  // Entrada vs Saída
+  useEffect(() => {
+    async function getTotalBalance() {
+      try {
+        const token = await AsyncStorage.getItem("@token")
+
+        if (!token) return
+
+        const response = await api.get("/computed/balance", {
+          headers: {
+            authorization: `Bearer ${token}`,
+          },
+        })
+
+        const formatted = [
+          {
+            label: "Receitas",
+            value: Number(response.data.receitas) / 100,
+            frontColor: "#f00",
+          },
+          {
+            label: "Despesas",
+            value: Number(response.data.despesas) / 100,
+            frontColor: "#ff0",
+          },
+        ]
+
+        const maxValue = Math.max(...formatted.map((item: any) => item.value))
+        const roundedMax = roundUp(maxValue, 100)
+
+        setMaxBalanceValue(roundedMax)
+        setTotalBalance(formatted)
+      } catch (err) {
+        console.log("Erro ao buscar total despesas/receitas:", err)
+      }
+    }
+
+    getTotalBalance()
+  }, [user])
+
+  if (!isAuthenticated) {
+    return <Redirect href="/signin" />
+  }
+
   return (
     <ScrollView>
       <View className="flex-1 p-2 gap-4" style={styles.container}>
@@ -109,7 +197,7 @@ export default function FinancialInsights() {
           </Text>
           <View className="rounded-lg p-5" style={styles.card}>
             <BarChart
-              data={categories}
+              data={totalCategories}
               disablePress
               backgroundColor={"rgb(0 0 0 / 0.7)"}
               // 📏 Dimensão
@@ -133,8 +221,8 @@ export default function FinancialInsights() {
               yAxisThickness={1}
               yAxisColor={colors.text}
               noOfSections={5}
-              stepValue={200}
-              maxValue={1000}
+              // stepValue={200}
+              maxValue={maxCategoriesValue}
               yAxisLabelPrefix="R$"
               // 🔢 Valores nas barras
               // showValuesAsTopLabel
@@ -197,7 +285,7 @@ export default function FinancialInsights() {
           </Text>
           <View className="rounded-lg p-5 items-center" style={styles.card}>
             <BarChart
-              data={data}
+              data={totalBalance}
               width={280}
               backgroundColor={"rgb(0 0 0 / 0.7)"}
               barBorderTopLeftRadius={5}
@@ -212,7 +300,7 @@ export default function FinancialInsights() {
               xAxisColor={colors.text}
               // Y axis
               noOfSections={5}
-              maxValue={6000}
+              maxValue={maxBalanceValue}
               yAxisTextStyle={{ color: colors.text, fontSize: 10 }}
               yAxisColor={colors.text}
               yAxisLabelPrefix="R$"

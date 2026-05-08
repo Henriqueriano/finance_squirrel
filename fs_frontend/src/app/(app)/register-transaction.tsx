@@ -15,7 +15,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 type TransactionForm = {
   id: string
   type: "despesa" | "receita"
-  amount: string
+  value: string
   date: Date | null
   category: Category | null
   description: string
@@ -28,7 +28,7 @@ export default function RegisterTransactionScreen() {
     {
       id: "1",
       type: "receita",
-      amount: "",
+      value: "",
       date: null,
       category: null,
       description: "",
@@ -40,7 +40,7 @@ export default function RegisterTransactionScreen() {
   const navigation = useNavigation()
 
   const isDisabled = data.some(
-    (item) => !item.amount || !item.category || !item.date,
+    (item) => !item.value || !item.category || !item.date,
   )
 
   const { colors } = useTheme()
@@ -95,9 +95,9 @@ export default function RegisterTransactionScreen() {
     )
   }
 
-  function handleChangeAmount(id: string, amount: string) {
+  function handleChangeValue(id: string, value: string) {
     setData((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, amount } : item)),
+      prev.map((item) => (item.id === id ? { ...item, value } : item)),
     )
   }
 
@@ -120,7 +120,7 @@ export default function RegisterTransactionScreen() {
       if (!token || !user?.id) return
 
       const hasInvalid = data.some(
-        (item) => !item.amount || !item.category || !item.date,
+        (item) => !item.value || !item.category || !item.date,
       )
 
       if (hasInvalid) {
@@ -129,25 +129,22 @@ export default function RegisterTransactionScreen() {
       }
 
       const expenses = data.map((item) => {
-        const parsedAmount = parseCurrencyToCents(item.amount)
+        const parsedAmount = parseCurrencyToCents(item.value)
 
         return {
-          expense_value: parsedAmount,
-          expense_date: item.date!.toISOString(),
-          expense_type: item.type === "receita",
+          value: parsedAmount,
+          date: item.date!.toISOString(),
+          type: item.type === "receita",
           category_id: Number(item.category!.id),
-          expense_desc: item.description.trim(),
+          description: item.description.trim(),
         }
       })
 
       const payload = {
-        user_id: user.id,
-        expenses,
+        items: expenses,
       }
 
-      console.log("Payload:", payload)
-
-      await api.post("/expenses/register/", payload, {
+      await api.post("/expenses/", payload, {
         headers: {
           authorization: `Bearer ${token}`,
         },
@@ -157,13 +154,12 @@ export default function RegisterTransactionScreen() {
         {
           id: "1",
           type: "receita",
-          amount: "",
+          value: "",
           date: null,
           category: null,
           description: "",
         },
       ])
-      setCategories([])
       setNextId(2)
     } catch (error) {
       console.error("Erro ao salvar:", error)
@@ -176,7 +172,7 @@ export default function RegisterTransactionScreen() {
       {
         id: String(nextId),
         type: "receita",
-        amount: "",
+        value: "",
         date: null,
         category: null,
         description: "",
@@ -193,7 +189,7 @@ export default function RegisterTransactionScreen() {
     setData((prev) => prev.filter((item) => item.id !== id))
   }
 
-  // Pegar categorias da API
+  // GET categories
   useEffect(() => {
     async function getCategories() {
       try {
@@ -201,19 +197,13 @@ export default function RegisterTransactionScreen() {
 
         if (!token || !user?.id) return
 
-        const response = await api.get(`/categories/all/?user_id=${user?.id}`, {
+        const response = await api.get("/categories/", {
           headers: {
             authorization: `Bearer ${token}`,
           },
         })
 
-        const formatted = response.data.map((item: any) => ({
-          id: item.category_id,
-          label: item.category_name,
-          color: item.category_color,
-        }))
-
-        setCategories(formatted)
+        setCategories(response.data)
       } catch (error) {
         console.error("Erro ao recuperar categorias:", error)
       }
@@ -243,7 +233,7 @@ export default function RegisterTransactionScreen() {
               categories={categories}
               onChangeCategory={handleChangeCategory}
               onChangeDescription={handleChangeDescription}
-              onChangeAmount={handleChangeAmount}
+              onChangeValue={handleChangeValue}
               onChangeType={handleChangeType}
               onChangeDate={handleChangeDate}
               onRemove={removeTransaction}

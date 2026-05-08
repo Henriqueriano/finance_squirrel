@@ -22,14 +22,16 @@ export default function CategoriesScreen() {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(
     null,
   )
+  const [search, setSearch] = useState("")
+  const [categories, setCategories] = useState<Category[]>([])
+  // Modal para criar categoria
   const [categoryName, setCategoryName] = useState("")
   const [selectedColor, setSelectedColor] = useState(colorOptions[0])
-  const [categories, setCategories] = useState<Category[]>([])
-  const [search, setSearch] = useState("")
   const [modalVisible, setModalVisible] = useState(false)
-  const [editModalVisible, setEditModalVisible] = useState(false)
+  // Modal para atualizar categoria
   const [editCategoryName, setEditCategoryName] = useState("")
   const [editSelectedColor, setEditSelectedColor] = useState("")
+  const [editModalVisible, setEditModalVisible] = useState(false)
 
   const { colors } = useTheme()
   const styles = useMemo(
@@ -63,14 +65,11 @@ export default function CategoriesScreen() {
       if (!token || !user?.id) return
 
       const body = {
-        user_id: user.id,
-        category: {
-          category_name: categoryName.trim(),
-          category_color: selectedColor,
-        },
+        name: categoryName.trim(),
+        color: selectedColor,
       }
 
-      const response = await api.post("/categories/register/", body, {
+      const response = await api.post("/categories/", body, {
         headers: {
           authorization: `Bearer ${token}`,
         },
@@ -78,13 +77,7 @@ export default function CategoriesScreen() {
 
       const data = response.data
 
-      const formatted = {
-        id: data.category_id,
-        label: data.category_name,
-        color: data.category_color,
-      }
-
-      setCategories((prev) => [...prev, formatted])
+      setCategories((prev) => [...prev, data])
 
       // reset
       setCategoryName("")
@@ -101,14 +94,11 @@ export default function CategoriesScreen() {
 
       if (!token || !user?.id) return
 
-      const response = await api.delete(
-        `/categories/delete/?category_id=${selectedCategory?.id}&user_id=${user?.id}`,
-        {
-          headers: {
-            authorization: `Bearer ${token}`,
-          },
+      const response = await api.delete(`/categories/${selectedCategory?.id}`, {
+        headers: {
+          authorization: `Bearer ${token}`,
         },
-      )
+      })
 
       setCategories((prev) =>
         prev.filter((category) => category.id !== selectedCategory?.id),
@@ -125,30 +115,25 @@ export default function CategoriesScreen() {
       if (!token || !user?.id) return
 
       const bodyData = {
-        user_id: user?.id,
-        category_id: selectedCategory?.id,
-        category: {
-          category_name: editCategoryName,
-          category_color: editSelectedColor,
-        },
+        name: editCategoryName,
+        color: editSelectedColor,
       }
 
-      const response = await api.patch("/categories/update/", bodyData, {
-        headers: {
-          authorization: `Bearer ${token}`,
+      const response = await api.patch(
+        `/categories/${selectedCategory?.id}`,
+        bodyData,
+        {
+          headers: {
+            authorization: `Bearer ${token}`,
+          },
         },
-      })
+      )
 
       const updatedCategory = response.data
-      const formatted = {
-        id: updatedCategory.category_id,
-        label: updatedCategory.category_name,
-        color: updatedCategory.category_color,
-      }
 
       setCategories((prev) =>
         prev.map((category) =>
-          category.id === formatted.id ? formatted : category,
+          category.id === updatedCategory.id ? updatedCategory : category,
         ),
       )
 
@@ -159,7 +144,7 @@ export default function CategoriesScreen() {
   }
 
   const filteredCategories = categories.filter((item) =>
-    item.label.toLowerCase().includes(search.toLowerCase()),
+    item.name.toLowerCase().includes(search.toLowerCase()),
   )
 
   useEffect(() => {
@@ -171,19 +156,13 @@ export default function CategoriesScreen() {
 
         if (!token) return
 
-        const response = await api.get(`/categories/all/?user_id=${user?.id}`, {
+        const response = await api.get("/categories/", {
           headers: {
             authorization: `Bearer ${token}`,
           },
         })
 
-        const formattedCategories = response.data.map((item: any) => ({
-          id: item.category_id,
-          label: item.category_name,
-          color: item.category_color,
-        }))
-
-        setCategories(formattedCategories)
+        setCategories(response.data)
       } catch (error) {
         console.error("Erro ao buscar categorias:", error)
       }
@@ -249,7 +228,7 @@ export default function CategoriesScreen() {
                 borderColor: colors.border,
               }}
             >
-              {selectedCategory?.label === item.label ? (
+              {selectedCategory?.name === item.name ? (
                 <View
                   className="h-4 w-4 rounded-xl"
                   style={{ backgroundColor: colors.text }}
@@ -259,7 +238,7 @@ export default function CategoriesScreen() {
               )}
             </View>
             <Text className="text-xl" style={styles.text}>
-              {item.label}
+              {item.name}
             </Text>
           </TouchableOpacity>
         )}
@@ -274,7 +253,7 @@ export default function CategoriesScreen() {
               className="p-3 rounded-full"
               style={styles.navigationColor}
               onPress={() => {
-                setEditCategoryName(selectedCategory.label)
+                setEditCategoryName(selectedCategory.name)
                 setEditSelectedColor(selectedCategory.color)
                 setEditModalVisible(true)
               }}
