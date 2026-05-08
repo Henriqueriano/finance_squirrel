@@ -1,5 +1,6 @@
 import { PasswordInput } from "@/src/components/password-input"
 import { useAuth } from "@/src/hooks/use-auth"
+import { useTheme } from "@/src/hooks/use-theme"
 import { LinearGradient } from "expo-linear-gradient"
 import { useRouter } from "expo-router"
 import { LogIn } from "lucide-react-native"
@@ -13,6 +14,7 @@ import {
 } from "react-native"
 
 export default function SignIn() {
+  const { colors } = useTheme()
   const [email, setEmail] = useState("lucas@email")
   const [password, setPassword] = useState("123")
   const [loading, setLoading] = useState(false)
@@ -46,33 +48,45 @@ export default function SignIn() {
   return (
     <LinearGradient
       className="flex-1 justify-center p-5"
-      colors={["#051F20", "#0B2B26", "#163832", "#235347"]}
+      colors={colors.gradient}
       locations={[0, 0.25, 0.5, 0.75]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
     >
-      <Text className="text-6xl text-white leading-normal font-bold">
+      <Text
+        className="text-6xl leading-normal font-bold"
+        style={{ color: colors.text }}
+      >
         Login
       </Text>
 
       <View className="flex-row gap-1">
-        <Text className="text-white text-xl">Ainda não tem uma Conta?</Text>
+        <Text className="text-xl" style={{ color: colors.text }}>
+          Ainda não tem uma Conta?
+        </Text>
         <TouchableOpacity onPress={() => router.push("/signup")}>
-          <Text className="text-accent text-xl">Criar uma conta</Text>
+          <Text className="text-xl" style={{ color: colors.anchor }}>
+            Criar uma conta
+          </Text>
         </TouchableOpacity>
       </View>
 
       <View className="justify-center items-center p-5">
         {msgError ? (
-          <Text className="text-red-500 text-xl">{msgError}</Text>
+          <Text className="text-red-400 text-xl">{msgError}</Text>
         ) : null}
       </View>
 
       <View className="gap-5">
         <TextInput
           placeholder="Email"
-          placeholderTextColor={"#fff"}
-          className="p-5 w-auto text-white bg-accent border-lightBorder border-2 rounded-lg text-xl"
+          placeholderTextColor={colors.text}
+          className="p-5 w-auto border-2 rounded-lg text-xl"
+          style={{
+            color: colors.text,
+            backgroundColor: colors.accent,
+            borderColor: colors.border,
+          }}
           value={email}
           onChangeText={setEmail}
         />
@@ -84,18 +98,23 @@ export default function SignIn() {
       </View>
 
       <View className="flex-row justify-between items-center mt-10">
-        <Text className="text-xl text-accent">Esqueci a senha</Text>
+        <Text className="text-xl" style={{ color: colors.anchor }}>
+          Esqueci a senha
+        </Text>
         <TouchableOpacity
-          className="flex-row gap-5 bg-menuColor w-30 h-30 p-5 rounded-3xl items-center justify-center"
+          className="flex-row gap-5 w-30 h-30 p-5 rounded-3xl items-center justify-center"
           onPress={handleSignIn}
           disabled={loading}
+          style={{ backgroundColor: colors.navigatorColor }}
         >
           {loading ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={colors.text} />
           ) : (
             <>
-              <Text className="text-white text-xl">Login</Text>
-              <LogIn size={24} color="#8EB69B" />
+              <Text className="text-xl" style={{ color: colors.text }}>
+                Login
+              </Text>
+              <LogIn size={24} color={colors.text} />
             </>
           )}
         </TouchableOpacity>

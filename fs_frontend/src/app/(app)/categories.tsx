@@ -1,14 +1,16 @@
+import { colorOptions } from "@/src/constants/categories-colors"
 import { useAuth } from "@/src/hooks/use-auth"
+import { useTheme } from "@/src/hooks/use-theme"
 import { api } from "@/src/services/api"
 import { Category } from "@/src/types/category/types"
-import { colorOptions } from "@/src/utils/categories-colors"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { Redirect } from "expo-router"
 import { Pencil, Plus, Trash, X } from "lucide-react-native"
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useMemo, useState } from "react"
 import {
   FlatList,
   Modal,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -20,14 +22,39 @@ export default function CategoriesScreen() {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(
     null,
   )
-  const [categoryName, setCategoryName] = useState("")
-  const [selectedColor, setSelectedColor] = useState("#f87171")
-  const [categories, setCategories] = useState<Category[]>([])
   const [search, setSearch] = useState("")
+  const [categories, setCategories] = useState<Category[]>([])
+  // Modal para criar categoria
+  const [categoryName, setCategoryName] = useState("")
+  const [selectedColor, setSelectedColor] = useState(colorOptions[0])
   const [modalVisible, setModalVisible] = useState(false)
-  const [editModalVisible, setEditModalVisible] = useState(false)
+  // Modal para atualizar categoria
   const [editCategoryName, setEditCategoryName] = useState("")
-  const [editSelectedColor, setEditSelectedColor] = useState("#f87171")
+  const [editSelectedColor, setEditSelectedColor] = useState("")
+  const [editModalVisible, setEditModalVisible] = useState(false)
+
+  const { colors } = useTheme()
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          backgroundColor: colors.background,
+        },
+        card: {
+          backgroundColor: colors.card,
+        },
+        text: {
+          color: colors.text,
+        },
+        navigationColor: {
+          backgroundColor: colors.navigatorColor,
+        },
+        btn: {
+          backgroundColor: colors.btn,
+        },
+      }),
+    [colors],
+  )
 
   async function handleAddCategory() {
     try {
@@ -38,14 +65,11 @@ export default function CategoriesScreen() {
       if (!token || !user?.id) return
 
       const body = {
-        user_id: user.id,
-        category: {
-          category_name: categoryName.trim(),
-          category_color: selectedColor,
-        },
+        name: categoryName.trim(),
+        color: selectedColor,
       }
 
-      const response = await api.post("/categories/register/", body, {
+      const response = await api.post("/categories/", body, {
         headers: {
           authorization: `Bearer ${token}`,
         },
@@ -53,13 +77,7 @@ export default function CategoriesScreen() {
 
       const data = response.data
 
-      const formatted = {
-        id: data.category_id,
-        label: data.category_name,
-        color: data.category_color,
-      }
-
-      setCategories((prev) => [...prev, formatted])
+      setCategories((prev) => [...prev, data])
 
       // reset
       setCategoryName("")
@@ -76,14 +94,11 @@ export default function CategoriesScreen() {
 
       if (!token || !user?.id) return
 
-      const response = await api.delete(
-        `/categories/delete/?category_id=${selectedCategory?.id}&user_id=${user?.id}`,
-        {
-          headers: {
-            authorization: `Bearer ${token}`,
-          },
+      const response = await api.delete(`/categories/${selectedCategory?.id}`, {
+        headers: {
+          authorization: `Bearer ${token}`,
         },
-      )
+      })
 
       setCategories((prev) =>
         prev.filter((category) => category.id !== selectedCategory?.id),
@@ -100,30 +115,25 @@ export default function CategoriesScreen() {
       if (!token || !user?.id) return
 
       const bodyData = {
-        user_id: user?.id,
-        category_id: selectedCategory?.id,
-        category: {
-          category_name: editCategoryName,
-          category_color: editSelectedColor,
-        },
+        name: editCategoryName,
+        color: editSelectedColor,
       }
 
-      const response = await api.patch("/categories/update/", bodyData, {
-        headers: {
-          authorization: `Bearer ${token}`,
+      const response = await api.patch(
+        `/categories/${selectedCategory?.id}`,
+        bodyData,
+        {
+          headers: {
+            authorization: `Bearer ${token}`,
+          },
         },
-      })
+      )
 
       const updatedCategory = response.data
-      const formatted = {
-        id: updatedCategory.category_id,
-        label: updatedCategory.category_name,
-        color: updatedCategory.category_color,
-      }
 
       setCategories((prev) =>
         prev.map((category) =>
-          category.id === formatted.id ? formatted : category,
+          category.id === updatedCategory.id ? updatedCategory : category,
         ),
       )
 
@@ -134,7 +144,7 @@ export default function CategoriesScreen() {
   }
 
   const filteredCategories = categories.filter((item) =>
-    item.label.toLowerCase().includes(search.toLowerCase()),
+    item.name.toLowerCase().includes(search.toLowerCase()),
   )
 
   useEffect(() => {
@@ -146,19 +156,13 @@ export default function CategoriesScreen() {
 
         if (!token) return
 
-        const response = await api.get(`/categories/all/?user_id=${user?.id}`, {
+        const response = await api.get("/categories/", {
           headers: {
             authorization: `Bearer ${token}`,
           },
         })
 
-        const formattedCategories = response.data.map((item: any) => ({
-          id: item.category_id,
-          label: item.category_name,
-          color: item.category_color,
-        }))
-
-        setCategories(formattedCategories)
+        setCategories(response.data)
       } catch (error) {
         console.error("Erro ao buscar categorias:", error)
       }
@@ -172,11 +176,12 @@ export default function CategoriesScreen() {
   }
 
   return (
-    <View className="flex-1 bg-background p-2 gap-5">
-      <Text className="text-2xl text-white font-bold mt-2">
+    <View className="flex-1 p-2 gap-5" style={styles.container}>
+      <Text className="text-2xl font-bold mt-2" style={styles.text}>
         Buscar categorias:
       </Text>
 
+      {/* Barra de Pesquisa */}
       <View className="relative">
         <TextInput
           className="bg-white rounded-lg p-5 pr-12"
@@ -191,7 +196,7 @@ export default function CategoriesScreen() {
             onPress={() => setSearch("")}
             className="absolute right-2 top-1/2 -translate-y-1/2 p-2"
           >
-            <X size={20} color="#235347" />
+            <X size={20} color={colors.icon} />
           </TouchableOpacity>
         )}
       </View>
@@ -217,62 +222,74 @@ export default function CategoriesScreen() {
             }}
           >
             <View
-              className="w-10 h-10 rounded-full border border-lightBorder items-center justify-center"
-              style={{ backgroundColor: item.color }}
+              className="w-10 h-10 rounded-full border items-center justify-center"
+              style={{
+                backgroundColor: item.color,
+                borderColor: colors.border,
+              }}
             >
-              {selectedCategory?.label === item.label ? (
-                <View className="h-4 w-4 bg-white rounded-xl" />
+              {selectedCategory?.name === item.name ? (
+                <View
+                  className="h-4 w-4 rounded-xl"
+                  style={{ backgroundColor: colors.text }}
+                />
               ) : (
                 <View />
               )}
             </View>
-            <Text className="text-white text-xl">{item.label}</Text>
+            <Text className="text-xl" style={styles.text}>
+              {item.name}
+            </Text>
           </TouchableOpacity>
         )}
       />
 
-      {/* Nova categoria */}
+      {/* Btn Nova categoria */}
       <View className="absolute bottom-2 right-2 gap-2">
         {selectedCategory && (
           <View className="flex-row gap-2 justify-end">
             {/* Editar categoria */}
             <TouchableOpacity
-              className="p-3 bg-menuColor rounded-full"
+              className="p-3 rounded-full"
+              style={styles.navigationColor}
               onPress={() => {
-                setEditCategoryName(selectedCategory.label)
+                setEditCategoryName(selectedCategory.name)
                 setEditSelectedColor(selectedCategory.color)
                 setEditModalVisible(true)
               }}
             >
-              <Pencil size={20} color={"#f5f5f5"} />
+              <Pencil size={20} color={colors.text} />
             </TouchableOpacity>
 
             {/* Deletar categoria */}
             <TouchableOpacity
-              className="p-3 bg-menuColor rounded-full"
+              className="p-3 rounded-full"
+              style={styles.navigationColor}
               onPress={handleDeleteCategory}
             >
-              <Trash size={20} color={"#f5f5f5"} />
+              <Trash size={20} color={colors.text} />
             </TouchableOpacity>
 
             {/* Desselecionar categoria */}
             <TouchableOpacity
-              className="p-3 bg-menuColor rounded-full"
+              className="p-3 rounded-full"
+              style={styles.navigationColor}
               onPress={() => {
                 setSelectedCategory(null)
               }}
             >
-              <X size={20} color={"#f5f5f5"} />
+              <X size={20} color={colors.text} />
             </TouchableOpacity>
           </View>
         )}
 
         <TouchableOpacity
-          className="flex-row items-center bg-accent p-2 rounded-lg gap-2"
+          className="flex-row items-center p-2 rounded-lg gap-2"
           onPress={() => setModalVisible(true)}
+          style={styles.btn}
         >
-          <Text className="text-white">Nova Categoria</Text>
-          <Plus size={30} color={"#235347"} />
+          <Text style={styles.text}>Nova Categoria</Text>
+          <Plus size={30} color={colors.icon} />
         </TouchableOpacity>
       </View>
 
@@ -289,8 +306,8 @@ export default function CategoriesScreen() {
           onPressOut={() => setModalVisible(false)}
         >
           <TouchableOpacity activeOpacity={1} className="w-[90%]">
-            <View className="bg-card p-5 rounded-2xl gap-4">
-              <Text className="text-white text-xl font-bold">
+            <View className="p-5 rounded-2xl gap-4" style={styles.card}>
+              <Text className="text-xl font-bold" style={styles.text}>
                 Nova Categoria
               </Text>
 
@@ -308,11 +325,11 @@ export default function CategoriesScreen() {
                   className="w-5 h-5 rounded-full"
                   style={{ backgroundColor: selectedColor }}
                 />
-                <Text className="text-white">Cor selecionada</Text>
+                <Text style={styles.text}>Cor selecionada</Text>
               </View>
 
               {/* Seletor de cores */}
-              <Text className="text-white">Selecione uma cor:</Text>
+              <Text style={styles.text}>Selecione uma cor:</Text>
               <View className="flex-row flex-wrap gap-3">
                 {colorOptions.map((color) => (
                   <TouchableOpacity
@@ -338,7 +355,7 @@ export default function CategoriesScreen() {
                     setCategoryName("")
                   }}
                 >
-                  <Text className="text-white">Cancelar</Text>
+                  <Text style={styles.text}>Cancelar</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -348,7 +365,7 @@ export default function CategoriesScreen() {
                   disabled={!categoryName.trim()}
                   onPress={handleAddCategory}
                 >
-                  <Text className="text-white">Salvar</Text>
+                  <Text style={styles.text}>Salvar</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -369,8 +386,8 @@ export default function CategoriesScreen() {
           onPressOut={() => setEditModalVisible(false)}
         >
           <TouchableOpacity activeOpacity={1} className="w-[90%]">
-            <View className="bg-card p-5 rounded-2xl gap-4">
-              <Text className="text-white text-xl font-bold">
+            <View className="p-5 rounded-2xl gap-4" style={styles.card}>
+              <Text className="text-xl font-bold" style={styles.text}>
                 Editar Categoria
               </Text>
 
@@ -388,11 +405,11 @@ export default function CategoriesScreen() {
                   className="w-5 h-5 rounded-full"
                   style={{ backgroundColor: editSelectedColor }}
                 />
-                <Text className="text-white">Cor selecionada</Text>
+                <Text style={styles.text}>Cor selecionada</Text>
               </View>
 
               {/* Seletor de cores */}
-              <Text className="text-white">Selecione uma cor:</Text>
+              <Text style={styles.text}>Selecione uma cor:</Text>
               <View className="flex-row flex-wrap gap-3">
                 {colorOptions.map((color) => (
                   <TouchableOpacity
@@ -418,7 +435,7 @@ export default function CategoriesScreen() {
                     setEditCategoryName("")
                   }}
                 >
-                  <Text className="text-white">Cancelar</Text>
+                  <Text style={styles.text}>Cancelar</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -428,7 +445,7 @@ export default function CategoriesScreen() {
                   disabled={!editCategoryName.trim()}
                   onPress={handleEditCategory}
                 >
-                  <Text className="text-white">Salvar</Text>
+                  <Text style={styles.text}>Salvar</Text>
                 </TouchableOpacity>
               </View>
             </View>

@@ -3,14 +3,19 @@ import { useState } from "react"
 import { TouchableOpacity, View } from "react-native"
 import { InputField } from "./input-field"
 
-export function DateField() {
-  const [date, setDate] = useState<Date | null>(null)
+type DateFieldProps = {
+  value: Date | null
+  onChange: (date: Date | null) => void
+}
+
+export function DateField({ value, onChange }: DateFieldProps) {
   const [show, setShow] = useState(false)
 
   function handleChange(event: any, selectedDate?: Date) {
     setShow(false)
-    if (selectedDate) {
-      setDate(selectedDate)
+
+    if (event.type === "set" && selectedDate) {
+      onChange(selectedDate)
     }
   }
 
@@ -25,7 +30,7 @@ export function DateField() {
         <View pointerEvents="none">
           <InputField
             label="Data:"
-            value={formatDate(date)}
+            value={formatDate(value)}
             placeholder="Selecione uma data"
             editable={false}
           />
@@ -34,7 +39,7 @@ export function DateField() {
 
       {show && (
         <DateTimePicker
-          value={date || new Date()}
+          value={value || new Date()}
           mode="date"
           display="default"
           onChange={handleChange}

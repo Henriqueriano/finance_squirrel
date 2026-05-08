@@ -1,4 +1,5 @@
 import { useAuth } from "@/src/hooks/use-auth"
+import { useTheme } from "@/src/hooks/use-theme"
 import { capitalizeFirstLetter } from "@/src/utils/capitalize-first-letter"
 import { Redirect, Tabs, useRouter } from "expo-router"
 import {
@@ -10,10 +11,11 @@ import {
   Layers,
   Settings,
 } from "lucide-react-native"
-import { Text, TouchableOpacity } from "react-native"
+import { TouchableOpacity } from "react-native"
 
 export default function TabLayout() {
   const { user, isAuthenticated } = useAuth()
+  const { colors } = useTheme()
   const router = useRouter()
 
   if (!isAuthenticated) {
@@ -25,23 +27,23 @@ export default function TabLayout() {
       screenOptions={{
         // Header (barra superior)
         headerStyle: {
-          backgroundColor: "#163832", // fundo do header
+          backgroundColor: colors.navigatorColor, // fundo do header
         },
         headerTintColor: "#fff", // cor de ícones e botão back
         headerTitleStyle: {
-          color: "#fff", // cor do título
+          color: colors.text, // cor do título
           fontWeight: "bold",
         },
         // Bottom (barra inferior)
         tabBarStyle: {
-          backgroundColor: "#163832", // fundo da barra
+          backgroundColor: colors.navigatorColor, // fundo da barra
           borderTopWidth: 0, // remove borda
           height: 80,
           paddingBottom: 8,
           paddingTop: 5,
         },
-        tabBarActiveTintColor: "#fff", // ícone/texto ativo
-        tabBarInactiveTintColor: "#8EB69B", // ícone/texto inativo
+        tabBarActiveTintColor: colors.navIconActive, // ícone/texto ativo
+        tabBarInactiveTintColor: colors.navIconDeactive, // ícone/texto inativo
       }}
     >
       <Tabs.Screen
@@ -58,6 +60,7 @@ export default function TabLayout() {
         name="financial-insights"
         options={{
           title: "Análise",
+          headerTitle: "Análise Financeira",
           tabBarIcon: ({ color, size }) => (
             <ChartNoAxesCombined size={size} color={color} />
           ),
@@ -75,11 +78,6 @@ export default function TabLayout() {
         options={{
           title: "Registrar",
           headerTitle: "Registro de Transações",
-          headerRight: () => (
-            <TouchableOpacity className="bg-accent p-2 rounded-lg mr-2">
-              <Text className="text-white">Salvar Transações</Text>
-            </TouchableOpacity>
-          ),
           tabBarIcon: ({ color, size }) => (
             <BookmarkPlus size={size} color={color} />
           ),
@@ -105,7 +103,7 @@ export default function TabLayout() {
               className="mr-5"
               onPress={() => router.navigate("/settings")}
             >
-              <Settings size={40} color="#8EB69B" />
+              <Settings size={40} color={colors.accent} />
             </TouchableOpacity>
           ),
           tabBarIcon: ({ color, size }) => <House size={size} color={color} />,
