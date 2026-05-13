@@ -75,4 +75,15 @@ class UserSettingDto(BaseModel):
     exchange_config: str
     date_format_config: str
 
+class MontlyCategoriesDto(BaseModel):
+    category_id: int
+    start_month: int # 0 january
+    end_month: int
+
+class MontlyCategoriesReturnDto(BaseModel):
+    month: int
+    category_name: str
+    total_entry: int
+    total_out: int
+
 # endregion

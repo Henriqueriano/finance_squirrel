@@ -8,7 +8,7 @@ from datetime import datetime
 from datetime import timedelta
 from dotenv import load_dotenv
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine, select, update, delete, func
+from sqlalchemy import create_engine, select, update, delete, func, extract
 
 # environment setup
 load_dotenv()
@@ -452,3 +452,43 @@ async def total_balance_service(user_id: str) -> dict:
     except Exception as e:
         print(f'Exception in total_balance_service > {e}')
         return backdata
+
+def get_montly_category_value(user_id: str, category_id: int, month: int) -> MontlyCategoriesReturnDto:
+    backdata: MontlyCategoriesDto = MontlyCategoriesReturnDto(month = month - 1, category_name = '', total_entry = 0, total_out = 0)
+    query = select(
+                    ExpenseCategoryModel.category_name,
+                    ExpenseModel.expense_date,
+                    ExpenseModel.expense_type,
+                    func.sum(ExpenseModel.expense_value)).join(ExpenseCategoryModel, 
+                    ExpenseCategoryModel.category_id == ExpenseModel.category_id
+                    ).where( 
+                    ExpenseModel.user_id == user_id,
+                    ExpenseCategoryModel.category_id == category_id,
+                    extract('month', ExpenseModel.expense_date) + 1 == month,
+                    ).group_by(ExpenseModel.expense_date, ExpenseCategoryModel.category_name, ExpenseModel.expense_type)
+
+    try: 
+       engine = create_engine(DATABASE_URL)
+       session = sessionmaker(bind = engine)
+       with session() as session:
+            data = session.execute(query)
+            for d in data:
+                backdata.category_name = d[0]
+                if d[2]:
+                    backdata.total_entry = d[3]
+                    continue
+                backdata.total_out = d[3]
+       return backdata
+
+    except Exception as e:
+        print(f'Exception in get_montly_category_value > {e}')
+
+
+async def categories_montly_service(user_id: str, payload: MontlyCategoriesDto) -> list[MontlyCategoriesReturnDto]:
+    start = payload.start_month + 1
+    end = payload.end_month + 1
+    category_id = payload.category_id
+    backdata: list[MontlyCategoriesReturnDto] = []
+    for month in range(start, end):
+        backdata.append(get_montly_category_value(user_id, category_id, month))
+    return backdata

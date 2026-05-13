@@ -188,6 +188,12 @@ async def categories_expenses(request: Request) -> JSONResponse:
     service_response = await categories_expenses_service(user_id)
     return JSONResponse(status_code = 200, content = [data.__dict__ for data in service_response])
 
+@computed.post('/montlyCategories')
+async def categories_montly_values(payload: MontlyCategoriesDto, request: Request) -> list[MontlyCategoriesReturnDto] | None:
+    user_id: str = request.state.user_id
+    service_response = await categories_montly_service(user_id, payload)
+    return JSONResponse(status_code = 200, content = [data.__dict__ for data in service_response])
+
 @computed.get('/balance')
 async def total_expenses(request: Request) -> dict:
     user_id: str = request.state.user_id
