@@ -95,5 +95,8 @@ class MontlyBalancesReturnDto(BaseModel):
     total_entry: int
     total_out: int
 
+class MontlyBalancesCompareDto(BaseModel):
+    month_one: int
+    month_two: int
 
 # endregion

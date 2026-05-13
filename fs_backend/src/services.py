@@ -525,4 +525,11 @@ def get_montly_balance_value(user_id: str, month: int) -> MontlyCategoriesReturn
     except Exception as e:
         print(f'Exception in get_montly_category_value > {e}')
 
-
+async def balances_montly_compare_service(user_id: str, payload: MontlyBalancesCompareDto) -> list[MontlyBalancesReturnDto]:
+    backdata: list[MontlyBalancesCompareDto] = []
+    month_one: int = payload.month_one + 1
+    month_two: int = payload.month_two + 1
+    backdata.append(get_montly_balance_value(user_id, month_one))
+    backdata.append(get_montly_balance_value(user_id, month_two))
+    return backdata
+    

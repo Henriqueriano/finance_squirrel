@@ -206,4 +206,11 @@ async def balances_montly_values(payload: MontlyBalancesDto, request: Request) -
     service_response = await balances_montly_service(user_id, payload)
     return JSONResponse(status_code = 200, content = [data.__dict__ for data in service_response])
 
+@computed.post('/montlyBalancesCompare')
+async def balances_montly_values_compare(payload: MontlyBalancesCompareDto, request: Request) -> list[MontlyBalancesReturnDto] | None:
+    user_id: str = request.state.user_id
+    service_response = await balances_montly_compare_service(user_id, payload)
+    return JSONResponse(status_code = 200, content = [data.__dict__ for data in service_response])
+
+
 # endregion
