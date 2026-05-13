@@ -30,7 +30,7 @@ def aux_create_user(user_name) -> str:
             session.commit()
             return data.user_id
     except Exception as e:
-        raise Exception(f'Aux create user error > {e}')
+        print(f'Aux create user error > {e}')
 
 def aux_create_jwt(payload: str) -> str:
     expiration_time = datetime.now(timezone.utc) + timedelta(minutes = 30)
@@ -53,7 +53,7 @@ async def user_exists_service(user_login: str) -> bool:
                 return False
             return True
     except Exception as e:
-        raise Exception(f'Error in user exists service > {e}')
+        print(f'Error in user exists service > {e}')
 
 
 async def login_service(payload: LoginDteo) -> AuthReturnDto:
@@ -80,7 +80,7 @@ async def login_service(payload: LoginDteo) -> AuthReturnDto:
                         data.auth = aux_create_jwt(str(lm.user_id))
             return data
     except Exception as e:
-        raise Exception(f'Login service exception > {e}') 
+        print(f'Login service exception > {e}') 
 
 async def register_service(payload: RegisterDto) -> AuthReturnDto:
     backdata: AuthReturnDto = AuthReturnDto(id = '', name = '', auth = '')
@@ -105,7 +105,7 @@ async def register_service(payload: RegisterDto) -> AuthReturnDto:
 
             return backdata
     except Exception as e:
-        raise Exception(f'Register user service error > {e}')
+        print(f'Register user service error > {e}')
 
 # endregion
 
@@ -116,10 +116,11 @@ async def expenses_bulk_register_service(user_id: str, payload: list[ExpenseDto]
         expense_value = e.value,
         expense_date = e.date,
         expense_type = e.type,
-        category_id = e.category_id,
-        expense_desc = e.description) for e in payload.items]
+        category_id = getDefaultCategoryId(user_id) if e.category_id == 0 else e.category_id,
+        expense_desc = e.description) for e in payload]
     statement = select(ExpenseModel).where(ExpenseModel.user_id == user_id)
     backdata: list[ExpenseReturnDto] = []
+
     try:
         engine = create_engine(DATABASE_URL)
         session = sessionmaker(bind=engine)
@@ -144,7 +145,7 @@ async def expenses_bulk_register_service(user_id: str, payload: list[ExpenseDto]
         return backdata
 
     except Exception as e:
-        raise Exception(f'Register expense service error > {e}')
+        print(f'Register expense service error > {e}')
 
 async def get_expenses(user_id: str) -> list[ExpenseReturnDto]:
     statement = select(ExpenseModel).where(ExpenseModel.user_id == user_id)
@@ -171,7 +172,7 @@ async def get_expenses(user_id: str) -> list[ExpenseReturnDto]:
             return backdata
 
     except Exception as e:
-        raise Exception(f'Get expense service error > {e}')
+        print(f'Get expense service error > {e}')
 
 async def update_expense_service(user_id, expense_id, payload: ExpenseDto) -> ExpenseReturnDto:
     sel_statement = select(ExpenseModel).where(ExpenseModel.expense_id == expense_id)
@@ -206,7 +207,7 @@ async def update_expense_service(user_id, expense_id, payload: ExpenseDto) -> Ex
                 backdata.description = db_data.expense_desc
             return backdata
     except Exception as e:
-        raise Exception(f'Update expense service error > {e}')
+        print(f'Update expense service error > {e}')
 
 async def delete_expense_service(user_id: str, expense_id: int) -> ExpenseReturnDto:
     sel_statement = select(ExpenseModel).where(ExpenseModel.expense_id == expense_id)
@@ -236,10 +237,32 @@ async def delete_expense_service(user_id: str, expense_id: int) -> ExpenseReturn
                 session.commit()
             return backdata
     except Exception as e:
-        raise Exception(f'Delete expense service error > {e}')
+        print(f'Delete expense service error > {e}')
 # endregion
 
 # region categoryes 
+def getDefaultCategoryId(user_id: str) -> int:
+    query = select(ExpenseCategoryModel.category_id).where(ExpenseCategoryModel.user_id == user_id,
+                                                           ExpenseCategoryModel.category_name == 'default')
+    default_data = ExpenseCategoryModel(
+                category_name = 'default',
+                category_color = '#F0F0F0',
+                user_id = user_id)
+    try:
+        engine = create_engine(DATABASE_URL)
+        session = sessionmaker(bind = engine)
+        with session() as session:
+            data = session.scalar(query) 
+            if data:
+                return data
+            session.add(default_data)
+            session.flush()
+            session.commit()
+            return default_data.category_id
+
+    except Exception as e:
+        print(f'Exception in getDefaultCategoryId > {e}')
+
 async def categories_register_service(user_id: str, payload: CategoryDto) -> ExpenseCategoryReturnDto:
     backdata: ExpenseCategoryReturnDto = ExpenseCategoryReturnDto( 
                                             id = -1,
@@ -249,6 +272,7 @@ async def categories_register_service(user_id: str, payload: CategoryDto) -> Exp
             category_name = payload.name,
             category_color = payload.color,
             user_id = user_id) 
+
     try:
         engine = create_engine(DATABASE_URL)
         session = sessionmaker(bind=engine)
@@ -264,7 +288,7 @@ async def categories_register_service(user_id: str, payload: CategoryDto) -> Exp
 
             return backdata
     except Exception as e :
-        raise Exception(f'Error in categories register service > {e}')
+        print(f'Error in categories register service > {e}')
 
 async def update_category_service(category_id: int, user_id: str, payload: CategoryDto) -> ExpenseCategoryReturnDto:
     backdata: ExpenseCategoryReturnDto = ExpenseCategoryReturnDto(

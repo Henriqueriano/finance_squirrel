@@ -44,8 +44,13 @@ class ExpenseDto(BaseModel):
     category_id: int
     description: str
 
-class ExpenseRegisterDto(BaseModel):
+class CompleteExpenseRegisterDto(BaseModel):
     items: list[ExpenseDto]
+
+class QuickExpenseRegisterDto(BaseModel):
+    value: int
+    type: bool
+    date: datetime
 
 class ExpenseUpdateDto(BaseModel):
     expense_id: int

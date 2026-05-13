@@ -32,12 +32,31 @@ async def register(payload: RegisterDto) -> str:
 # region expenses: 
 expenses = APIRouter(prefix = "/expenses")
 @expenses.post('/')
-async def bulk_register(payload: ExpenseRegisterDto, request: Request) -> list[ExpenseReturnDto]:
+async def bulk_register(payload: CompleteExpenseRegisterDto | QuickExpenseRegisterDto, request: Request) -> list[ExpenseReturnDto] | None:
+    is_complete_transaction: bool = isinstance(payload, CompleteExpenseRegisterDto)
+    is_quick_transaction: bool = isinstance(payload, QuickExpenseRegisterDto)
     user_id: str = request.state.user_id
+
+
     if not user_id:
         return JSONResponse(status_code = 400, content = {'msg' : 'user_id cannot be empty'})
+    
+    if (is_complete_transaction):
+        service_response = await expenses_bulk_register_service(user_id, payload.items)
 
-    service_response = await expenses_bulk_register_service(user_id, payload)
+    elif(is_quick_transaction):
+        new_payload: list[ExpenseDto] = [ExpenseDto(
+            value = payload.value,
+            date = payload.date,
+            type = payload.type,
+            category_id = 0, # default
+            description = ''
+            )]
+        service_response = await expenses_bulk_register_service(user_id, new_payload)
+
+    elif(not is_complete_transaction and not is_quick_transaction):
+        return JSONResponse(status_code = 400, content = {'msg' : 'bad request'})
+
     if (len(service_response) == 0):
         return JSONResponse(status_code = 500, content = {'msg' : 'error while insert data'})
 
