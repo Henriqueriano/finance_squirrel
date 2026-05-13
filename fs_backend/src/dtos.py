@@ -86,4 +86,14 @@ class MontlyCategoriesReturnDto(BaseModel):
     total_entry: int
     total_out: int
 
+class MontlyBalancesDto(BaseModel):
+    start_month: int
+    end_month: int
+
+class MontlyBalancesReturnDto(BaseModel):
+    month: int
+    total_entry: int
+    total_out: int
+
+
 # endregion

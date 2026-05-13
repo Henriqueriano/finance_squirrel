@@ -32,7 +32,7 @@ async def register(payload: RegisterDto) -> str:
 # region expenses: 
 expenses = APIRouter(prefix = "/expenses")
 @expenses.post('/')
-async def bulk_register(payload: CompleteExpenseRegisterDto | QuickExpenseRegisterDto, request: Request) -> list[ExpenseReturnDto] | None:
+async def bulk_register(payload: CompleteExpenseRegisterDto | QuickExpenseRegisterDto, request: Request) -> list[ExpenseReturnDto]:
     is_complete_transaction: bool = isinstance(payload, CompleteExpenseRegisterDto)
     is_quick_transaction: bool = isinstance(payload, QuickExpenseRegisterDto)
     user_id: str = request.state.user_id
@@ -189,7 +189,7 @@ async def categories_expenses(request: Request) -> JSONResponse:
     return JSONResponse(status_code = 200, content = [data.__dict__ for data in service_response])
 
 @computed.post('/montlyCategories')
-async def categories_montly_values(payload: MontlyCategoriesDto, request: Request) -> list[MontlyCategoriesReturnDto] | None:
+async def categories_montly_values(payload: MontlyCategoriesDto, request: Request) -> list[MontlyCategoriesReturnDto]:
     user_id: str = request.state.user_id
     service_response = await categories_montly_service(user_id, payload)
     return JSONResponse(status_code = 200, content = [data.__dict__ for data in service_response])
@@ -199,4 +199,11 @@ async def total_expenses(request: Request) -> dict:
     user_id: str = request.state.user_id
     service_response = await total_balance_service(user_id)
     return JSONResponse(status_code = 200, content = service_response)
+
+@computed.post('/montlyBalances')
+async def balances_montly_values(payload: MontlyBalancesDto, request: Request) -> list[MontlyBalancesReturnDto] | None:
+    user_id: str = request.state.user_id
+    service_response = await balances_montly_service(user_id, payload)
+    return JSONResponse(status_code = 200, content = [data.__dict__ for data in service_response])
+
 # endregion

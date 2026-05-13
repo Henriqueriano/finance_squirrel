@@ -454,7 +454,7 @@ async def total_balance_service(user_id: str) -> dict:
         return backdata
 
 def get_montly_category_value(user_id: str, category_id: int, month: int) -> MontlyCategoriesReturnDto:
-    backdata: MontlyCategoriesDto = MontlyCategoriesReturnDto(month = month - 1, category_name = '', total_entry = 0, total_out = 0)
+    backdata: MontlyCategoriesReturnDto = MontlyCategoriesReturnDto(month = month - 1, category_name = '', total_entry = 0, total_out = 0)
     query = select(
                     ExpenseCategoryModel.category_name,
                     ExpenseModel.expense_date,
@@ -483,7 +483,6 @@ def get_montly_category_value(user_id: str, category_id: int, month: int) -> Mon
     except Exception as e:
         print(f'Exception in get_montly_category_value > {e}')
 
-
 async def categories_montly_service(user_id: str, payload: MontlyCategoriesDto) -> list[MontlyCategoriesReturnDto]:
     start = payload.start_month + 1
     end = payload.end_month + 1
@@ -492,3 +491,38 @@ async def categories_montly_service(user_id: str, payload: MontlyCategoriesDto) 
     for month in range(start, end):
         backdata.append(get_montly_category_value(user_id, category_id, month))
     return backdata
+
+async def balances_montly_service(user_id: str, payload: MontlyBalancesDto) -> list[MontlyBalancesReturnDto]:
+    start = payload.start_month + 1
+    end = payload.end_month + 1
+    backdata: list[MontlyBalancesReturnDto] = []
+    for month in range(start, end):
+        backdata.append(get_montly_balance_value(user_id, month))
+
+    return backdata 
+
+def get_montly_balance_value(user_id: str, month: int) -> MontlyCategoriesReturnDto:
+    backdata: MontlyBalancesReturnDto = MontlyBalancesReturnDto(month = month - 1, total_entry = 0, total_out = 0)
+    query = select(
+                    ExpenseModel.expense_type,
+                    func.sum(ExpenseModel.expense_value)
+                    ).where( 
+                    ExpenseModel.user_id == user_id,
+                    extract('month', ExpenseModel.expense_date) + 1 == month).group_by(ExpenseModel.expense_type)
+
+    try: 
+       engine = create_engine(DATABASE_URL)
+       session = sessionmaker(bind = engine)
+       with session() as session:
+            data = session.execute(query)
+            for d in data:
+                if d[0]:
+                    backdata.total_entry = d[1]
+                    continue
+                backdata.total_out = d[1]
+            return backdata
+
+    except Exception as e:
+        print(f'Exception in get_montly_category_value > {e}')
+
+
