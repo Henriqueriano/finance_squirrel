@@ -79,6 +79,7 @@ class MonthlyCategoriesDto(BaseModel):
     category_id: int
     start_month: int # 0 january
     end_month: int
+    year: int
 
 class MonthlyCategoriesReturnDto(BaseModel):
     month: int
@@ -89,14 +90,18 @@ class MonthlyCategoriesReturnDto(BaseModel):
 class MonthlyDto(BaseModel):
     start_month: int
     end_month: int
+    year: int
 
 class MonthlyBalancesReturnDto(BaseModel):
     month: int
+    year: int
     total_entry: int
     total_out: int
 
 class MonthlyBalancesCompareDto(BaseModel):
     month_one: int
+    year_one: int
     month_two: int
+    year_two: int
 
 # endregion

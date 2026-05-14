@@ -195,24 +195,25 @@ async def categories_monthly_values(payload: MonthlyCategoriesDto, request: Requ
     return JSONResponse(status_code = 200, content = [data.__dict__ for data in service_response])
 
 @computed.post('/monthlyTotalCategories')
-async def get_categories_total_per_month(start: int, end: int, request: Request) -> list[MonthlyCategoriesReturnDto]:
+async def get_categories_total_per_month(start: int, end: int, year: int, request: Request) -> list[MonthlyCategoriesReturnDto]:
     user_id: str = request.state.user_id
     if start < 0 and end > 11:
         return JSONResponse(status_code = 400, content = {'msg' : 'invalid data range'})
-    payload : MonthlyDto = MonthlyDto(start_month = start, end_month = end)
+    payload : MonthlyDto = MonthlyDto(start_month = start, end_month = end, year = year)
     service_response = await get_categories_month_service(user_id, payload)
     return JSONResponse(status_code = 200, content = [data.__dict__ for data in service_response])
 
 @computed.get('/balance')
-async def total_expenses(request: Request) -> dict:
+async def total_expenses(year: int, request: Request) -> dict:
     user_id: str = request.state.user_id
-    service_response = await total_balance_service(user_id)
+    service_response = await total_balance_service(user_id, year)
     return JSONResponse(status_code = 200, content = service_response)
 
 @computed.post('/monthlyBalances')
 async def balances_monthly_values(payload: MonthlyDto, request: Request) -> list[MonthlyBalancesReturnDto]:
     user_id: str = request.state.user_id
     service_response = await balances_monthly_service(user_id, payload)
+    print(service_response)
     return JSONResponse(status_code = 200, content = [data.__dict__ for data in service_response])
 
 @computed.post('/monthlyBalancesCompare')

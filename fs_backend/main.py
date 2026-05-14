@@ -13,7 +13,9 @@ logging.basicConfig(level = level,
                     filename = file_name,
                     filemode = 'w',
                     format = log_format)
+
 app = FastAPI()
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -21,6 +23,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 app.middleware("http")(middlewares.process_timer)
 app.middleware("http")(middlewares.is_authenticated)
 app.include_router(controllers.auth, tags=['auth'])

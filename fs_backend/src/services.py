@@ -81,6 +81,7 @@ async def login_service(payload: LoginDteo) -> AuthReturnDto:
             return data
     except Exception as e:
         print(f'Login service exception > {e}') 
+        return data
 
 async def register_service(payload: RegisterDto) -> AuthReturnDto:
     backdata: AuthReturnDto = AuthReturnDto(id = '', name = '', auth = '')
@@ -106,6 +107,7 @@ async def register_service(payload: RegisterDto) -> AuthReturnDto:
             return backdata
     except Exception as e:
         print(f'Register user service error > {e}')
+        return backdata
 
 # endregion
 
@@ -432,10 +434,12 @@ async def categories_expenses_service(user_id: str) -> list[AllCategoriesReturnD
         print(f'Exception in categories_expenses_service > {e}')
         return backdata
 
-async def total_balance_service(user_id: str) -> dict:
+async def total_balance_service(user_id: str, year: int) -> dict:
     backdata : dict = {'receitas' : 0, 'despesas' : 0}
     query = select(ExpenseModel.expense_type,
-                   func.sum(ExpenseModel.expense_value)).where(ExpenseModel.user_id == user_id
+                   func.sum(ExpenseModel.expense_value)).where(
+                        ExpenseModel.user_id == user_id,
+                        extract('year', ExpenseModel.expense_date) == year
                    ).group_by(ExpenseModel.expense_type)
     try: 
         engine = create_engine(DATABASE_URL)
@@ -453,7 +457,7 @@ async def total_balance_service(user_id: str) -> dict:
         print(f'Exception in total_balance_service > {e}')
         return backdata
 
-def get_monthly_category_value(user_id: str, category_id: int, month: int) -> MonthlyCategoriesReturnDto:
+def get_monthly_category_value(user_id: str, category_id: int, month: int, year: int) -> MonthlyCategoriesReturnDto:
     backdata: MonthlyCategoriesReturnDto = MonthlyCategoriesReturnDto(month = month - 1, category_name = '', total_entry = 0, total_out = 0)
     query = select(
                     ExpenseCategoryModel.category_name,
@@ -465,6 +469,7 @@ def get_monthly_category_value(user_id: str, category_id: int, month: int) -> Mo
                     ExpenseModel.user_id == user_id,
                     ExpenseCategoryModel.category_id == category_id,
                     extract('month', ExpenseModel.expense_date) + 1 == month,
+                    extract('year', ExpenseModel.expense_date)  == year
                     ).group_by(ExpenseModel.expense_date, ExpenseCategoryModel.category_name, ExpenseModel.expense_type)
 
     try: 
@@ -486,29 +491,32 @@ def get_monthly_category_value(user_id: str, category_id: int, month: int) -> Mo
 async def categories_monthly_service(user_id: str, payload: MonthlyCategoriesDto) -> list[MonthlyCategoriesReturnDto]:
     start = payload.start_month + 1
     end = payload.end_month + 1
+    year = payload.year
     category_id = payload.category_id
     backdata: list[MonthlyCategoriesReturnDto] = []
     for month in range(start, end):
-        backdata.append(get_monthly_category_value(user_id, category_id, month, end))
+        backdata.append(get_monthly_category_value(user_id, category_id, month, end, year))
     return backdata
 
 async def balances_monthly_service(user_id: str, payload: MonthlyDto) -> list[MonthlyBalancesReturnDto]:
     start = payload.start_month + 1
     end = payload.end_month + 1
+    year = payload.year
     backdata: list[MonthlyBalancesReturnDto] = []
     for month in range(start, end):
-        backdata.append(get_monthly_balance_value(user_id, month))
+        backdata.append(get_monthly_balance_value(user_id, month, year))
 
     return backdata 
 
-def get_monthly_balance_value(user_id: str, month: int) -> MonthlyCategoriesReturnDto:
-    backdata: MonthlyBalancesReturnDto = MonthlyBalancesReturnDto(month = month - 1, total_entry = 0, total_out = 0)
+def get_monthly_balance_value(user_id: str, month: int, year: int) -> MonthlyCategoriesReturnDto:
+    backdata: MonthlyBalancesReturnDto = MonthlyBalancesReturnDto(month = month - 1, year = year, total_entry = 0, total_out = 0)
     query = select(
                     ExpenseModel.expense_type,
                     func.sum(ExpenseModel.expense_value)
                     ).where( 
                     ExpenseModel.user_id == user_id,
-                    extract('month', ExpenseModel.expense_date) + 1 == month).group_by(ExpenseModel.expense_type)
+                    extract('month', ExpenseModel.expense_date) + 1 == month,
+                    extract('year', ExpenseModel.expense_date)  == year).group_by(ExpenseModel.expense_type)
 
     try: 
        engine = create_engine(DATABASE_URL)
@@ -516,10 +524,10 @@ def get_monthly_balance_value(user_id: str, month: int) -> MonthlyCategoriesRetu
        with session() as session:
             data = session.execute(query)
             for d in data:
-                if d[1]:
-                    backdata.total_entry = d[2]
+                if d[0]:
+                    backdata.total_entry = d[1]
                     continue
-                backdata.total_expenses = d[2]
+                backdata.total_out = d[1]
             return backdata
 
     except Exception as e:
@@ -529,11 +537,13 @@ async def balances_monthly_compare_service(user_id: str, payload: MonthlyBalance
     backdata: list[MonthlyBalancesReturnDto] = []
     month_one: int = payload.month_one + 1
     month_two: int = payload.month_two + 1
-    backdata.append(get_monthly_balance_value(user_id, month_one))
-    backdata.append(get_monthly_balance_value(user_id, month_two))
+    year_one: int = payload.year_one
+    year_two: int = payload.year_two
+    backdata.append(get_monthly_balance_value(user_id, month_one, year_one))
+    backdata.append(get_monthly_balance_value(user_id, month_two, year_two))
     return backdata
 
-async def get_categories_value_without_id(user_id, start, end) -> list[MonthlyCategoriesReturnDto]:
+async def get_categories_value_without_id(user_id, start, end, year) -> list[MonthlyCategoriesReturnDto]:
     backdata: MonthlyCategoriesReturnDto = MonthlyCategoriesReturnDto(month = start - 1, category_name = '', total_entry = 0, total_expenses = 0)
     expenses = select(
                     ExpenseCategoryModel.category_name,
@@ -544,6 +554,7 @@ async def get_categories_value_without_id(user_id, start, end) -> list[MonthlyCa
                     ExpenseModel.user_id == user_id,
                     extract('month', ExpenseModel.expense_date) + 1 == start,
                     extract('month', ExpenseModel.expense_date) + 1 <= end,
+                    extract('year', ExpenseModel.expense_date) == year,
                     ).group_by(ExpenseCategoryModel.category_name, ExpenseModel.expense_type)
 
     try: 
@@ -565,11 +576,11 @@ async def get_categories_value_without_id(user_id, start, end) -> list[MonthlyCa
 async def get_categories_month_service(user_id: str, payload: MonthlyDto) -> list[MonthlyCategoriesDto]:
     start = payload.start_month + 1
     end = payload.end_month + 1
+    year = payload.year
     backdata: list[MonthlyCategoriesReturnDto] = []
     for month in range(start, end):
-        data = await get_categories_value_without_id(user_id, month, end)
-        if data.category_name:
-            backdata.append(data)
+        data = await get_categories_value_without_id(user_id, month, end, year)
+        backdata.append(data)
     return backdata
 
    
