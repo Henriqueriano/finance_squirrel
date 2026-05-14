@@ -453,7 +453,7 @@ async def total_balance_service(user_id: str) -> dict:
         print(f'Exception in total_balance_service > {e}')
         return backdata
 
-def get_montly_category_value(user_id: str, category_id: int, month: int) -> MonthlyCategoriesReturnDto:
+def get_monthly_category_value(user_id: str, category_id: int, month: int) -> MonthlyCategoriesReturnDto:
     backdata: MonthlyCategoriesReturnDto = MonthlyCategoriesReturnDto(month = month - 1, category_name = '', total_entry = 0, total_out = 0)
     query = select(
                     ExpenseCategoryModel.category_name,
@@ -481,27 +481,27 @@ def get_montly_category_value(user_id: str, category_id: int, month: int) -> Mon
        return backdata
 
     except Exception as e:
-        print(f'Exception in get_montly_category_value > {e}')
+        print(f'Exception in get_monthly_category_value > {e}')
 
-async def categories_montly_service(user_id: str, payload: MonthlyCategoriesDto) -> list[MonthlyCategoriesReturnDto]:
+async def categories_monthly_service(user_id: str, payload: MonthlyCategoriesDto) -> list[MonthlyCategoriesReturnDto]:
     start = payload.start_month + 1
     end = payload.end_month + 1
     category_id = payload.category_id
     backdata: list[MonthlyCategoriesReturnDto] = []
     for month in range(start, end):
-        backdata.append(get_montly_category_value(user_id, category_id, month, end))
+        backdata.append(get_monthly_category_value(user_id, category_id, month, end))
     return backdata
 
-async def balances_montly_service(user_id: str, payload: MonthlyDto) -> list[MonthlyBalancesReturnDto]:
+async def balances_monthly_service(user_id: str, payload: MonthlyDto) -> list[MonthlyBalancesReturnDto]:
     start = payload.start_month + 1
     end = payload.end_month + 1
     backdata: list[MonthlyBalancesReturnDto] = []
     for month in range(start, end):
-        backdata.append(get_montly_balance_value(user_id, month))
+        backdata.append(get_monthly_balance_value(user_id, month))
 
     return backdata 
 
-def get_montly_balance_value(user_id: str, month: int) -> MonthlyCategoriesReturnDto:
+def get_monthly_balance_value(user_id: str, month: int) -> MonthlyCategoriesReturnDto:
     backdata: MonthlyBalancesReturnDto = MonthlyBalancesReturnDto(month = month - 1, total_entry = 0, total_out = 0)
     query = select(
                     ExpenseModel.expense_type,
@@ -523,14 +523,14 @@ def get_montly_balance_value(user_id: str, month: int) -> MonthlyCategoriesRetur
             return backdata
 
     except Exception as e:
-        print(f'Exception in get_montly_category_value > {e}')
+        print(f'Exception in get_monthly_category_value > {e}')
 
-async def balances_montly_compare_service(user_id: str, payload: MonthlyBalancesCompareDto) -> list[MonthlyBalancesReturnDto]:
+async def balances_monthly_compare_service(user_id: str, payload: MonthlyBalancesCompareDto) -> list[MonthlyBalancesReturnDto]:
     backdata: list[MonthlyBalancesReturnDto] = []
     month_one: int = payload.month_one + 1
     month_two: int = payload.month_two + 1
-    backdata.append(get_montly_balance_value(user_id, month_one))
-    backdata.append(get_montly_balance_value(user_id, month_two))
+    backdata.append(get_monthly_balance_value(user_id, month_one))
+    backdata.append(get_monthly_balance_value(user_id, month_two))
     return backdata
 
 async def get_categories_value_without_id(user_id, start, end) -> list[MonthlyCategoriesReturnDto]:
@@ -567,7 +567,9 @@ async def get_categories_month_service(user_id: str, payload: MonthlyDto) -> lis
     end = payload.end_month + 1
     backdata: list[MonthlyCategoriesReturnDto] = []
     for month in range(start, end):
-        backdata.append(await get_categories_value_without_id(user_id, month, end))
+        data = await get_categories_value_without_id(user_id, month, end)
+        if data.category_name:
+            backdata.append(data)
     return backdata
 
    

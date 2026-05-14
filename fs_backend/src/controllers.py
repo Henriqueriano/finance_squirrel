@@ -188,15 +188,18 @@ async def categories_expenses(request: Request) -> JSONResponse:
     service_response = await categories_expenses_service(user_id)
     return JSONResponse(status_code = 200, content = [data.__dict__ for data in service_response])
 
-@computed.post('/montlyCategories')
-async def categories_montly_values(payload: MonthlyCategoriesDto, request: Request) -> list[MonthlyCategoriesReturnDto]:
+@computed.post('/monthlyCategories')
+async def categories_monthly_values(payload: MonthlyCategoriesDto, request: Request) -> list[MonthlyCategoriesReturnDto]:
     user_id: str = request.state.user_id
-    service_response = await categories_montly_service(user_id, payload)
+    service_response = await categories_monthly_service(user_id, payload)
     return JSONResponse(status_code = 200, content = [data.__dict__ for data in service_response])
 
-@computed.post('/montlyTotalCategories')
-async def get_categories_total_per_month(payload: MonthlyDto, request: Request) -> list[MonthlyCategoriesReturnDto]:
+@computed.post('/monthlyTotalCategories')
+async def get_categories_total_per_month(start: int, end: int, request: Request) -> list[MonthlyCategoriesReturnDto]:
     user_id: str = request.state.user_id
+    if start < 0 and end > 11:
+        return JSONResponse(status_code = 400, content = {'msg' : 'invalid data range'})
+    payload : MonthlyDto = MonthlyDto(start_month = start, end_month = end)
     service_response = await get_categories_month_service(user_id, payload)
     return JSONResponse(status_code = 200, content = [data.__dict__ for data in service_response])
 
@@ -206,16 +209,16 @@ async def total_expenses(request: Request) -> dict:
     service_response = await total_balance_service(user_id)
     return JSONResponse(status_code = 200, content = service_response)
 
-@computed.post('/montlyBalances')
-async def balances_montly_values(payload: MonthlyDto, request: Request) -> list[MonthlyBalancesReturnDto]:
+@computed.post('/monthlyBalances')
+async def balances_monthly_values(payload: MonthlyDto, request: Request) -> list[MonthlyBalancesReturnDto]:
     user_id: str = request.state.user_id
-    service_response = await balances_montly_service(user_id, payload)
+    service_response = await balances_monthly_service(user_id, payload)
     return JSONResponse(status_code = 200, content = [data.__dict__ for data in service_response])
 
-@computed.post('/montlyBalancesCompare')
-async def balances_montly_values_compare(payload: MonthlyBalancesCompareDto, request: Request) -> list[MonthlyBalancesReturnDto]:
+@computed.post('/monthlyBalancesCompare')
+async def balances_monthly_values_compare(payload: MonthlyBalancesCompareDto, request: Request) -> list[MonthlyBalancesReturnDto]:
     user_id: str = request.state.user_id
-    service_response = await balances_montly_compare_service(user_id, payload)
+    service_response = await balances_monthly_compare_service(user_id, payload)
     return JSONResponse(status_code = 200, content = [data.__dict__ for data in service_response])
 
 
