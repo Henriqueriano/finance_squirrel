@@ -75,27 +75,27 @@ class UserSettingDto(BaseModel):
     exchange_config: str
     date_format_config: str
 
-class MontlyCategoriesDto(BaseModel):
+class MonthlyCategoriesDto(BaseModel):
     category_id: int
     start_month: int # 0 january
     end_month: int
 
-class MontlyCategoriesReturnDto(BaseModel):
+class MonthlyCategoriesReturnDto(BaseModel):
     month: int
     category_name: str
+    total_expenses: int
     total_entry: int
-    total_out: int
 
-class MontlyBalancesDto(BaseModel):
+class MonthlyDto(BaseModel):
     start_month: int
     end_month: int
 
-class MontlyBalancesReturnDto(BaseModel):
+class MonthlyBalancesReturnDto(BaseModel):
     month: int
     total_entry: int
     total_out: int
 
-class MontlyBalancesCompareDto(BaseModel):
+class MonthlyBalancesCompareDto(BaseModel):
     month_one: int
     month_two: int
 
