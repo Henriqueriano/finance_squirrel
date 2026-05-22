@@ -1,7 +1,9 @@
+import { months } from "@/src/constants/months"
 import { useAuth } from "@/src/hooks/use-auth"
 import { useTheme } from "@/src/hooks/use-theme"
 import { api } from "@/src/services/api"
 import { LineGraphData } from "@/src/types/dashboard/types"
+import { formatCurrency } from "@/src/utils/format-currency"
 import { roundUp } from "@/src/utils/round-up"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import DateTimePicker from "@react-native-community/datetimepicker"
@@ -16,36 +18,6 @@ import {
 } from "react-native"
 import { BarChart, LineChart } from "react-native-gifted-charts"
 
-const lineData1: LineGraphData[] = [
-  { value: 1200, label: "jan" },
-  { value: 900, label: "fev" },
-  { value: 1600, label: "mar" },
-  { value: 2000, label: "abr" },
-  { value: 1000, label: "mai" },
-  { value: 1500, label: "jun" },
-  { value: 1700, label: "jul" },
-  { value: 1750, label: "ago" },
-  { value: 1700, label: "set" },
-  { value: 1200, label: "out" },
-  { value: 1900, label: "nov" },
-  { value: 2100, label: "dez" },
-]
-
-const lineData2: LineGraphData[] = [
-  { value: 800, label: "jan" },
-  { value: 1100, label: "fev" },
-  { value: 1300, label: "mar" },
-  { value: 950, label: "abr" },
-  { value: 1400, label: "mai" },
-  { value: 1200, label: "jun" },
-  { value: 1600, label: "jul" },
-  { value: 1800, label: "ago" },
-  { value: 1500, label: "set" },
-  { value: 1700, label: "out" },
-  { value: 2000, label: "nov" },
-  { value: 2300, label: "dez" },
-]
-
 type TotalCategory = {
   id: string
   label: string
@@ -59,6 +31,13 @@ type TotalBalance = {
   frontColor: string
 }
 
+type MonthlyCompare = {
+  month: number
+  year: number
+  total_entry: number
+  total_out: number
+}
+
 export default function FinancialInsights() {
   const { user, isAuthenticated } = useAuth()
   // Category
@@ -67,11 +46,18 @@ export default function FinancialInsights() {
   // Balance
   const [totalBalance, setTotalBalance] = useState<TotalBalance[]>([])
   const [maxBalanceValue, setMaxBalanceValue] = useState(0)
-
-  const [date1, setDate1] = useState<Date | null>(null)
-  const [date2, setDate2] = useState<Date | null>(null)
-  const [activeField, setActiveField] = useState<"date1" | "date2" | null>(null)
+  // Entry vs Out
+  const [totalEntry, setTotalEntry] = useState<LineGraphData[]>([])
+  const [totalOut, setTotalOut] = useState<LineGraphData[]>([])
+  const [maxTotalEntryOut, setMaxTotalEntryOut] = useState(0)
+  // DateOne vs DateTwo
+  const [selectedDateOne, setSelectedDateOne] = useState<Date | null>(null)
+  const [selectedDateTwo, setSelectedDateTwo] = useState<Date | null>(null)
+  const [activeField, setActiveField] = useState<"dateOne" | "dateTwo" | null>(
+    null,
+  )
   const [show, setShow] = useState(false)
+  const [monthlyCompare, setMonthlyCompare] = useState<MonthlyCompare[]>([])
 
   const { colors } = useTheme()
   const styles = useMemo(
@@ -95,10 +81,10 @@ export default function FinancialInsights() {
 
     if (!selectedDate || !activeField) return
 
-    if (activeField === "date1") {
-      setDate1(selectedDate)
-    } else if (activeField === "date2") {
-      setDate2(selectedDate)
+    if (activeField === "dateOne") {
+      setSelectedDateOne(selectedDate)
+    } else if (activeField === "dateTwo") {
+      setSelectedDateTwo(selectedDate)
     }
   }
 
@@ -110,7 +96,7 @@ export default function FinancialInsights() {
     })
   }
 
-  // Gastos por Categoria
+  // Gastos total por Categoria
   useEffect(() => {
     async function getTotalCategories() {
       try {
@@ -151,11 +137,15 @@ export default function FinancialInsights() {
 
         if (!token) return
 
-        const response = await api.get("/computed/balance", {
-          headers: {
-            authorization: `Bearer ${token}`,
+        const currentYear = new Date().getFullYear()
+        const response = await api.get(
+          `/computed/balance?year=${currentYear}`,
+          {
+            headers: {
+              authorization: `Bearer ${token}`,
+            },
           },
-        })
+        )
 
         const formatted = [
           {
@@ -182,6 +172,99 @@ export default function FinancialInsights() {
 
     getTotalBalance()
   }, [user])
+
+  // Gasto total despesa/receita no ano atual
+  useEffect(() => {
+    async function getTotalEntradaSaida() {
+      try {
+        const token = await AsyncStorage.getItem("@token")
+
+        if (!token) return
+
+        const currentYear = new Date().getFullYear()
+        const payload = {
+          start_month: 0,
+          end_month: 11,
+          year: currentYear,
+        }
+        const response = await api.post("/computed/monthlyBalances", payload, {
+          headers: {
+            authorization: `Bearer ${token}`,
+          },
+        })
+
+        const lineDataEntry: LineGraphData[] = response.data.map(
+          (item: any) => ({
+            value: Number(item.total_entry) / 100,
+            label: months[item.month],
+          }),
+        )
+
+        const lineDataOut: LineGraphData[] = response.data.map((item: any) => ({
+          value: Number(item.total_out) / 100,
+          label: months[item.month],
+        }))
+
+        const maxGraphValue = Math.max(
+          ...lineDataEntry.map((item) => item.value),
+          ...lineDataOut.map((item) => item.value),
+        )
+        const roundedMaxGraph = roundUp(maxGraphValue, 100)
+
+        setMaxTotalEntryOut(roundedMaxGraph)
+
+        setTotalEntry(lineDataEntry)
+        setTotalOut(lineDataOut)
+      } catch (err) {
+        console.log("Erro ao buscar total despesas/receitas no ano:", err)
+      }
+    }
+
+    getTotalEntradaSaida()
+  }, [user])
+
+  // Comparar Meses
+  useEffect(() => {
+    async function handleCompareMonths() {
+      try {
+        if (!selectedDateOne || !selectedDateTwo) return
+
+        const token = await AsyncStorage.getItem("@token")
+
+        if (!token) return
+
+        const payload = {
+          month_one: selectedDateOne.getMonth(),
+          year_one: selectedDateOne.getFullYear(),
+
+          month_two: selectedDateTwo.getMonth(),
+          year_two: selectedDateTwo.getFullYear(),
+        }
+
+        const response = await api.post(
+          "/computed/monthlyBalancesCompare",
+          payload,
+          {
+            headers: {
+              authorization: `Bearer ${token}`,
+            },
+          },
+        )
+
+        const formatted = response.data.map((item: MonthlyCompare) => ({
+          month: item.month,
+          year: item.year,
+          total_entry: Number(item.total_entry) / 100,
+          total_out: Number(item.total_out) / 100,
+        }))
+
+        setMonthlyCompare(formatted)
+      } catch (error) {
+        console.log("Erro ao comparar meses:", error)
+      }
+    }
+    handleCompareMonths()
+  }, [selectedDateOne, selectedDateTwo])
 
   if (!isAuthenticated) {
     return <Redirect href="/signin" />
@@ -251,8 +334,8 @@ export default function FinancialInsights() {
             </View>
 
             <LineChart
-              data={lineData1}
-              data2={lineData2}
+              data={totalEntry}
+              data2={totalOut}
               width={280}
               backgroundColor={"rgb(0 0 0 / 0.7)"}
               color1="skyblue"
@@ -268,8 +351,8 @@ export default function FinancialInsights() {
               xAxisLabelTextStyle={{ color: colors.text, fontSize: 12 }}
               // Y axis
               noOfSections={5}
-              stepValue={500}
-              maxValue={2500}
+              // stepValue={500}
+              maxValue={maxTotalEntryOut}
               yAxisLabelWidth={40}
               yAxisColor={colors.text}
               yAxisTextStyle={{ color: colors.text, fontSize: 10 }}
@@ -322,23 +405,27 @@ export default function FinancialInsights() {
               <TouchableOpacity
                 className="p-3 bg-black/70 justify-between rounded-lg"
                 onPress={() => {
-                  setActiveField("date1")
+                  setActiveField("dateOne")
                   setShow(true)
                 }}
               >
                 <Text style={styles.text}>
-                  {date1 ? formatMonthYear(date1) : "Escolha Mês 1"}
+                  {selectedDateOne
+                    ? formatMonthYear(selectedDateOne)
+                    : "Escolha Mês 1"}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 className="p-3 bg-black/70 justify-between rounded-lg"
                 onPress={() => {
-                  setActiveField("date2")
+                  setActiveField("dateTwo")
                   setShow(true)
                 }}
               >
                 <Text style={styles.text}>
-                  {date2 ? formatMonthYear(date2) : "Escolha Mês 2"}
+                  {selectedDateTwo
+                    ? formatMonthYear(selectedDateTwo)
+                    : "Escolha Mês 2"}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -355,10 +442,17 @@ export default function FinancialInsights() {
                 <View className="flex-1 flex-row justify-between items-center">
                   <View className="bg-black/70 border-l-8 border-l-[#00BF62] rounded-r-2xl p-4">
                     <Text className="text-sm" style={styles.text}>
-                      Set/2025
+                      {monthlyCompare[0]
+                        ? formatMonthYear(
+                            new Date(
+                              monthlyCompare[0].year,
+                              monthlyCompare[0].month,
+                            ),
+                          )
+                        : "--"}
                     </Text>
                     <Text className="text-2xl font-bold" style={styles.text}>
-                      R$ 300,00
+                      {formatCurrency(monthlyCompare[0]?.total_entry ?? 0)}
                     </Text>
                   </View>
 
@@ -371,10 +465,17 @@ export default function FinancialInsights() {
 
                   <View className="bg-black/70 border-l-8 border-l-[#00BF62] rounded-r-2xl p-4">
                     <Text className="text-sm" style={styles.text}>
-                      Set/2025
+                      {monthlyCompare[1]
+                        ? formatMonthYear(
+                            new Date(
+                              monthlyCompare[1].year,
+                              monthlyCompare[1].month,
+                            ),
+                          )
+                        : "--"}
                     </Text>
                     <Text className="text-2xl font-bold" style={styles.text}>
-                      R$ 300,00
+                      {formatCurrency(monthlyCompare[1]?.total_entry ?? 0)}
                     </Text>
                   </View>
                 </View>
@@ -392,10 +493,17 @@ export default function FinancialInsights() {
                 <View className="flex-1 flex-row justify-between items-center">
                   <View className="bg-black/70 border-l-8 border-l-[#FF5757] rounded-r-2xl p-4">
                     <Text className="text-sm" style={styles.text}>
-                      Set/2025
+                      {monthlyCompare[0]
+                        ? formatMonthYear(
+                            new Date(
+                              monthlyCompare[0].year,
+                              monthlyCompare[0].month,
+                            ),
+                          )
+                        : "--"}
                     </Text>
                     <Text className="text-2xl font-bold" style={styles.text}>
-                      R$ 300,00
+                      {formatCurrency(monthlyCompare[0]?.total_out ?? 0)}
                     </Text>
                   </View>
 
@@ -408,10 +516,17 @@ export default function FinancialInsights() {
 
                   <View className="bg-black/70 border-l-8 border-l-[#FF5757] rounded-r-2xl p-4">
                     <Text className="text-sm" style={styles.text}>
-                      Set/2025
+                      {monthlyCompare[1]
+                        ? formatMonthYear(
+                            new Date(
+                              monthlyCompare[0].year,
+                              monthlyCompare[0].month,
+                            ),
+                          )
+                        : "--"}
                     </Text>
                     <Text className="text-2xl font-bold" style={styles.text}>
-                      R$ 300,00
+                      {formatCurrency(monthlyCompare[1]?.total_out ?? 0)}
                     </Text>
                   </View>
                 </View>
@@ -420,7 +535,7 @@ export default function FinancialInsights() {
               <View className="flex-1 h-1 bg-black/70 rounded-lg"></View>
 
               {/* Saldo */}
-              <View className="flex-1 gap-2">
+              {/* <View className="flex-1 gap-2">
                 <View className="flex-row items-center gap-2">
                   <View className="h-5 w-5 bg-[#536FFF] rounded-full"></View>
                   <Text style={styles.text}>Saldo</Text>
@@ -452,7 +567,7 @@ export default function FinancialInsights() {
                     </Text>
                   </View>
                 </View>
-              </View>
+              </View> */}
             </View>
           </View>
         </View>
@@ -461,7 +576,9 @@ export default function FinancialInsights() {
       {show && (
         <DateTimePicker
           value={
-            activeField === "date1" ? date1 || new Date() : date2 || new Date()
+            activeField === "dateOne"
+              ? selectedDateOne || new Date()
+              : selectedDateTwo || new Date()
           }
           mode="date"
           display="default"

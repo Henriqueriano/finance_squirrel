@@ -30,7 +30,5 @@ export type DashboardData = {
   totalIncome: number
   totalExpense: number
   pieData: PieGraphData[]
-  lineData1: LineGraphData[]
-  lineData2: LineGraphData[]
   transactions: Transaction[]
 }

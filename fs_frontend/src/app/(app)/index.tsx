@@ -1,7 +1,12 @@
+import { DateField } from "@/src/components/date-field"
 import { InputField } from "@/src/components/input-field"
 import TransactionTable from "@/src/components/transaction-table"
+import { months } from "@/src/constants/months"
+import { useAuth } from "@/src/hooks/use-auth"
 import { useDashboard } from "@/src/hooks/use-dashboard"
 import { useTheme } from "@/src/hooks/use-theme"
+import { api } from "@/src/services/api"
+import { Category } from "@/src/types/category/types"
 import {
   DashboardData,
   LineGraphData,
@@ -9,7 +14,11 @@ import {
 } from "@/src/types/dashboard/types"
 import { Transaction } from "@/src/types/transaction/types"
 import { formatCurrency } from "@/src/utils/format-currency"
-import { Link } from "expo-router"
+import { formatDateToMonthYear } from "@/src/utils/format-date-to-month-year"
+import { parseCurrencyToCents } from "@/src/utils/parse-currency-to-cents"
+import { roundUp } from "@/src/utils/round-up"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import { Link, useFocusEffect } from "expo-router"
 import {
   BanknoteArrowDown,
   BanknoteArrowUp,
@@ -17,7 +26,7 @@ import {
   Landmark,
   Plus,
 } from "lucide-react-native"
-import { JSX, useEffect, useMemo, useState } from "react"
+import { JSX, useCallback, useEffect, useMemo, useState } from "react"
 import {
   Modal,
   ScrollView,
@@ -33,36 +42,6 @@ const pieData: PieGraphData[] = [
   { value: 40, color: "#79D2DE", text: "banana" },
   { value: 20, color: "#ED6665", text: "uva" },
   { value: 200, color: "#0ac009", text: "melancia" },
-]
-
-const lineData1: LineGraphData[] = [
-  { value: 1200, label: "jan" },
-  { value: 900, label: "fev" },
-  { value: 1600, label: "mar" },
-  { value: 2000, label: "abr" },
-  { value: 1000, label: "mai" },
-  { value: 1500, label: "jun" },
-  { value: 1700, label: "jul" },
-  { value: 1750, label: "ago" },
-  { value: 1700, label: "set" },
-  { value: 1200, label: "out" },
-  { value: 1900, label: "nov" },
-  { value: 2100, label: "dez" },
-]
-
-const lineData2: LineGraphData[] = [
-  { value: 800, label: "jan" },
-  { value: 1100, label: "fev" },
-  { value: 1300, label: "mar" },
-  { value: 950, label: "abr" },
-  { value: 1400, label: "mai" },
-  { value: 1200, label: "jun" },
-  { value: 1600, label: "jul" },
-  { value: 1800, label: "ago" },
-  { value: 1500, label: "set" },
-  { value: 1700, label: "out" },
-  { value: 2000, label: "nov" },
-  { value: 2300, label: "dez" },
 ]
 
 const data: Transaction[] = [
@@ -113,19 +92,53 @@ const mockDashboardData: DashboardData = {
   totalIncome: 2000,
   totalExpense: 2000,
   pieData,
-  lineData1,
-  lineData2,
   transactions: data,
 }
 
 type DashboardItemId = "category" | "monthly" | "recent"
 
+const transactions = [
+  { key: "receita", label: "Receita" },
+  { key: "despesa", label: "Despesa" },
+]
+
+type TotalBalance = {
+  label: string
+  value: number
+  frontColor: string
+}
+
+type Expense = {
+  id: string
+  value: string
+  date: Date
+  type: boolean
+  category: string
+  desc: string
+}
+
 export default function Index() {
+  const { user, isAuthenticated } = useAuth()
   const [dashboardData, setDashboardData] =
     useState<DashboardData>(mockDashboardData)
   const [loading, setLoading] = useState(false)
-  const [modalVisible, setModalVisible] = useState(false)
   const { dashboardItems } = useDashboard()
+
+  // Transação Rápida
+  const [simpleExpenseType, setSimpleExpenseType] = useState("despesa")
+  const [simpleExpenseValue, setSimpleExpenseValue] = useState("")
+  const [simpleExpenseDate, setSimpleExpenseDate] = useState<Date | null>(null)
+  const [modalVisible, setModalVisible] = useState(false)
+  // Entry vs Out
+  const [totalEntry, setTotalEntry] = useState<LineGraphData[]>([])
+  const [totalOut, setTotalOut] = useState<LineGraphData[]>([])
+  const [maxTotalEntryOut, setMaxTotalEntryOut] = useState(0)
+  // Balance
+  const [totalBalance, setTotalBalance] = useState<TotalBalance[]>([])
+  const [maxBalanceValue, setMaxBalanceValue] = useState(0)
+
+  const [expenses, setExpenses] = useState<Expense[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
 
   const { colors } = useTheme()
   const styles = useMemo(
@@ -146,6 +159,9 @@ export default function Index() {
         btn: {
           backgroundColor: colors.btn,
         },
+        btnConfirm: {
+          backgroundColor: colors.btnConfirm,
+        },
       }),
     [colors],
   )
@@ -153,23 +169,26 @@ export default function Index() {
   const dashboardComponents: Record<DashboardItemId, () => JSX.Element> = {
     category: () => (
       <>
-        <Text className="text-2xl font-bold mt-5" style={styles.text}>
+        <Text className="text-2xl font-bold" style={styles.text}>
           Gastos por Categoria (Mês)
         </Text>
         <View
-          className="flex-row rounded-lg items-center gap-5 p-5 mt-2"
+          className="flex-row rounded-lg items-center justify-around p-5 mt-2"
           style={styles.card}
         >
-          <PieChart
-            radius={100}
-            data={relativeDataPercent}
-            showText
-            textColor={colors.text}
-            textSize={14}
-            strokeWidth={2}
-            strokeColor="#333"
-          />
-          <View className="flex-1 gap-2">
+          <View>
+            <PieChart
+              radius={100}
+              data={relativeDataPercent}
+              showText
+              textColor={colors.text}
+              textSize={14}
+              strokeWidth={2}
+              strokeColor="#333"
+            />
+          </View>
+          {/* Lista de Categorias */}
+          <View className="gap-2">
             {dashboardData.pieData.map((item, index) => (
               <View
                 key={index}
@@ -177,12 +196,8 @@ export default function Index() {
                 style={{ marginBottom: 5 }}
               >
                 <View
-                  style={{
-                    backgroundColor: item.color,
-                    width: 20,
-                    height: 20,
-                    borderRadius: 5,
-                  }}
+                  className="h-5 w-5 rounded-md"
+                  style={{ backgroundColor: item.color }}
                 />
                 <Text style={styles.text}>{item.text}</Text>
               </View>
@@ -194,11 +209,14 @@ export default function Index() {
 
     monthly: () => (
       <>
-        <Text className="text-2xl font-bold mt-5" style={styles.text}>
+        <Text className="text-2xl font-bold" style={styles.text}>
           Evolução Mensal (2026)
         </Text>
-        <View className="rounded-lg p-5 mt-2" style={styles.card}>
-          <View className="flex-1 flex-row justify-center mb-5 gap-5">
+        <View
+          className="items-center rounded-lg p-5 mt-2 gap-5"
+          style={styles.card}
+        >
+          <View className="flex-1 flex-row justify-center gap-5">
             <View className="flex-row gap-2">
               <View className="h-5 w-5 bg-sky-300 rounded-md" />
               <Text style={styles.text}>Receita</Text>
@@ -211,8 +229,8 @@ export default function Index() {
           </View>
 
           <LineChart
-            data={dashboardData.lineData1}
-            data2={dashboardData.lineData2}
+            data={totalEntry}
+            data2={totalOut}
             width={280}
             color1="skyblue"
             color2="orange"
@@ -227,11 +245,12 @@ export default function Index() {
             xAxisLabelTextStyle={{ color: colors.text, fontSize: 12 }}
             // Y axis
             noOfSections={5}
-            stepValue={500}
-            maxValue={2500}
+            // stepValue={500}
+            maxValue={maxTotalEntryOut}
+            endSpacing={5}
             yAxisColor={colors.text}
             yAxisTextStyle={{ color: colors.text, fontSize: 10 }}
-            yAxisLabelWidth={40}
+            yAxisLabelWidth={45}
             yAxisLabelPrefix="R$ "
           />
         </View>
@@ -240,12 +259,56 @@ export default function Index() {
 
     recent: () => (
       <>
-        <Text className="text-2xl font-bold mt-5" style={styles.text}>
+        <Text className="text-2xl font-bold" style={styles.text}>
           Últimas Movimentações (Mês)
         </Text>
-        <TransactionTable data={dashboardData.transactions} />
+        <TransactionTable data={normalizedData} />
       </>
     ),
+  }
+
+  const total = dashboardData.pieData.reduce((acc, item) => acc + item.value, 0)
+
+  const relativeDataPercent = dashboardData.pieData.map((item) => ({
+    ...item,
+    value: (item.value / total) * 100,
+    text: ((item.value / total) * 100).toFixed(2) + "%",
+  }))
+
+  const isDisabled = !simpleExpenseDate || !simpleExpenseValue
+
+  async function handleSave() {
+    try {
+      const token = await AsyncStorage.getItem("@token")
+
+      if (!token) return
+
+      const parsedAmount = parseCurrencyToCents(simpleExpenseValue)
+
+      const expense = {
+        value: parsedAmount,
+        date: simpleExpenseDate!.toISOString(),
+        type: simpleExpenseType === "receita",
+        category_id: 7, // default category
+        description: "",
+      }
+
+      const payload = {
+        items: [expense],
+      }
+
+      await api.post("/expenses/", payload, {
+        headers: {
+          authorization: `Bearer ${token}`,
+        },
+      })
+
+      setSimpleExpenseDate(null)
+      setSimpleExpenseValue("")
+      setModalVisible(false)
+    } catch (err) {
+      console.log("Erro ao salvar Transação rápida:", err)
+    }
   }
 
   async function fetchDashboardData() {
@@ -257,7 +320,7 @@ export default function Index() {
       // setDashboardData(response.data)
 
       // 🟢 TEMPORÁRIO (simulando backend)
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      // await new Promise((resolve) => setTimeout(resolve, 1000))
 
       setDashboardData(mockDashboardData)
     } catch (error) {
@@ -271,18 +334,186 @@ export default function Index() {
     fetchDashboardData()
   }, [])
 
-  const total = dashboardData.pieData.reduce((acc, item) => acc + item.value, 0)
+  // GET categories
+  useFocusEffect(
+    useCallback(() => {
+      if (!isAuthenticated || !user?.id) return
 
-  const relativeDataPercent = dashboardData.pieData.map((item) => ({
-    ...item,
-    value: (item.value / total) * 100,
-    text: ((item.value / total) * 100).toFixed(2) + "%",
-  }))
+      async function getCategories() {
+        try {
+          const token = await AsyncStorage.getItem("@token")
+
+          if (!token) return
+
+          const response = await api.get("/categories/", {
+            headers: {
+              authorization: `Bearer ${token}`,
+            },
+          })
+
+          setCategories(response.data)
+        } catch (error) {
+          console.error("Erro ao buscar categorias:", error)
+        }
+      }
+
+      getCategories()
+    }, [isAuthenticated, user]),
+  )
+
+  // Gasto total despesa/receita no ano atual
+  useEffect(() => {
+    async function getTotalEntradaSaida() {
+      try {
+        const token = await AsyncStorage.getItem("@token")
+
+        if (!token) return
+
+        const currentYear = new Date().getFullYear()
+        const payload = {
+          start_month: 0,
+          end_month: 11,
+          year: currentYear,
+        }
+        const response = await api.post("/computed/monthlyBalances", payload, {
+          headers: {
+            authorization: `Bearer ${token}`,
+          },
+        })
+
+        const lineDataEntry: LineGraphData[] = response.data.map(
+          (item: any) => ({
+            value: Number(item.total_entry) / 100,
+            label: months[item.month],
+          }),
+        )
+
+        const lineDataOut: LineGraphData[] = response.data.map((item: any) => ({
+          value: Number(item.total_out) / 100,
+          label: months[item.month],
+        }))
+
+        const maxGraphValue = Math.max(
+          ...lineDataEntry.map((item) => item.value),
+          ...lineDataOut.map((item) => item.value),
+        )
+        const roundedMaxGraph = roundUp(maxGraphValue, 100)
+
+        setMaxTotalEntryOut(roundedMaxGraph)
+
+        setTotalEntry(lineDataEntry)
+        setTotalOut(lineDataOut)
+      } catch (err) {
+        console.log("Erro ao buscar total despesas/receitas no ano:", err)
+      }
+    }
+
+    getTotalEntradaSaida()
+  }, [user])
+
+  // Entrada vs Saída
+  useEffect(() => {
+    async function getTotalBalance() {
+      try {
+        const token = await AsyncStorage.getItem("@token")
+
+        if (!token) return
+
+        const currentYear = new Date().getFullYear()
+        const response = await api.get(
+          `/computed/balance?year=${currentYear}`,
+          {
+            headers: {
+              authorization: `Bearer ${token}`,
+            },
+          },
+        )
+
+        const formatted = [
+          {
+            label: "Receitas",
+            value: Number(response.data.receitas) / 100,
+            frontColor: "#f00",
+          },
+          {
+            label: "Despesas",
+            value: Number(response.data.despesas) / 100,
+            frontColor: "#ff0",
+          },
+        ]
+
+        const maxValue = Math.max(...formatted.map((item: any) => item.value))
+        const roundedMax = roundUp(maxValue, 100)
+
+        setMaxBalanceValue(roundedMax)
+        setTotalBalance(formatted)
+      } catch (err) {
+        console.log("Erro ao buscar total despesas/receitas:", err)
+      }
+    }
+
+    getTotalBalance()
+  }, [user])
+
+  // GET expenses
+  useFocusEffect(
+    useCallback(() => {
+      async function getExpenses() {
+        try {
+          const token = await AsyncStorage.getItem("@token")
+          if (!token || !user?.id) return
+
+          const response = await api.get("/expenses/", {
+            headers: {
+              authorization: `Bearer ${token}`,
+            },
+          })
+
+          const formattedExpenses = response.data.map((item: any) => ({
+            id: item.id,
+            value: Number(item.value) / 100,
+            date: new Date(item.date),
+            type: !!item.type,
+            category: item.category_id,
+            desc: item.description,
+          }))
+
+          const sliced = formattedExpenses.slice(0, 5)
+
+          setExpenses(sliced)
+        } catch (error) {
+          console.error("Erro ao buscar expenses:", error)
+        }
+      }
+
+      getExpenses()
+    }, [user]),
+  )
+
+  const normalizedData = useMemo(() => {
+    if (!expenses.length || !categories.length) return []
+
+    return expenses.map((exp) => {
+      const category = categories.find((cat) => cat.id === exp.category)
+
+      return {
+        id: exp.id,
+        date: formatDateToMonthYear(exp.date),
+        category: category?.name ?? "Sem categoria",
+        description: exp.desc,
+        value: Number(exp.value),
+        type: exp.type ? "Receita" : "Despesa",
+      }
+    })
+  }, [expenses, categories])
 
   return (
     <>
       <ScrollView className="flex-1">
-        <View className="flex-1 justify-center p-2" style={styles.container}>
+        <View
+          className="flex-1 justify-center p-2 gap-3"
+          style={styles.container}
+        >
           {/* Saldo e Tot. Receita/Despesa */}
           <View className="flex-1 flex-row justify-between gap-2">
             {/* Saldo */}
@@ -296,7 +527,9 @@ export default function Index() {
                   Saldo
                 </Text>
                 <Text className="text-3xl" style={styles.text}>
-                  {formatCurrency(dashboardData.balance)}
+                  {formatCurrency(
+                    totalBalance[0]?.value - totalBalance[1]?.value,
+                  )}
                 </Text>
                 <Link href="/transaction-history">
                   <View className="flex-row items-center">
@@ -309,6 +542,7 @@ export default function Index() {
 
             {/* Total Receita/Despesa */}
             <View className="rounded-lg p-2 gap-2" style={styles.card}>
+              {/* Receitas */}
               <View className="flex-row gap-3">
                 <BanknoteArrowUp size={30} color={"#8EB69B"} />
                 <View>
@@ -316,11 +550,11 @@ export default function Index() {
                     Total Receitas
                   </Text>
                   <Text style={styles.text}>
-                    {formatCurrency(dashboardData.totalIncome)}
+                    {formatCurrency(totalBalance[0]?.value)}
                   </Text>
                 </View>
               </View>
-
+              {/* Despesas */}
               <View className="flex-row gap-3">
                 <BanknoteArrowDown size={30} color={"#DB5461"} />
                 <View>
@@ -328,7 +562,7 @@ export default function Index() {
                     Total Despesas
                   </Text>
                   <Text style={styles.text}>
-                    {formatCurrency(dashboardData.totalExpense)}
+                    {formatCurrency(totalBalance[1]?.value)}
                   </Text>
                 </View>
               </View>
@@ -361,20 +595,49 @@ export default function Index() {
           onPressOut={() => setModalVisible(false)}
         >
           <TouchableOpacity activeOpacity={1} className="w-[90%]">
+            {/* Transação Rápida */}
             <View className="p-5 rounded-2xl gap-4" style={styles.card}>
               <Text className="text-xl font-bold" style={styles.text}>
                 Transação Rápida
               </Text>
 
+              {/* Campo tipo */}
+              <View className="flex-row items-center gap-2">
+                <Text style={styles.text}>Tipo de Transação:</Text>
+
+                <View className="flex-1 flex-row gap-2">
+                  {transactions.map((transaction) => (
+                    <TouchableOpacity
+                      key={transaction.key}
+                      onPress={() =>
+                        setSimpleExpenseType(transaction.key as any)
+                      }
+                      className="flex-1 flex-row items-center justify-center p-2 rounded-lg"
+                      style={
+                        simpleExpenseType === transaction.key ? styles.btn : ""
+                      }
+                    >
+                      <Text style={styles.text}>{transaction.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              {/* Campo valor */}
               <InputField
                 label="Valor:"
                 placeholder="0,00"
                 keyboardType="numeric"
                 leftElement={<Text className="text-gray-500">R$</Text>}
+                value={simpleExpenseValue}
+                onChangeText={(text) => setSimpleExpenseValue(text)}
               />
 
-              {/* Data */}
-              {/* <DateField /> */}
+              {/* Campo Data */}
+              <DateField
+                value={simpleExpenseDate}
+                onChange={(date) => setSimpleExpenseDate(date)}
+              />
 
               {/* Botões */}
               <View className="flex-row items-center justify-end gap-3 mt-3">
@@ -386,7 +649,12 @@ export default function Index() {
                   <Text style={styles.text}>Sair</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity className="px-4 py-2 rounded-lg bg-accent">
+                <TouchableOpacity
+                  className={`px-4 py-2 rounded-lg ${isDisabled ? "bg-gray-400" : ""}`}
+                  disabled={isDisabled}
+                  onPress={handleSave}
+                  style={isDisabled ? "" : styles.btnConfirm}
+                >
                   <Text style={styles.text}>Salvar</Text>
                 </TouchableOpacity>
               </View>
