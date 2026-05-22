@@ -1,4 +1,5 @@
 import uuid
+import uuid_utils as ud
 from typing import List
 from datetime import datetime, timezone
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -38,7 +39,7 @@ class ExpenseModel(Base):
 class UserModel(Base):
     __tablename__ = 'users_table'
 
-    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid = True), primary_key = True, default = uuid.uuid7) 
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid = True), primary_key = True, default = ud.uuid7()) 
     user_name: Mapped[str] = mapped_column(String(100), nullable = False)
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)    
 
