@@ -84,8 +84,8 @@ class MonthlyCategoriesDto(BaseModel):
 class MonthlyCategoriesReturnDto(BaseModel):
     month: int
     category_name: str
-    total_expenses: int
-    total_entry: int
+    total_expenses: int | None
+    total_entry: int | None
 
 class MonthlyDto(BaseModel):
     start_month: int
