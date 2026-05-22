@@ -376,7 +376,7 @@ async def get_all_categories_service(user_id: str) -> list[ExpenseCategoryReturn
 
 
 # region user 
-async def get_user_name_service(user_login: payload) -> str:
+async def get_user_name_service(user_login: str) -> str:
     query = select(UserModel).join(LoginModel,
                                    UserModel.user_id == LoginModel.user_id).where(LoginModel.user_login == user_login)
     try: 
