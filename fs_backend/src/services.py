@@ -1,5 +1,5 @@
-import os
-import jwt
+    import os
+    import jwt
 import bcrypt
 import datetime
 from .dtos import *
@@ -56,7 +56,7 @@ async def user_exists_service(user_login: str) -> bool:
         print(f'Error in user exists service > {e}')
 
 
-async def login_service(payload: LoginDteo) -> AuthReturnDto:
+async def login_service(payload: LoginDto) -> AuthReturnDto:
     data: AuthReturnDto = AuthReturnDto(id = '', name = '', auth = '')
     try:
         engine = create_engine(DATABASE_URL)
