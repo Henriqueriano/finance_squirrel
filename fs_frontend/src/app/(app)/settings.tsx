@@ -1,12 +1,10 @@
-import { dateFormat } from "@/src/constants/date-format"
-import { moneyType } from "@/src/constants/money-type"
 import { themesOptions } from "@/src/constants/theme-options"
 import { useAuth } from "@/src/hooks/use-auth"
 import { useDashboard } from "@/src/hooks/use-dashboard"
 import { useTheme } from "@/src/hooks/use-theme"
 import { useRouter } from "expo-router"
 import { LogOut, Menu } from "lucide-react-native"
-import { useMemo, useState } from "react"
+import { useMemo } from "react"
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native"
 import DraggableFlatList from "react-native-draggable-flatlist"
 
@@ -14,9 +12,6 @@ export default function SettingsScreen() {
   const { signOut } = useAuth()
   const { theme, setTheme, colors } = useTheme()
   const { dashboardItems, setDashboardItems } = useDashboard()
-  const [selectedTheme, setSelectedTheme] = useState("claro")
-  const [selectedTypeMoney, setSelectedTypeMoney] = useState("real")
-  const [selectedDateFormat, setSelectedDateFormat] = useState("nominal")
 
   const styles = useMemo(
     () =>
@@ -67,58 +62,6 @@ export default function SettingsScreen() {
                 </TouchableOpacity>
               )
             })}
-          </View>
-        </View>
-
-        <View className="h-1 bg-black/70 rounded-lg" />
-
-        {/* Moeda */}
-        <View className="flex-row items-center gap-2">
-          <Text className="flex-1/3 text-xl" style={styles.text}>
-            Moeda:
-          </Text>
-          <View className="flex-1 flex-row gap-2">
-            {moneyType.map((money) => (
-              <TouchableOpacity
-                key={money.key}
-                onPress={() => setSelectedTypeMoney(money.key)}
-                className="flex-1 flex-row items-center justify-center py-2 rounded-lg"
-                style={{
-                  backgroundColor:
-                    selectedTypeMoney === money.key
-                      ? colors.btn
-                      : "transparent",
-                }}
-              >
-                <Text style={styles.text}>{money.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        <View className="h-1 bg-black/70 rounded-lg" />
-
-        {/* Formato data */}
-        <View className="flex-row items-center gap-2">
-          <Text className="flex-1/3 text-xl" style={styles.text}>
-            Formato de Data:
-          </Text>
-          <View className="flex-1 flex-row gap-2">
-            {dateFormat.map((format) => (
-              <TouchableOpacity
-                key={format.key}
-                onPress={() => setSelectedDateFormat(format.key)}
-                className="flex-1 flex-row items-center justify-center py-2 rounded-lg gap-1"
-                style={{
-                  backgroundColor:
-                    selectedDateFormat === format.key
-                      ? colors.btn
-                      : "transparent",
-                }}
-              >
-                <Text style={styles.text}>{format.label}</Text>
-              </TouchableOpacity>
-            ))}
           </View>
         </View>
 

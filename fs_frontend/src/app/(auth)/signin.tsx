@@ -2,7 +2,7 @@ import { PasswordInput } from "@/src/components/password-input"
 import { useAuth } from "@/src/hooks/use-auth"
 import { useTheme } from "@/src/hooks/use-theme"
 import { LinearGradient } from "expo-linear-gradient"
-import { useRouter } from "expo-router"
+import { Link, useRouter } from "expo-router"
 import { LogIn } from "lucide-react-native"
 import { useState } from "react"
 import {
@@ -98,9 +98,11 @@ export default function SignIn() {
       </View>
 
       <View className="flex-row justify-between items-center mt-10">
-        <Text className="text-xl" style={{ color: colors.anchor }}>
-          Esqueci a senha
-        </Text>
+        <Link href="/config-rota">
+          <Text className="text-xl" style={{ color: colors.anchor }}>
+            Configurar Rota
+          </Text>
+        </Link>
         <TouchableOpacity
           className="flex-row gap-5 w-30 h-30 p-5 rounded-3xl items-center justify-center"
           onPress={handleSignIn}

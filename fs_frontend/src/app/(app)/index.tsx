@@ -7,12 +7,7 @@ import { useDashboard } from "@/src/hooks/use-dashboard"
 import { useTheme } from "@/src/hooks/use-theme"
 import { api } from "@/src/services/api"
 import { Category } from "@/src/types/category/types"
-import {
-  DashboardData,
-  LineGraphData,
-  PieGraphData,
-} from "@/src/types/dashboard/types"
-import { Transaction } from "@/src/types/transaction/types"
+import { LineGraphData } from "@/src/types/dashboard/types"
 import { formatCurrency } from "@/src/utils/format-currency"
 import { formatDateToMonthYear } from "@/src/utils/format-date-to-month-year"
 import { parseCurrencyToCents } from "@/src/utils/parse-currency-to-cents"
@@ -35,67 +30,9 @@ import {
   TouchableOpacity,
   View,
 } from "react-native"
-import { LineChart, PieChart } from "react-native-gifted-charts"
+import { LineChart } from "react-native-gifted-charts"
 
-const pieData: PieGraphData[] = [
-  { value: 54, color: "#177AD5", text: "abacate" },
-  { value: 40, color: "#79D2DE", text: "banana" },
-  { value: 20, color: "#ED6665", text: "uva" },
-  { value: 200, color: "#0ac009", text: "melancia" },
-]
-
-const data: Transaction[] = [
-  {
-    id: "1",
-    date: "Jun/2026",
-    category: "Alimentação",
-    description: "...",
-    value: 10,
-    type: "despesa",
-  },
-  {
-    id: "2",
-    date: "Dez/2025",
-    category: "Jogos",
-    description: "Minecraft",
-    value: 109.9,
-    type: "despesa",
-  },
-  {
-    id: "3",
-    date: "Jan/2026",
-    category: "Alimentação",
-    description: "Arroz, Feijão",
-    value: 17.9,
-    type: "despesa",
-  },
-  {
-    id: "4",
-    date: "Abr/2025",
-    category: "Alimentação",
-    description: "Macarrão, Leite",
-    value: 9.5,
-    type: "despesa",
-  },
-  {
-    id: "5",
-    date: "Fev/2026",
-    category: "Transporte",
-    description: "Uber",
-    value: 23.4,
-    type: "despesa",
-  },
-]
-
-const mockDashboardData: DashboardData = {
-  balance: 3000,
-  totalIncome: 2000,
-  totalExpense: 2000,
-  pieData,
-  transactions: data,
-}
-
-type DashboardItemId = "category" | "monthly" | "recent"
+type DashboardItemId = "monthly" | "recent"
 
 const transactions = [
   { key: "receita", label: "Receita" },
@@ -119,9 +56,6 @@ type Expense = {
 
 export default function Index() {
   const { user, isAuthenticated } = useAuth()
-  const [dashboardData, setDashboardData] =
-    useState<DashboardData>(mockDashboardData)
-  const [loading, setLoading] = useState(false)
   const { dashboardItems } = useDashboard()
 
   // Transação Rápida
@@ -135,7 +69,6 @@ export default function Index() {
   const [maxTotalEntryOut, setMaxTotalEntryOut] = useState(0)
   // Balance
   const [totalBalance, setTotalBalance] = useState<TotalBalance[]>([])
-  const [maxBalanceValue, setMaxBalanceValue] = useState(0)
 
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -167,46 +100,6 @@ export default function Index() {
   )
 
   const dashboardComponents: Record<DashboardItemId, () => JSX.Element> = {
-    category: () => (
-      <>
-        <Text className="text-2xl font-bold" style={styles.text}>
-          Gastos por Categoria (Mês)
-        </Text>
-        <View
-          className="flex-row rounded-lg items-center justify-around p-5 mt-2"
-          style={styles.card}
-        >
-          <View>
-            <PieChart
-              radius={100}
-              data={relativeDataPercent}
-              showText
-              textColor={colors.text}
-              textSize={14}
-              strokeWidth={2}
-              strokeColor="#333"
-            />
-          </View>
-          {/* Lista de Categorias */}
-          <View className="gap-2">
-            {dashboardData.pieData.map((item, index) => (
-              <View
-                key={index}
-                className="flex-row gap-2"
-                style={{ marginBottom: 5 }}
-              >
-                <View
-                  className="h-5 w-5 rounded-md"
-                  style={{ backgroundColor: item.color }}
-                />
-                <Text style={styles.text}>{item.text}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-      </>
-    ),
-
     monthly: () => (
       <>
         <Text className="text-2xl font-bold" style={styles.text}>
@@ -267,14 +160,6 @@ export default function Index() {
     ),
   }
 
-  const total = dashboardData.pieData.reduce((acc, item) => acc + item.value, 0)
-
-  const relativeDataPercent = dashboardData.pieData.map((item) => ({
-    ...item,
-    value: (item.value / total) * 100,
-    text: ((item.value / total) * 100).toFixed(2) + "%",
-  }))
-
   const isDisabled = !simpleExpenseDate || !simpleExpenseValue
 
   async function handleSave() {
@@ -310,29 +195,6 @@ export default function Index() {
       console.log("Erro ao salvar Transação rápida:", err)
     }
   }
-
-  async function fetchDashboardData() {
-    try {
-      setLoading(true)
-
-      // 🔴 FUTURO: substituir por fetch real
-      // const response = await api.get("/dashboard")
-      // setDashboardData(response.data)
-
-      // 🟢 TEMPORÁRIO (simulando backend)
-      // await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      setDashboardData(mockDashboardData)
-    } catch (error) {
-      console.error("Erro ao buscar dados do dashboard", error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    fetchDashboardData()
-  }, [])
 
   // GET categories
   useFocusEffect(
@@ -442,10 +304,6 @@ export default function Index() {
           },
         ]
 
-        const maxValue = Math.max(...formatted.map((item: any) => item.value))
-        const roundedMax = roundUp(maxValue, 100)
-
-        setMaxBalanceValue(roundedMax)
         setTotalBalance(formatted)
       } catch (err) {
         console.log("Erro ao buscar total despesas/receitas:", err)
@@ -509,7 +367,7 @@ export default function Index() {
 
   return (
     <>
-      <ScrollView className="flex-1">
+      <ScrollView className="flex-1" style={styles.container}>
         <View
           className="flex-1 justify-center p-2 gap-3"
           style={styles.container}

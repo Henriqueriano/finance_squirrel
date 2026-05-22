@@ -1,6 +1,6 @@
 import { createContext, ReactNode, useState } from "react"
 
-type DashboardItemId = "category" | "monthly" | "recent"
+type DashboardItemId = "monthly" | "recent"
 
 type DashboardItem = {
   id: DashboardItemId
@@ -16,7 +16,6 @@ export const DashboardContext = createContext({} as DashboardContextType)
 
 export function DashboardProvider({ children }: { children: ReactNode }) {
   const [dashboardItems, setDashboardItems] = useState<DashboardItem[]>([
-    { id: "category", label: "Gastos por categoria" },
     { id: "monthly", label: "Evolução Mensal" },
     { id: "recent", label: "Últimas movimentações" },
   ])
