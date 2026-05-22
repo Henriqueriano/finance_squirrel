@@ -39,7 +39,7 @@ class ExpenseModel(Base):
 class UserModel(Base):
     __tablename__ = 'users_table'
 
-    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid = True), primary_key = True, default = ud.uuid7()) 
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid = True), primary_key = True, default = lambda: uuid.UUID(str(ud.uuid7()))) 
     user_name: Mapped[str] = mapped_column(String(100), nullable = False)
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)    
 
