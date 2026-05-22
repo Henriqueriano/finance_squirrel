@@ -1,5 +1,5 @@
-    import os
-    import jwt
+import os
+import jwt
 import bcrypt
 import datetime
 from .dtos import *
