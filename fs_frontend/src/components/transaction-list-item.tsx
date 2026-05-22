@@ -21,6 +21,7 @@ type TransactionForm = {
 }
 
 interface TransactionListItemProps {
+  title: string
   id: string
   cont: number
   data: TransactionForm
@@ -40,6 +41,7 @@ const transactions = [
 ]
 
 export function TransactionListItem({
+  title,
   cont,
   id,
   data,
@@ -86,17 +88,19 @@ export function TransactionListItem({
   return (
     <View className="rounded-xl p-4" style={styles.card}>
       {/* HEADER */}
-      <View className="flex-row justify-between items-center">
-        <Text className="text-2xl font-bold" style={styles.text}>
-          Transação {cont}
-        </Text>
+      {title && (
+        <View className="flex-row justify-between items-center">
+          <Text className="text-2xl font-bold" style={styles.text}>
+            {title}
+          </Text>
 
-        {canRemove && (
-          <TouchableOpacity onPress={() => onRemove(id)}>
-            <Text className="text-red-500 font-bold">Remover</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+          {canRemove && (
+            <TouchableOpacity onPress={() => onRemove(id)}>
+              <Text className="text-red-500 font-bold">Remover</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
 
       {/* FORMULÁRIO */}
       <View className="gap-4 mt-4">
@@ -139,7 +143,7 @@ export function TransactionListItem({
           <Text className="w-24" style={styles.text}>
             Categoria:
           </Text>
-          <View className="flex-1 relative">
+          <View className="flex-1 relative h-10">
             <TextInput
               className="flex-1 bg-white rounded-lg px-3 py-2"
               value={search}
@@ -179,7 +183,7 @@ export function TransactionListItem({
         <View className="gap-2">
           <Text style={styles.text}>Descrição:</Text>
           <TextInput
-            className="bg-white rounded-lg px-3 py-3 h-28"
+            className="bg-white rounded-lg px-3 py-3 h-24"
             multiline
             textAlignVertical="top"
             value={data.description}
