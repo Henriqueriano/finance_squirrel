@@ -87,6 +87,12 @@ class MonthlyCategoriesReturnDto(BaseModel):
     total_expenses: int | None
     total_entry: int | None
 
+class MonthlyCategoriesCostReturnDto(BaseModel):
+    id: int
+    name: str
+    total: int | None
+
+
 class MonthlyDto(BaseModel):
     start_month: int
     end_month: int

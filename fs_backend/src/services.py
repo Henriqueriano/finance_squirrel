@@ -574,10 +574,17 @@ async def get_categories_value_without_id(user_id, start, end, year) -> list[Mon
     except Exception as e:
         print(f'Exception in get_categories_value_without_id > {e}')
 
-async def get_categories_value_without_id_a(user_id, start, end, year) -> list[MonthlyCategoriesReturnDto]:
-    backdata: list[MonthlyCategoriesReturnDto] = []
-    categoryes = select(ExpenseCategoryModel.category_id, ExpenseCategoryModel.category_name).distinct(ExpenseCategoryModel.category_id).join(ExpenseModel, ExpenseCategoryModel.category_id == ExpenseModel.category_id).where(
-                    ExpenseModel.user_id == user_id, extract('month', ExpenseModel.expense_date) + 1 == start, extract('month', ExpenseModel.expense_date) + 1 <= end, extract('year', ExpenseModel.expense_date) == year)
+async def get_monthly_categories_cost(user_id, start, end, year) -> list[MonthlyCategoriesReturnDto]:
+    backdata: list[MonthlyCategoriesCostReturnDto] = []
+    categoryes = select(ExpenseCategoryModel.category_id,
+                        ExpenseCategoryModel.category_name) \
+                .distinct(ExpenseCategoryModel.category_id) \
+                .join(ExpenseModel,
+                      ExpenseCategoryModel.category_id == ExpenseModel.category_id) \
+                .where(ExpenseModel.user_id == user_id,
+                       extract('month', ExpenseModel.expense_date) + 1 >= start,
+                       extract('month', ExpenseModel.expense_date) + 1 <= end,
+                       extract('year', ExpenseModel.expense_date) == year)
 
     try: 
        engine = create_engine(DATABASE_URL)
@@ -585,12 +592,14 @@ async def get_categories_value_without_id_a(user_id, start, end, year) -> list[M
        with session() as session:
             categoryes = session.execute(categoryes)
             for category in categoryes:
-                bucket_expense = select(func.sum(ExpenseModel.expense_value)).where(ExpenseModel.user_id == user_id, ExpenseModel.category_id == category[0], ExpenseModel.expense_type == 'f')
-                bucket_entry = select(func.sum(ExpenseModel.expense_value)).where(ExpenseModel.user_id == user_id, ExpenseModel.category_id == category[0], ExpenseModel.expense_type == 't')
+                bucket_expense = select(func.sum(ExpenseModel.expense_value)) \
+                                .where(ExpenseModel.user_id == user_id,
+                                       ExpenseModel.category_id == category[0],
+                                       ExpenseModel.expense_type == 'f')
                 expenses = session.scalar(bucket_expense)
-                entry = session.scalar(bucket_entry)
-                backdata.append(MonthlyCategoriesReturnDto(month = start, category_name = category[1], total_entry = entry, total_expenses = expenses))
-       print(backdata)
+                backdata.append(MonthlyCategoriesCostReturnDto(id = category[0],
+                                                               name = category[1],
+                                                               total = expenses if expenses else 0))
        return backdata
 
     except Exception as e:
@@ -601,7 +610,7 @@ async def get_categories_month_service(user_id: str, payload: MonthlyDto) -> lis
     start = payload.start_month
     end = payload.end_month
     year = payload.year
-    backdata = await get_categories_value_without_id_a(user_id, start, end, year)
+    backdata = await get_monthly_categories_cost(user_id, start, end, year)
     return backdata
 
    

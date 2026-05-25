@@ -194,7 +194,7 @@ async def categories_monthly_values(payload: MonthlyCategoriesDto, request: Requ
     service_response = await categories_monthly_service(user_id, payload)
     return JSONResponse(status_code = 200, content = [data.__dict__ for data in service_response])
 
-@computed.post('/monthlyTotalCategories')
+@computed.get('/monthlyTotalCategories')
 async def get_categories_total_per_month(start: int, end: int, year: int, request: Request) -> list[MonthlyCategoriesReturnDto]:
     user_id: str = request.state.user_id
     if start < 0 and end > 11:
