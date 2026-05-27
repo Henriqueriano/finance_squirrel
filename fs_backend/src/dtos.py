@@ -91,6 +91,7 @@ class MonthlyCategoriesCostReturnDto(BaseModel):
     id: int
     name: str
     total: int | None
+    color: str
 
 
 class MonthlyDto(BaseModel):
