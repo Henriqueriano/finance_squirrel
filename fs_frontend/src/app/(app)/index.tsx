@@ -7,11 +7,7 @@ import { useDashboard } from "@/src/hooks/use-dashboard"
 import { useTheme } from "@/src/hooks/use-theme"
 import { api } from "@/src/services/api"
 import { Category } from "@/src/types/category/types"
-import {
-  DashboardData,
-  LineGraphData,
-  PieGraphData,
-} from "@/src/types/dashboard/types"
+import { LineGraphData, PieGraphData } from "@/src/types/dashboard/types"
 import { Transaction } from "@/src/types/transaction/types"
 import { formatCurrency } from "@/src/utils/format-currency"
 import { formatDateToMonthYear } from "@/src/utils/format-date-to-month-year"
@@ -37,70 +33,7 @@ import {
 } from "react-native"
 import { LineChart, PieChart } from "react-native-gifted-charts"
 
-const pieData: PieGraphData[] = [
-  { value: 54, color: "#177AD5", text: "abacate" },
-  { value: 40, color: "#79D2DE", text: "banana" },
-  { value: 20, color: "#ED6665", text: "uva" },
-  { value: 200, color: "#0ac009", text: "melancia" },
-]
-
-const data: Transaction[] = [
-  {
-    id: "1",
-    date: "Jun/2026",
-    category: "Alimentação",
-    description: "...",
-    value: 10,
-    type: "despesa",
-  },
-  {
-    id: "2",
-    date: "Dez/2025",
-    category: "Jogos",
-    description: "Minecraft",
-    value: 109.9,
-    type: "despesa",
-  },
-  {
-    id: "3",
-    date: "Jan/2026",
-    category: "Alimentação",
-    description: "Arroz, Feijão",
-    value: 17.9,
-    type: "despesa",
-  },
-  {
-    id: "4",
-    date: "Abr/2025",
-    category: "Alimentação",
-    description: "Macarrão, Leite",
-    value: 9.5,
-    type: "despesa",
-  },
-  {
-    id: "5",
-    date: "Fev/2026",
-    category: "Transporte",
-    description: "Uber",
-    value: 23.4,
-    type: "despesa",
-  },
-]
-
-const mockDashboardData: DashboardData = {
-  balance: 3000,
-  totalIncome: 2000,
-  totalExpense: 2000,
-  pieData,
-  transactions: data,
-}
-
 type DashboardItemId = "category" | "monthly" | "recent"
-
-const transactions = [
-  { key: "receita", label: "Receita" },
-  { key: "despesa", label: "Despesa" },
-]
 
 type TotalBalance = {
   label: string
@@ -117,13 +50,21 @@ type Expense = {
   desc: string
 }
 
+type ApiExpense = {
+  id: number
+  name: string
+  total: number
+  color: string
+}
+
+const transactions = [
+  { key: "receita", label: "Receita" },
+  { key: "despesa", label: "Despesa" },
+]
+
 export default function Index() {
   const { user, isAuthenticated } = useAuth()
-  const [dashboardData, setDashboardData] =
-    useState<DashboardData>(mockDashboardData)
-  const [loading, setLoading] = useState(false)
   const { dashboardItems } = useDashboard()
-
   // Transação Rápida
   const [simpleExpenseType, setSimpleExpenseType] = useState("despesa")
   const [simpleExpenseValue, setSimpleExpenseValue] = useState("")
@@ -136,7 +77,9 @@ export default function Index() {
   // Balance
   const [totalBalance, setTotalBalance] = useState<TotalBalance[]>([])
   const [maxBalanceValue, setMaxBalanceValue] = useState(0)
-
+  // PieGraph
+  const [pieData, setPieData] = useState<PieGraphData[]>([])
+  // Expenses
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [categories, setCategories] = useState<Category[]>([])
 
@@ -180,16 +123,17 @@ export default function Index() {
             <PieChart
               radius={100}
               data={relativeDataPercent}
+              labelsPosition="outward"
               showText
               textColor={colors.text}
-              textSize={14}
-              strokeWidth={2}
+              textSize={12}
+              strokeWidth={1}
               strokeColor="#333"
             />
           </View>
           {/* Lista de Categorias */}
           <View className="gap-2">
-            {dashboardData.pieData.map((item, index) => (
+            {pieData.map((item, index) => (
               <View
                 key={index}
                 className="flex-row gap-2"
@@ -267,9 +211,9 @@ export default function Index() {
     ),
   }
 
-  const total = dashboardData.pieData.reduce((acc, item) => acc + item.value, 0)
+  const total = pieData.reduce((acc, item) => acc + item.value, 0)
 
-  const relativeDataPercent = dashboardData.pieData.map((item) => ({
+  const relativeDataPercent = pieData.map((item) => ({
     ...item,
     value: (item.value / total) * 100,
     text: ((item.value / total) * 100).toFixed(2) + "%",
@@ -285,16 +229,10 @@ export default function Index() {
 
       const parsedAmount = parseCurrencyToCents(simpleExpenseValue)
 
-      const expense = {
+      const payload = {
         value: parsedAmount,
         date: simpleExpenseDate!.toISOString(),
         type: simpleExpenseType === "receita",
-        category_id: 7, // default category
-        description: "",
-      }
-
-      const payload = {
-        items: [expense],
       }
 
       await api.post("/expenses/", payload, {
@@ -310,29 +248,6 @@ export default function Index() {
       console.log("Erro ao salvar Transação rápida:", err)
     }
   }
-
-  async function fetchDashboardData() {
-    try {
-      setLoading(true)
-
-      // 🔴 FUTURO: substituir por fetch real
-      // const response = await api.get("/dashboard")
-      // setDashboardData(response.data)
-
-      // 🟢 TEMPORÁRIO (simulando backend)
-      // await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      setDashboardData(mockDashboardData)
-    } catch (error) {
-      console.error("Erro ao buscar dados do dashboard", error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    fetchDashboardData()
-  }, [])
 
   // GET categories
   useFocusEffect(
@@ -361,7 +276,7 @@ export default function Index() {
     }, [isAuthenticated, user]),
   )
 
-  // Gasto total despesa/receita no ano atual
+  // POST Gasto total despesa/receita no ano atual
   useEffect(() => {
     async function getTotalEntradaSaida() {
       try {
@@ -411,7 +326,7 @@ export default function Index() {
     getTotalEntradaSaida()
   }, [user])
 
-  // Entrada vs Saída
+  // GET Entrada vs Saída
   useEffect(() => {
     async function getTotalBalance() {
       try {
@@ -463,7 +378,7 @@ export default function Index() {
           const token = await AsyncStorage.getItem("@token")
           if (!token || !user?.id) return
 
-          const response = await api.get("/expenses/", {
+          const response = await api.get("/expenses/lasts?quantity=5", {
             headers: {
               authorization: `Bearer ${token}`,
             },
@@ -478,9 +393,7 @@ export default function Index() {
             desc: item.description,
           }))
 
-          const sliced = formattedExpenses.slice(0, 5)
-
-          setExpenses(sliced)
+          setExpenses(formattedExpenses)
         } catch (error) {
           console.error("Erro ao buscar expenses:", error)
         }
@@ -490,7 +403,42 @@ export default function Index() {
     }, [user]),
   )
 
-  const normalizedData = useMemo(() => {
+  // GET gasto por categoria no mês atual
+  useEffect(() => {
+    async function getTotCategories() {
+      try {
+        const token = await AsyncStorage.getItem("@token")
+
+        if (!token || !user?.id) return
+
+        const response = await api.get(
+          `/computed/monthlyTotalCategories?start=${5}&end=${6}&year=${2026}`,
+          {
+            headers: {
+              authorization: `Bearer ${token}`,
+            },
+          },
+        )
+
+        const data: ApiExpense[] = response.data
+
+        const dataGraph: PieGraphData[] = data
+          .sort((a, b) => b.total - a.total)
+          .map((item) => ({
+            value: Number(item.total) / 100,
+            color: item.color,
+            text: item.name,
+          }))
+        setPieData(dataGraph)
+      } catch (err) {
+        console.log("Erro ao buscar total por categoria no mês:", err)
+      }
+    }
+
+    getTotCategories()
+  }, [user])
+
+  const normalizedData: Transaction[] = useMemo(() => {
     if (!expenses.length || !categories.length) return []
 
     return expenses.map((exp) => {
@@ -502,7 +450,7 @@ export default function Index() {
         category: category?.name ?? "Sem categoria",
         description: exp.desc,
         value: Number(exp.value),
-        type: exp.type ? "Receita" : "Despesa",
+        type: exp.type ? "receita" : "despesa",
       }
     })
   }, [expenses, categories])
