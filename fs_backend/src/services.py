@@ -577,8 +577,9 @@ async def get_categories_value_without_id(user_id, start, end, year) -> list[Mon
 async def get_monthly_categories_cost(user_id, start, end, year) -> list[MonthlyCategoriesReturnDto]:
     backdata: list[MonthlyCategoriesCostReturnDto] = []
     categoryes = select(ExpenseCategoryModel.category_id,
-                        ExpenseCategoryModel.category_name) \
-                .distinct(ExpenseCategoryModel.category_id) \
+                        ExpenseCategoryModel.category_name,
+                        ExpenseCategoryModel.category_color) \
+                .distinct(ExpenseCategoryModel.category_id)  \
                 .join(ExpenseModel,
                       ExpenseCategoryModel.category_id == ExpenseModel.category_id) \
                 .where(ExpenseModel.user_id == user_id,
@@ -599,6 +600,7 @@ async def get_monthly_categories_cost(user_id, start, end, year) -> list[Monthly
                 expenses = session.scalar(bucket_expense)
                 backdata.append(MonthlyCategoriesCostReturnDto(id = category[0],
                                                                name = category[1],
+                                                               color = category[2], 
                                                                total = expenses if expenses else 0))
        return backdata
 
