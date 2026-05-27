@@ -12,3 +12,5 @@ export const colorOptions = [
   "#e879f9",
   "#f472b6",
 ]
+
+export const defaultColor = colorOptions[0]

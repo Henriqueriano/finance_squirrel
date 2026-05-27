@@ -21,19 +21,19 @@ type TransactionForm = {
   description: string
 }
 
+const defaultData: TransactionForm = {
+  id: "1",
+  type: "receita",
+  value: "",
+  date: null,
+  category: null,
+  description: "",
+}
+
 export default function RegisterTransactionScreen() {
   const { user, isAuthenticated } = useAuth()
   const [categories, setCategories] = useState<Category[]>([])
-  const [data, setData] = useState<TransactionForm[]>([
-    {
-      id: "1",
-      type: "receita",
-      value: "",
-      date: null,
-      category: null,
-      description: "",
-    },
-  ])
+  const [data, setData] = useState<TransactionForm[]>([defaultData])
 
   const [nextId, setNextId] = useState(2)
 
@@ -150,16 +150,7 @@ export default function RegisterTransactionScreen() {
         },
       })
 
-      setData([
-        {
-          id: "1",
-          type: "receita",
-          value: "",
-          date: null,
-          category: null,
-          description: "",
-        },
-      ])
+      setData([defaultData])
       setNextId(2)
     } catch (error) {
       console.error("Erro ao salvar:", error)
@@ -227,6 +218,7 @@ export default function RegisterTransactionScreen() {
           {data.map((item, index) => (
             <TransactionListItem
               key={item.id}
+              title={`Transação ${index + 1}`}
               cont={index + 1}
               id={item.id}
               data={item}
