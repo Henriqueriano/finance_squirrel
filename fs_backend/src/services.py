@@ -9,7 +9,8 @@ from datetime import datetime
 from datetime import timedelta
 from dotenv import load_dotenv
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine, select, update, delete, func, extract
+from sqlalchemy import ( create_engine, select, update,
+                        delete, func, extract, desc )
 
 # environment setup
 load_dotenv()
@@ -151,7 +152,7 @@ async def expenses_bulk_register_service(user_id: str, payload: list[ExpenseDto]
         print(f'Register expense service error > {e}')
 
 async def get_expenses(user_id: str) -> list[ExpenseReturnDto]:
-    statement = select(ExpenseModel).where(ExpenseModel.user_id == user_id)
+    statement = select(ExpenseModel).where(ExpenseModel.user_id == user_id).order_by(desc(ExpenseModel.expense_date))
     backdata: list[ExpenseReturnDto] = []
 
     try:
@@ -171,7 +172,37 @@ async def get_expenses(user_id: str) -> list[ExpenseReturnDto]:
             for d in backdata:
                 d.date = d.date.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-            print(backdata)
+            return backdata
+
+    except Exception as e:
+        print(f'Get expense service error > {e}')
+
+async def get_last_expenses(user_id: str, quantity: int) -> list[ExpenseReturnDto]:
+    if quantity < 0:
+        quantity = 0
+    statement = select(ExpenseModel).where(ExpenseModel.user_id == user_id) \
+    .order_by(desc(ExpenseModel.expense_date)) \
+    .limit(quantity)
+
+    backdata: list[ExpenseReturnDto] = []
+
+    try:
+        engine = create_engine(DATABASE_URL)
+        session = sessionmaker(bind=engine)
+        with session() as session:
+            db_data = session.scalars(statement).all()
+            for d in db_data:
+                backdata.append(ExpenseReturnDto(
+                id = d.expense_id,
+                value = d.expense_value,
+                date = d.expense_date,
+                type = d.expense_type,
+                category_id = d.category_id,
+                description = d.expense_desc))
+
+            for d in backdata:
+                d.date = d.date.strftime("%Y-%m-%dT%H:%M:%SZ")
+
             return backdata
 
     except Exception as e:
@@ -403,7 +434,6 @@ async def get_settings_service(payload: UserSettingDto, user_id: str) -> UserSet
         Session = sessionmaker(bind = engine)
         with Session() as session:
             data = session.execute(sttm)
-            print(data)
     except:
         return ''
 # endregion

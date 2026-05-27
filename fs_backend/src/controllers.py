@@ -100,6 +100,16 @@ async def delete_expense(expense_id: int,
                 status_code=500,
                 content ={ 'msg' : 'Error while deleting'})
     return JSONResponse( status_code = 200, content = service_response.__dict__)
+
+@expenses.get('/lasts')
+async def get_last_five(quantity: int, request: Request) -> list[ExpenseReturnDto]:
+    user_id: str = request.state.user_id
+    if not user_id:
+        return JSONResponse(status_code = 400, content = {'msg' : 'user_id cannot be empty'})
+
+    service_response = await get_last_expenses(user_id, quantity)
+    return JSONResponse(status_code = 200, content = [data.__dict__ for data in service_response])
+
 # endregion
 
 # region categories:
@@ -213,7 +223,6 @@ async def total_expenses(year: int, request: Request) -> dict:
 async def balances_monthly_values(payload: MonthlyDto, request: Request) -> list[MonthlyBalancesReturnDto]:
     user_id: str = request.state.user_id
     service_response = await balances_monthly_service(user_id, payload)
-    print(service_response)
     return JSONResponse(status_code = 200, content = [data.__dict__ for data in service_response])
 
 @computed.post('/monthlyBalancesCompare')
