@@ -195,7 +195,7 @@ async def categories_monthly_values(payload: MonthlyCategoriesDto, request: Requ
     return JSONResponse(status_code = 200, content = [data.__dict__ for data in service_response])
 
 @computed.get('/monthlyTotalCategories')
-async def get_categories_total_per_month(start: int, end: int, year: int, request: Request) -> list[MonthlyCategoriesReturnDto]:
+async def get_categories_total_per_month(start: int, end: int, year: int, request: Request) -> list[MonthlyCategoriesCostReturnDto]:
     user_id: str = request.state.user_id
     if start < 0 and end > 11:
         return JSONResponse(status_code = 400, content = {'msg' : 'invalid data range'})
