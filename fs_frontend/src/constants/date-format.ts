@@ -1,4 +1,4 @@
 export const dateFormat = [
-  { key: "nominal", label: "Jan/2025" },
-  { key: "numerico", label: "01/2025" },
+  { key: "numeric", label: "01/2026" },
+  { key: "nominal", label: "jan/2026" },
 ]

@@ -1,20 +1,9 @@
+import { months } from "../constants/months"
+
 export function formatDateToMonthYear(date: Date | string) {
   const d = new Date(date)
+  const month = months[d.getMonth()]
+  const captalizedMonth = month.charAt(0).toUpperCase() + month.slice(1)
 
-  const months = [
-    "Jan",
-    "Fev",
-    "Mar",
-    "Abr",
-    "Mai",
-    "Jun",
-    "Jul",
-    "Ago",
-    "Set",
-    "Out",
-    "Nov",
-    "Dez",
-  ]
-
-  return `${months[d.getMonth()]}/${d.getFullYear()}`
+  return `${captalizedMonth}/${d.getFullYear()}`
 }

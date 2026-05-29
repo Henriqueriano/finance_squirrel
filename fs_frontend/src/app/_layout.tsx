@@ -1,3 +1,4 @@
+import { FormatProvider } from "@/src/contexts/format-context"
 import { ThemeProvider } from "@/src/contexts/theme-context"
 import { Stack } from "expo-router"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
@@ -11,7 +12,9 @@ export default function Layout() {
       <AuthProvider>
         <DashboardProvider>
           <ThemeProvider>
-            <Stack screenOptions={{ headerShown: false }} />
+            <FormatProvider>
+              <Stack screenOptions={{ headerShown: false }} />
+            </FormatProvider>
           </ThemeProvider>
         </DashboardProvider>
       </AuthProvider>

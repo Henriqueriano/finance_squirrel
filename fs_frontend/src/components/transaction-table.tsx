@@ -1,8 +1,8 @@
 import { useMemo } from "react"
 import { StyleSheet, Text, View } from "react-native"
+import { useMoney } from "../hooks/use-money"
 import { useTheme } from "../hooks/use-theme"
 import { Transaction } from "../types/transaction/types"
-import { formatCurrency } from "../utils/format-currency"
 
 type TransactionTableProps = {
   data: Transaction[]
@@ -28,7 +28,15 @@ const TableHeader = ({ styles }: { styles: any }) => (
   </View>
 )
 
-const renderItem = ({ item, styles }: { item: Transaction; styles: any }) => (
+const renderItem = ({
+  item,
+  styles,
+  formatMoney,
+}: {
+  item: Transaction
+  styles: any
+  formatMoney(value: number): string
+}) => (
   <View className="flex-row gap-2 py-1 border-b border-gray-800" key={item.id}>
     <Text className="flex-1 text-xs" style={styles.text}>
       {item.date}
@@ -40,7 +48,7 @@ const renderItem = ({ item, styles }: { item: Transaction; styles: any }) => (
       {item.description}
     </Text>
     <Text className="flex-1 text-xs" style={styles.text}>
-      {formatCurrency(item.value)}
+      {formatMoney(item.value)}
     </Text>
     <Text className="flex-1 text-xs" style={styles.text}>
       {item.type}
@@ -50,6 +58,7 @@ const renderItem = ({ item, styles }: { item: Transaction; styles: any }) => (
 
 export default function TransactionTable({ data }: TransactionTableProps) {
   const { colors } = useTheme()
+  const { formatMoney } = useMoney()
   const styles = useMemo(
     () =>
       StyleSheet.create({
@@ -70,7 +79,7 @@ export default function TransactionTable({ data }: TransactionTableProps) {
     <View style={{ gap: 6 }}>
       <TableHeader styles={styles} />
       {/* Linhas */}
-      {data.map((item) => renderItem({ item, styles }))}
+      {data.map((item) => renderItem({ item, styles, formatMoney }))}
     </View>
   )
 }

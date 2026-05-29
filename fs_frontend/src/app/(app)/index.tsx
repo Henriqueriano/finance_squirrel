@@ -4,12 +4,12 @@ import TransactionTable from "@/src/components/transaction-table"
 import { months } from "@/src/constants/months"
 import { useAuth } from "@/src/hooks/use-auth"
 import { useDashboard } from "@/src/hooks/use-dashboard"
+import { useMoney } from "@/src/hooks/use-money"
 import { useTheme } from "@/src/hooks/use-theme"
 import { api } from "@/src/services/api"
 import { Category } from "@/src/types/category/types"
 import { LineGraphData, PieGraphData } from "@/src/types/dashboard/types"
 import { Transaction } from "@/src/types/transaction/types"
-import { formatCurrency } from "@/src/utils/format-currency"
 import { formatDateToMonthYear } from "@/src/utils/format-date-to-month-year"
 import { parseCurrencyToCents } from "@/src/utils/parse-currency-to-cents"
 import { roundUp } from "@/src/utils/round-up"
@@ -22,7 +22,7 @@ import {
   Landmark,
   Plus,
 } from "lucide-react-native"
-import { JSX, useCallback, useEffect, useMemo, useState } from "react"
+import { JSX, useCallback, useMemo, useState } from "react"
 import {
   Modal,
   ScrollView,
@@ -65,6 +65,7 @@ const transactions = [
 export default function Index() {
   const { user, isAuthenticated } = useAuth()
   const { dashboardItems } = useDashboard()
+  const { formatMoney } = useMoney()
   // Transação Rápida
   const [simpleExpenseType, setSimpleExpenseType] = useState("despesa")
   const [simpleExpenseValue, setSimpleExpenseValue] = useState("")
@@ -143,7 +144,9 @@ export default function Index() {
                   className="h-5 w-5 rounded-md"
                   style={{ backgroundColor: item.color }}
                 />
-                <Text style={styles.text}>{item.text}</Text>
+                <Text style={styles.text} className="text-sm">
+                  {item.text}
+                </Text>
               </View>
             ))}
           </View>
@@ -277,98 +280,108 @@ export default function Index() {
   )
 
   // POST Gasto total despesa/receita no ano atual
-  useEffect(() => {
-    async function getTotalEntradaSaida() {
-      try {
-        const token = await AsyncStorage.getItem("@token")
+  useFocusEffect(
+    useCallback(() => {
+      async function getTotalEntradaSaida() {
+        try {
+          const token = await AsyncStorage.getItem("@token")
 
-        if (!token) return
+          if (!token) return
 
-        const currentYear = new Date().getFullYear()
-        const payload = {
-          start_month: 0,
-          end_month: 11,
-          year: currentYear,
+          const currentYear = new Date().getFullYear()
+          const payload = {
+            start_month: 0,
+            end_month: 11,
+            year: currentYear,
+          }
+          const response = await api.post(
+            "/computed/monthlyBalances",
+            payload,
+            {
+              headers: {
+                authorization: `Bearer ${token}`,
+              },
+            },
+          )
+
+          const lineDataEntry: LineGraphData[] = response.data.map(
+            (item: any) => ({
+              value: Number(item.total_entry) / 100,
+              label: months[item.month],
+            }),
+          )
+
+          const lineDataOut: LineGraphData[] = response.data.map(
+            (item: any) => ({
+              value: Number(item.total_out) / 100,
+              label: months[item.month],
+            }),
+          )
+
+          const maxGraphValue = Math.max(
+            ...lineDataEntry.map((item) => item.value),
+            ...lineDataOut.map((item) => item.value),
+          )
+          const roundedMaxGraph = roundUp(maxGraphValue, 100)
+
+          setMaxTotalEntryOut(roundedMaxGraph)
+
+          setTotalEntry(lineDataEntry)
+          setTotalOut(lineDataOut)
+        } catch (err) {
+          console.log("Erro ao buscar total despesas/receitas no ano:", err)
         }
-        const response = await api.post("/computed/monthlyBalances", payload, {
-          headers: {
-            authorization: `Bearer ${token}`,
-          },
-        })
-
-        const lineDataEntry: LineGraphData[] = response.data.map(
-          (item: any) => ({
-            value: Number(item.total_entry) / 100,
-            label: months[item.month],
-          }),
-        )
-
-        const lineDataOut: LineGraphData[] = response.data.map((item: any) => ({
-          value: Number(item.total_out) / 100,
-          label: months[item.month],
-        }))
-
-        const maxGraphValue = Math.max(
-          ...lineDataEntry.map((item) => item.value),
-          ...lineDataOut.map((item) => item.value),
-        )
-        const roundedMaxGraph = roundUp(maxGraphValue, 100)
-
-        setMaxTotalEntryOut(roundedMaxGraph)
-
-        setTotalEntry(lineDataEntry)
-        setTotalOut(lineDataOut)
-      } catch (err) {
-        console.log("Erro ao buscar total despesas/receitas no ano:", err)
       }
-    }
 
-    getTotalEntradaSaida()
-  }, [user])
+      getTotalEntradaSaida()
+    }, [user]),
+  )
 
   // GET Entrada vs Saída
-  useEffect(() => {
-    async function getTotalBalance() {
-      try {
-        const token = await AsyncStorage.getItem("@token")
+  useFocusEffect(
+    useCallback(() => {
+      async function getTotalBalance() {
+        try {
+          const token = await AsyncStorage.getItem("@token")
 
-        if (!token) return
+          if (!token) return
 
-        const currentYear = new Date().getFullYear()
-        const response = await api.get(
-          `/computed/balance?year=${currentYear}`,
-          {
-            headers: {
-              authorization: `Bearer ${token}`,
+          const currentYear = new Date().getFullYear()
+          const response = await api.get(
+            `/computed/balance?year=${currentYear}`,
+            {
+              headers: {
+                authorization: `Bearer ${token}`,
+              },
             },
-          },
-        )
+          )
 
-        const formatted = [
-          {
-            label: "Receitas",
-            value: Number(response.data.receitas) / 100,
-            frontColor: "#f00",
-          },
-          {
-            label: "Despesas",
-            value: Number(response.data.despesas) / 100,
-            frontColor: "#ff0",
-          },
-        ]
+          const formatted = [
+            {
+              label: "Receitas",
+              value: Number(response.data.receitas) / 100,
+              frontColor: "#f00",
+            },
+            {
+              label: "Despesas",
+              value: Number(response.data.despesas) / 100,
+              frontColor: "#ff0",
+            },
+          ]
 
-        const maxValue = Math.max(...formatted.map((item: any) => item.value))
-        const roundedMax = roundUp(maxValue, 100)
+          const maxValue = Math.max(...formatted.map((item: any) => item.value))
+          const roundedMax = roundUp(maxValue, 100)
 
-        setMaxBalanceValue(roundedMax)
-        setTotalBalance(formatted)
-      } catch (err) {
-        console.log("Erro ao buscar total despesas/receitas:", err)
+          setMaxBalanceValue(roundedMax)
+          setTotalBalance(formatted)
+        } catch (err) {
+          console.log("Erro ao buscar total despesas/receitas:", err)
+        }
       }
-    }
 
-    getTotalBalance()
-  }, [user])
+      getTotalBalance()
+    }, [user]),
+  )
 
   // GET expenses
   useFocusEffect(
@@ -404,39 +417,44 @@ export default function Index() {
   )
 
   // GET gasto por categoria no mês atual
-  useEffect(() => {
-    async function getTotCategories() {
-      try {
-        const token = await AsyncStorage.getItem("@token")
+  useFocusEffect(
+    useCallback(() => {
+      async function getTotCategories() {
+        try {
+          const token = await AsyncStorage.getItem("@token")
 
-        if (!token || !user?.id) return
+          if (!token || !user?.id) return
+          const currentDate = new Date()
 
-        const response = await api.get(
-          `/computed/monthlyTotalCategories?start=${5}&end=${6}&year=${2026}`,
-          {
-            headers: {
-              authorization: `Bearer ${token}`,
+          const currentMonth = currentDate.getMonth()
+          const currentYear = currentDate.getFullYear()
+          const response = await api.get(
+            `/computed/monthlyTotalCategories?start=${currentMonth}&end=${Math.min(currentMonth + 1, 11)}&year=${currentYear}`,
+            {
+              headers: {
+                authorization: `Bearer ${token}`,
+              },
             },
-          },
-        )
+          )
 
-        const data: ApiExpense[] = response.data
+          const data: ApiExpense[] = response.data
 
-        const dataGraph: PieGraphData[] = data
-          .sort((a, b) => b.total - a.total)
-          .map((item) => ({
-            value: Number(item.total) / 100,
-            color: item.color,
-            text: item.name,
-          }))
-        setPieData(dataGraph)
-      } catch (err) {
-        console.log("Erro ao buscar total por categoria no mês:", err)
+          const dataGraph: PieGraphData[] = data
+            .sort((a, b) => b.total - a.total)
+            .map((item) => ({
+              value: Number(item.total) / 100,
+              color: item.color,
+              text: item.name,
+            }))
+          setPieData(dataGraph)
+        } catch (err) {
+          console.log("Erro ao buscar total por categoria no mês:", err)
+        }
       }
-    }
 
-    getTotCategories()
-  }, [user])
+      getTotCategories()
+    }, [user]),
+  )
 
   const normalizedData: Transaction[] = useMemo(() => {
     if (!expenses.length || !categories.length) return []
@@ -475,9 +493,7 @@ export default function Index() {
                   Saldo
                 </Text>
                 <Text className="text-3xl" style={styles.text}>
-                  {formatCurrency(
-                    totalBalance[0]?.value - totalBalance[1]?.value,
-                  )}
+                  {formatMoney(totalBalance[0]?.value - totalBalance[1]?.value)}
                 </Text>
                 <Link href="/transaction-history">
                   <View className="flex-row items-center">
@@ -498,7 +514,7 @@ export default function Index() {
                     Total Receitas
                   </Text>
                   <Text style={styles.text}>
-                    {formatCurrency(totalBalance[0]?.value)}
+                    {formatMoney(totalBalance[0]?.value)}
                   </Text>
                 </View>
               </View>
@@ -510,7 +526,7 @@ export default function Index() {
                     Total Despesas
                   </Text>
                   <Text style={styles.text}>
-                    {formatCurrency(totalBalance[1]?.value)}
+                    {formatMoney(totalBalance[1]?.value)}
                   </Text>
                 </View>
               </View>

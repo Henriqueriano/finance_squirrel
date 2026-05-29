@@ -1,5 +1,6 @@
 import { TransactionListItem } from "@/src/components/transaction-list-item"
 import { useAuth } from "@/src/hooks/use-auth"
+import { useMoney } from "@/src/hooks/use-money"
 import { useTheme } from "@/src/hooks/use-theme"
 import { api } from "@/src/services/api"
 import { Category } from "@/src/types/category/types"
@@ -42,6 +43,7 @@ const expenseTypes = ["Receita", "Despesa"]
 
 export default function TransactionHistoryScreen() {
   const { user, isAuthenticated } = useAuth()
+  const { formatMoney } = useMoney()
   // Filtros
   const [modalVisivel, setModalVisivel] = useState(false)
   const [filtroAtivo, setFiltroAtivo] = useState<
@@ -210,7 +212,7 @@ export default function TransactionHistoryScreen() {
           </Text>
 
           <Text className="flex-1 text-xs" style={styles.text}>
-            {formatCurrency(item.value)}
+            {formatMoney(item.value)}
           </Text>
 
           <Text className="flex-1 text-xs" style={styles.text}>
